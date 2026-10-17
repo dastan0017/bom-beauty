@@ -45,21 +45,23 @@ Scaffold
 
 ## M2 Client site
 
-- [ ] Layout: header (logo, currency picker, WhatsApp, tabs), footer, theme vars from settings, sticky bars
-- [ ] Base components from the design (chips, cards, buttons, sheets, dialogs, stepper, badges); `BbImage`, `Price`
-- [ ] `content/copy.ts` with every static string and validation text
-- [ ] Pages: `/`, `/programs`, `/programs/[slug]`, `/catalog`, `/catalog/[slug]`, `/wholesale`, `/delivery`, `/privacy`, `/offer`, not-found, error
-- [ ] Order sheet (form, validation, keepalive POST + outbox, WhatsApp open, done state, "Открыть ещё раз")
-- [ ] Quiz overlay (4 steps, ranking, results, WhatsApp hand-off with lead, "К результатам теста" pill)
-- [ ] Wholesale price sheet (buyer kind, country, ETA, lead + WhatsApp), catalog PDF download, call
-- [ ] Reviews carousel + lightbox; video player with custom controls and end card (Bunny URLs or placeholder until M5)
-- [ ] Currency switching from settings rates; UTM + referrer capture
-- [ ] Desktop layouts (≥ 1024 px) per the desktop references
-- [ ] SEO: metadata, canonical, sitemap, robots, OG images, JSON-LD
-- [ ] `/api/revalidate`, redirect lookup on not-found; Umami + optional Meta Pixel
-- [ ] Skeletons, empty and error states
-- [ ] Lighthouse mobile (home, programs, program, catalog, product): Perf ≥ 90, SEO 100, A11y ≥ 95, report in `docs/lighthouse/`
-- [ ] Gate + `feat(frontend): client site`
+- [x] Layout: header (logo, currency picker, WhatsApp, tabs), footer, theme vars from settings, sticky bars
+- [x] Base components from the design (chips, cards, buttons, sheets, dialogs, stepper, badges); `BbImage`, `Price`
+- [x] `content/copy.ts` with every static string and validation text
+- [x] Pages: `/`, `/programs`, `/programs/[slug]`, `/catalog`, `/catalog/[slug]`, `/wholesale`, `/delivery`, `/privacy`, `/offer`, not-found, error
+- [x] Order sheet (form, validation, keepalive POST + outbox, WhatsApp open, done state, "Открыть ещё раз")
+- [x] Quiz overlay (4 steps, ranking, results, WhatsApp hand-off with lead, "К результатам теста" pill)
+- [x] Wholesale price sheet (buyer kind, country, ETA, lead + WhatsApp), catalog PDF download, call
+- [x] Reviews carousel + lightbox; video player with custom controls and end card (Bunny URLs or placeholder until M5)
+- [x] Currency switching from settings rates; UTM + referrer capture
+- [x] Desktop layouts (≥ 1024 px) per the desktop references
+- [x] SEO: metadata, canonical, sitemap, robots, OG images, JSON-LD
+- [x] `/api/revalidate`, redirect lookup on not-found; Umami + optional Meta Pixel
+- [x] Empty and error states; no skeleton screens (pages render in < 50 ms and a root `loading.tsx` delayed LCP, see
+      `docs/lighthouse/2026-10-17-m2.md`)
+- [x] Lighthouse mobile (home, programs, program, catalog, product): Perf ≥ 90, SEO 100, A11y ≥ 95, report in `docs/lighthouse/`
+- [x] Playwright flows in `frontend/e2e` (order, program order, quiz, wholesale, currency, 404) on phone and desktop
+- [x] Gate + `feat(frontend): client site`
 
 ## M3 Admin: orders and overview
 

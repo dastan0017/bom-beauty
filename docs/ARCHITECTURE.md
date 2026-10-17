@@ -164,7 +164,8 @@ column and the price card on the right. Copy always comes from the mobile protot
 - Server Components fetch `INTERNAL_API_URL` with `next: { tags, revalidate: 3600 }`. Tags: `products`, `product:{slug}`,
   `programs`, `program:{slug}`, `categories`, `reviews`, `content`, `content:{key}`, `settings`, `redirects`.
 - Admin mutations enqueue `web.revalidate`; the worker calls `POST web:3000/api/revalidate` and retries while `web` restarts.
-- `generateStaticParams` tolerates an unreachable API, so `next build` never needs the backend.
+- Pages render per request (`connection()` in the fetch helper), so `next build` never needs the backend; the API
+  responses themselves sit in Next's data cache until their tags are revalidated, so a render costs no API call.
 - Cloudflare caches only `/_next/static/*`, fonts and media; HTML is not cached at the edge.
 
 **Theme and currency at runtime**
@@ -173,13 +174,19 @@ column and the price card on the right. Copy always comes from the mobile protot
   properties on `<html>`. Changing colours in "Оформление" revalidates every page; no rebuild.
 - Prices render server-side in сом. `<Price kgs>` is a client component that switches to the visitor's currency (kept in
   `localStorage`) after hydration using the rates from `/settings/public`. Visitors on сом see no change; others see a
-  one-frame swap, which keeps pages static.
+  one-frame swap, which keeps the HTML identical for everyone.
 
 **Progressive enhancement:** catalog and content pages render fully without JS; category chips are links; the order
 buttons fall back to a plain `wa.me` link with a default message; the quiz CTA falls back to `/programs`.
 
-**Images:** `<BbImage>` builds `<picture>` (AVIF + WebP) from pre-built variants via `getImageProps()` and a custom loader
-mapping widths to 320/640/960/1280/1920; explicit dimensions and blur placeholders; originals are never served.
+**Images:** `<BbImage>` renders a plain `<picture>` (AVIF + WebP `srcset` from the pre-built variants, WebP `<img>`
+fallback) with intrinsic dimensions and the blur placeholder as a background; originals are never served. Not
+`next/image`: the variants already exist in object storage, so an optimiser would only add a hop. Every slot has a
+placeholder (initials, icon or the design's mono "фото" label) because media is uploaded after launch.
+
+**Open Graph:** `opengraph-image.tsx` for the site (the owner's image from SEO settings when set), programs and
+products, rendered with `next/og`. Satori cannot read WOFF2 or variable fonts, so static 600-weight TTF instances of
+Onest and Cormorant live in `packages/config/fonts/og` and are traced into the standalone build.
 
 **Video:** native `<video>` with the Bunny HLS playlist as the first `<source>` and Bunny's 720p MP4 fallback as the second
 (browsers without native HLS use the MP4), poster from Bunny, custom controls and end card as in the design
@@ -376,6 +383,9 @@ dev containers SeaweedFS (S3) and Mailpit. Since 2026-10-17 dependencies are add
 - M1: `prisma` + `@prisma/client` + `@prisma/adapter-pg` + `pg` (Prisma 7 driver adapter), `@node-rs/argon2` (prebuilt
   argon2id, no native build in Docker), `@nestjs/throttler`, `ioredis`, `cookie-parser`, `@nestjs/swagger`, `nestjs-zod`,
   `openapi-typescript` (dev), `openapi-fetch` (typed client in `@bom/shared/api`), `tsx` (seed).
+- M2: `react-hook-form` (order sheet field state; validation runs synchronously with the shared zod schemas so
+  WhatsApp opens inside the click), `react-markdown` (delivery and legal pages, raw HTML off), `@playwright/test` (dev,
+  end-to-end flows in `frontend/e2e`).
 
 ## 15. Decisions and deviations
 

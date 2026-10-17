@@ -12,13 +12,13 @@ export const onest = localFont({
 export const cormorant = localFont({
   src: [
     {
-      path: '../../../packages/config/fonts/cormorant-garamond-var.woff2',
-      weight: '500 600',
+      path: '../../../packages/config/fonts/cormorant-garamond-600.woff2',
+      weight: '600',
       style: 'normal',
     },
     {
-      path: '../../../packages/config/fonts/cormorant-garamond-italic-var.woff2',
-      weight: '500 600',
+      path: '../../../packages/config/fonts/cormorant-garamond-italic-600.woff2',
+      weight: '600',
       style: 'italic',
     },
   ],

@@ -30,3 +30,5 @@ npm-debug.log*
 pnpm-debug.log*
 .vscode/*
 !.vscode/extensions.json
+test-results/
+playwright-report/

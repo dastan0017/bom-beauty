@@ -17,7 +17,8 @@
     "infra:down": "docker compose -f infra/docker-compose.yml down",
     "db:migrate": "pnpm --filter @bom/backend db:migrate",
     "db:seed": "pnpm --filter @bom/backend db:seed",
-    "gen:api": "pnpm --filter @bom/backend gen:api"
+    "gen:api": "pnpm --filter @bom/backend gen:api",
+    "e2e": "pnpm --filter @bom/frontend test:e2e"
   },
   "devDependencies": {
     "@bom/config": "workspace:*",

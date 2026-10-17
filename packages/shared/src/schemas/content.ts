@@ -3,7 +3,8 @@ import { WHOLESALE_COUNTRIES } from '../enums';
 import { productCardSchema } from './catalog';
 import { fileRefSchema, imageRefSchema, videoRefSchema } from './common';
 
-// Owner-editable content blocks (docs/DATA-MODEL.md §4). In titles, `*word*` marks the accent word
+// Owner-editable content blocks (docs/DATA-MODEL.md §4). Fields added after launch use `.default()` so stored rows
+// written before them still parse. In titles, `*word*` marks the accent word
 // (italic, accent colour), as in the design's "Время *расцвета* и сияния вашей кожи".
 
 const text = (max = 500) => z.string().trim().max(max);
@@ -16,6 +17,8 @@ export const homeContentSchema = z.object({
   heroTitle: text(160),
   heroSubtitle: text(200),
   quizPrompt: text(200),
+  /** Нурайым's photo in the hero; tapping it plays the greeting video when there is one. */
+  heroPhotoMediaId: z.uuid().nullable().default(null),
   greetingVideoId: z.uuid().nullable(),
   entries: z
     .array(
@@ -26,7 +29,12 @@ export const homeContentSchema = z.object({
     )
     .length(3),
   comparison: z.object({ title: text(120), subtitle: text(200), mass: comparisonSide, pro: comparisonSide }),
-  about: z.object({ caption: text(80), text: text(1500), stats: z.array(stat).max(4) }),
+  about: z.object({
+    caption: text(80),
+    text: text(1500),
+    stats: z.array(stat).max(4),
+    photoMediaId: z.uuid().nullable().default(null),
+  }),
   reviewsTitle: text(80),
   reviewsSubtitle: text(200),
 });
@@ -59,6 +67,8 @@ export const wholesaleContentSchema = z.object({
     )
     .max(6),
   catalogMediaId: z.uuid().nullable(),
+  /** Portrait in the "Обо мне" block, shown until a video is uploaded. */
+  portraitMediaId: z.uuid().nullable().default(null),
   videoId: z.uuid().nullable(),
 });
 

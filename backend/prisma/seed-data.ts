@@ -388,6 +388,7 @@ export const HOME_CONTENT: ContentValue<'home'> = {
   heroTitle: 'Время *расцвета* и сияния вашей кожи',
   heroSubtitle: 'с профессиональной косметикой',
   quizPrompt: 'Не уверены, какая программа подойдёт? Ответьте на 4 простых вопроса',
+  heroPhotoMediaId: null,
   greetingVideoId: null,
   entries: [
     {
@@ -434,6 +435,7 @@ export const HOME_CONTENT: ContentValue<'home'> = {
       { value: 'С 2017', label: 'живу в Корее' },
       { value: 'С 2022', label: 'подбираю уход клиентам' },
     ],
+    photoMediaId: null,
   },
   reviewsTitle: 'Отзывы',
   reviewsSubtitle: 'Переписки с клиентами — листайте и нажмите, чтобы открыть',
@@ -486,6 +488,7 @@ export const WHOLESALE_CONTENT: Omit<ContentValue<'wholesale'>, 'featuredProduct
     { region: 'Россия · Москва', flags: ['ru'], airDays: '10–14', seaDays: '20–30' },
   ],
   catalogMediaId: null,
+  portraitMediaId: null,
   videoId: null,
 };
 

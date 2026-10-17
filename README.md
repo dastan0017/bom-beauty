@@ -21,7 +21,9 @@ pnpm dev        # creates .env from infra/.env.example, starts Docker services a
 
 Postgres listens on `localhost:5434`, Redis on `6379`.
 
-Checks: `pnpm lint`, `pnpm typecheck`, `pnpm test`.
+Checks: `pnpm lint`, `pnpm typecheck`, `pnpm test`. End-to-end flows (needs `pnpm dev` running, first time
+`pnpm --filter @bom/frontend exec playwright install chromium`): `pnpm e2e`. They create real orders and leads in the
+dev database.
 
 ## Docs
 

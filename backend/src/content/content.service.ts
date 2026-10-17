@@ -35,11 +35,14 @@ function refIds(key: ContentKey, data: ContentValue<ContentKey>): RefIds {
   if (key === 'home') {
     const home = data as ContentValue<'home'>;
     ids.images.push(...home.entries.flatMap((entry) => (entry.imageMediaId ? [entry.imageMediaId] : [])));
+    if (home.heroPhotoMediaId) ids.images.push(home.heroPhotoMediaId);
+    if (home.about.photoMediaId) ids.images.push(home.about.photoMediaId);
     if (home.greetingVideoId) ids.videos.push(home.greetingVideoId);
   }
   if (key === 'wholesale') {
     const wholesale = data as ContentValue<'wholesale'>;
     if (wholesale.catalogMediaId) ids.files.push(wholesale.catalogMediaId);
+    if (wholesale.portraitMediaId) ids.images.push(wholesale.portraitMediaId);
     if (wholesale.videoId) ids.videos.push(wholesale.videoId);
     ids.products.push(...wholesale.featuredProductIds);
   }
