@@ -34,21 +34,22 @@ Swagger UI at `http://localhost:4000/docs` in dev) is the source of truth; this 
 
 ## 2. Auth model
 
-| Group                                                                                              | Auth                                         | CSRF                                   | CORS                         |
-| -------------------------------------------------------------------------------------------------- | -------------------------------------------- | -------------------------------------- | ---------------------------- |
-| Public (`/catalog`, `/content`, `/reviews`, `/settings/public`, `/redirects`, `/orders`, `/leads`) | none                                         | no                                     | `WEB_ORIGIN`, no credentials |
-| `/auth/*`                                                                                          | session cookie                               | on logout                              | `ADMIN_ORIGIN`, credentials  |
-| `/admin/*`                                                                                         | session + role guard                         | `X-CSRF-Token` + `Origin` on mutations | `ADMIN_ORIGIN`, credentials  |
-| `/webhooks/bunny`                                                                                  | none (triggers a verified status fetch only) | no                                     | none                         |
+| Group                                                                                                | Auth                                         | CSRF                                   | CORS                         |
+| ---------------------------------------------------------------------------------------------------- | -------------------------------------------- | -------------------------------------- | ---------------------------- |
+| Public (`/catalog`, `/content`, `/reviews`, `/settings/public`, `/redirects`, `/orders`, `/leads/*`) | none                                         | no                                     | `WEB_ORIGIN`, no credentials |
+| `/auth/*`                                                                                            | session cookie                               | on logout                              | `ADMIN_ORIGIN`, credentials  |
+| `/admin/*`                                                                                           | session + role guard                         | `X-CSRF-Token` + `Origin` on mutations | `ADMIN_ORIGIN`, credentials  |
+| `/webhooks/bunny`                                                                                    | none (triggers a verified status fetch only) | no                                     | none                         |
 
-Session cookie `__Host-bb_sid` (prod) / `bb_sid` (dev); CSRF cookie `bb_csrf`.
+Session cookie `__Host-bb_sid` (prod) / `bb_sid` (dev). The CSRF token is an HMAC of the session id returned in the body
+of login and `/auth/me`; there is no CSRF cookie.
 
 ## 3. Rate limits (per client IP)
 
 | Route              | Limit                                                              |
 | ------------------ | ------------------------------------------------------------------ |
 | `POST /orders`     | 6 / min, 30 / hour                                                 |
-| `POST /leads`      | 10 / min, 60 / hour                                                |
+| `POST /leads/*`    | 10 / min, 60 / hour (each)                                         |
 | `POST /auth/login` | 5 / min per IP and 10 / 15 min per email, then exponential lockout |
 | Public GETs        | 120 / min                                                          |
 | Admin              | 600 / min per session                                              |
@@ -69,7 +70,7 @@ Session cookie `__Host-bb_sid` (prod) / `bb_sid` (dev); CSRF cookie `bb_csrf`.
 | `GET /settings/public`              |                                                     | `PublicSettings`                                                        |
 | `GET /redirects/resolve`            | `path`                                              | `{ toPath, statusCode }` or 404                                         |
 | `POST /orders`                      |                                                     | `201 { id, number }`                                                    |
-| `POST /leads`                       |                                                     | `201 { id }`                                                            |
+| `POST /leads/*`                     |                                                     | `201 { id }`                                                            |
 | `POST /webhooks/bunny`              |                                                     | `204`                                                                   |
 | `GET /health` · `GET /health/ready` |                                                     | liveness · db + redis                                                   |
 
@@ -190,22 +191,24 @@ type PublicSettings = {
 Server: item must be published; unit price and total from the DB; phone normalised to E.164 (KG default, international
 accepted); a repeated `clientRef` returns the original `201` body.
 
-### POST /leads
+### POST /leads/quiz and POST /leads/wholesale
 
 ```ts
-{ clientRef, kind: 'quiz', answers: { skin, goal, exp, fmt }, choose?: boolean, message, pageUrl, referrer?, utm?, website, turnstileToken? }
-{ clientRef, kind: 'wholesale', answers: { buyer?, country? }, message, pageUrl, referrer?, utm?, website, turnstileToken? }
+// POST /leads/quiz
+{ clientRef, answers: { skin, goal, exp, fmt }, choose?: boolean, message, pageUrl, referrer?, utm?, website, turnstileToken? }
+// POST /leads/wholesale
+{ clientRef, answers: { buyer?, country? }, message, pageUrl, referrer?, utm?, website, turnstileToken? }
 ```
 
 Server recomputes `recommended` for quiz leads with `rankPrograms` over published programs.
 
 ## 5. Auth endpoints
 
-| Method & path       | Body                            | Response                                           |
-| ------------------- | ------------------------------- | -------------------------------------------------- |
-| `POST /auth/login`  | `{ email, password, remember }` | `200 { user, csrfToken }` + cookies; generic `401` |
-| `POST /auth/logout` |                                 | `204`                                              |
-| `GET /auth/me`      |                                 | `{ user: { id, email, name, role }, csrfToken }`   |
+| Method & path       | Body                            | Response                                          |
+| ------------------- | ------------------------------- | ------------------------------------------------- |
+| `POST /auth/login`  | `{ email, password, remember }` | `200 { user, csrfToken }` + cookie; generic `401` |
+| `POST /auth/logout` |                                 | `204`                                             |
+| `GET /auth/me`      |                                 | `{ user: { id, email, name, role }, csrfToken }`  |
 
 ## 6. Admin endpoints
 

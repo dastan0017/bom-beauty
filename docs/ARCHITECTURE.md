@@ -238,15 +238,15 @@ mutation shows a toast. shadcn/ui primitives are restyled to the design (Onest, 
 
 Four questions (skin, goal, experience, format) with auto-advance. Format "Готовый набор" shows up to 3 ranked programs
 (`rankPrograms`); format "Персональная консультация" shows the summary and "Получить разбор в WhatsApp". Any hand-off to
-WhatsApp from the result (`Получить разбор…`, `Спросить Нурайым в WhatsApp`) first sends `POST /v1/leads` (`kind = quiz`,
-answers, `clientRef`); the API recomputes the recommendation for the record. Opening a recommended program and ordering
+WhatsApp from the result (`Получить разбор…`, `Спросить Нурайым в WhatsApp`) first sends `POST /v1/leads/quiz`
+(answers, `clientRef`); the API recomputes the recommendation for the record. Opening a recommended program and ordering
 it marks the order `fromQuiz`. The "К результатам теста" pill returns to the result.
 
 ### 7.3 Wholesale
 
 "Получить прайс и консультацию" opens a sheet: buyer kind (Косметолог / Клиника / Салон / Магазин косметики) and
 destination (Кыргызстан / Казахстан / Узбекистан / Россия, with lead times). "Получить прайс в WhatsApp" sends
-`POST /v1/leads` (`kind = wholesale`) and opens WhatsApp with the design's message. "Скачать каталог брендов" downloads the
+`POST /v1/leads/wholesale` and opens WhatsApp with the design's message. "Скачать каталог брендов" downloads the
 PDF uploaded in the admin, or shows "Каталог появится здесь, когда Нурайым загрузит PDF". "Позвонить" uses the wholesale
 phone, or shows "Номер появится после подтверждения Нурайым".
 
@@ -255,8 +255,9 @@ phone, or shows "Номер появится после подтверждени
 - Login with email + password (argon2id), throttled per IP and per email, generic error.
 - Session: 32 random bytes in the cookie; the DB keeps `sha256(token)` as the id. 12 h sliding, 30 days with "Запомнить меня".
   `HttpOnly; Secure; SameSite=Lax; Path=/`.
-- CSRF: signed double-submit. Token = `HMAC(SESSION_SECRET, sessionId)`, set as cookie and returned by `/auth/login` and
-  `/auth/me`; mutations need a matching `X-CSRF-Token` and `Origin = ADMIN_ORIGIN`.
+- CSRF: token = `HMAC(SESSION_SECRET, sessionId)`, returned by `/auth/login` and `/auth/me` and kept in memory by the
+  admin. Mutations need it in `X-CSRF-Token` (checked against the session, no CSRF cookie) and `Origin = ADMIN_ORIGIN`.
+- Login lockout: 10 failed attempts per email lock it for 15 minutes (Redis); 5 attempts per minute per IP.
 - Roles: `owner` (everything), `manager` (everything except users, notifications, audit, export).
 
 ### 7.5 Media (images and PDFs)
@@ -370,7 +371,11 @@ Approved dependencies beyond the brief's stack (2026-10-17): `@nestjs/swagger`, 
 `react-markdown`, shadcn/ui packages (`radix-ui`, `class-variance-authority`, `clsx`, `tailwind-merge`, `lucide-react`,
 `sonner`, `tw-animate-css`), `@dnd-kit/core` + `@dnd-kit/sortable`, lint tooling (`typescript-eslint`,
 `eslint-config-next`, `eslint-plugin-react-hooks`, `eslint-config-prettier`, `prettier-plugin-tailwindcss`), dev
-containers MinIO and Mailpit. **Pending approval:** `tus-js-client` (resumable upload to Bunny, M5).
+dev containers SeaweedFS (S3) and Mailpit. Since 2026-10-17 dependencies are added without asking and listed here:
+
+- M1: `prisma` + `@prisma/client` + `@prisma/adapter-pg` + `pg` (Prisma 7 driver adapter), `@node-rs/argon2` (prebuilt
+  argon2id, no native build in Docker), `@nestjs/throttler`, `ioredis`, `cookie-parser`, `@nestjs/swagger`, `nestjs-zod`,
+  `openapi-typescript` (dev), `openapi-fetch` (typed client in `@bom/shared/api`), `tsx` (seed).
 
 ## 15. Decisions and deviations
 

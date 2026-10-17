@@ -12,7 +12,7 @@ Phase 0
 - [x] Docs: ARCHITECTURE, DATA-MODEL, API, TASKS, HANDOFF; root CLAUDE.md
 - [x] Open questions answered (Node 24, Next 16, design wins, quiz only, Bunny Stream, design seed, WhatsApp +996706304803)
 - [x] Design imported: `Bom Beauty Prototype.dc.html`, `BomAdmin.dc.html`, `support.js`, `image-slot.js`, logos, 5 photos
-- [ ] Remaining design assets dropped into `design/assets/` by the owner/dev (HANDOFF §0)
+- [x] Design assets: skipped by decision; the owner uploads all media through the admin after deploy
 
 Scaffold
 
@@ -30,18 +30,18 @@ Scaffold
 
 ## M1 Backend core
 
-- [ ] Prisma schema per DATA-MODEL, first migration (order number sequence from 1001, CHECKs), indexes
-- [ ] Idempotent seed from the design data (products, categories, brands, programs, steps, settings, content, demo orders/leads in dev)
-- [ ] Shared zod schemas: order and lead create, catalog responses, settings and content per key
-- [ ] Auth: argon2id, DB sessions, cookies, signed double-submit CSRF, Origin check, roles guard, login throttling + lockout
-- [ ] `cli create-admin`, `cli reset-password`
-- [ ] Public catalog: categories, products, programs (with steps, sums), brands, sitemap, redirects resolve
-- [ ] `GET /content/:key`, `GET /reviews` (demo logic), `GET /settings/public`
-- [ ] `POST /orders` (server prices, phone normalisation, clientRef idempotency, honeypot), `POST /leads` (quiz recommendation recomputed)
-- [ ] Throttler with real-IP extraction
-- [ ] OpenAPI + `pnpm gen:api` + typed fetch client
-- [ ] Tests: schemas, money/currency, theme vars, quiz ranking parity with the design, phone, order and lead creation, idempotency, auth guards, CSRF
-- [ ] Gate + `feat(backend): core api, auth, catalog, orders`
+- [x] Prisma schema per DATA-MODEL, first migration (order number sequence from 1001, CHECKs), indexes
+- [x] Idempotent seed from the design data (products, categories, brands, programs, steps, settings, content, demo orders/leads in dev)
+- [x] Shared zod schemas: order and lead create, catalog responses, settings and content per key
+- [x] Auth: argon2id, DB sessions (hashed ids), cookie, HMAC CSRF token, Origin check, roles guard, login throttling + lockout
+- [x] `cli create-admin`, `cli reset-password`
+- [x] Public catalog: categories, products, programs (with steps, sums), brands, sitemap, redirects resolve
+- [x] `GET /content/:key`, `GET /reviews` (demo logic), `GET /settings/public`
+- [x] `POST /orders` (server prices, phone normalisation, clientRef idempotency, honeypot), `POST /leads/quiz` + `POST /leads/wholesale` (quiz recommendation recomputed)
+- [x] Throttler with real-IP extraction
+- [x] OpenAPI + `pnpm gen:api` + typed fetch client
+- [x] Tests: schemas, money/currency, theme vars, quiz ranking parity with the design, phone, order and lead creation, idempotency, auth guards, CSRF
+- [x] Gate + `feat(backend): core api, auth, catalog, orders`
 
 ## M2 Client site
 
@@ -91,7 +91,6 @@ Scaffold
 - [ ] `media.process` (variants, blur, metadata strip, HEIC fallback, PDF publish)
 - [ ] Bunny Stream: create + TUS signature, admin upload with progress (`tus-js-client` pending approval), webhook + `video.sync`, player wiring
 - [ ] `notify.telegram`, `notify.email`, `uploads.cleanup`, `sessions.cleanup`, `web.revalidate`, `indexnow.submit`
-- [ ] Seed media upload from `design/assets/` when present
 - [ ] Tests: variant generation, EXIF removal (fixture with GPS), Bunny signature, notification formatting
 - [ ] Gate + `feat(backend): media, video, jobs`
 

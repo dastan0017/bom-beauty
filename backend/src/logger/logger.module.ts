@@ -12,6 +12,16 @@ export function loggerModule(env: Env) {
         const header = req.headers['x-request-id'];
         return typeof header === 'string' && header ? header : randomUUID();
       },
+      // One compact line per request: method, path, status and timing (no headers or bodies).
+      serializers: {
+        req: (req: { id?: unknown; method?: string; url?: string }) => ({
+          id: req.id,
+          method: req.method,
+          url: req.url,
+        }),
+        res: (res: { statusCode?: number }) => ({ statusCode: res.statusCode }),
+      },
+      autoLogging: { ignore: (req: IncomingMessage) => req.url === '/health' || req.url === '/health/ready' },
       redact: {
         paths: [
           'req.headers.cookie',

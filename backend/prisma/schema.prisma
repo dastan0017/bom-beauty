@@ -1,0 +1,406 @@
+// Data model: docs/DATA-MODEL.md. Enums are mirrored in packages/shared/src/enums.ts (checked by a test).
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  owner
+  manager
+}
+
+enum OrderStatus {
+  new
+  sent
+  cancelled
+}
+
+enum OrderItemType {
+  product
+  program
+}
+
+enum LeadKind {
+  quiz
+  wholesale
+}
+
+enum MediaBucket {
+  public
+  private
+}
+
+enum MediaKind {
+  image
+  pdf
+}
+
+enum MediaStatus {
+  pending
+  processing
+  ready
+  failed
+}
+
+enum VideoStatus {
+  created
+  uploading
+  processing
+  ready
+  failed
+}
+
+enum RoutinePeriod {
+  am
+  pm
+}
+
+enum QuizGoal {
+  age
+  pigment
+  acne
+  barrier
+}
+
+enum SkinType {
+  dry
+  oily
+  normal
+  sens
+}
+
+// ───────────── Users and auth ─────────────
+
+model User {
+  id           String    @id @default(uuid(7)) @db.Uuid
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  name         String
+  role         UserRole  @default(manager)
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz(3)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  sessions     Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id         String   @id
+  userId     String   @map("user_id") @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rememberMe Boolean  @default(false) @map("remember_me")
+  expiresAt  DateTime @map("expires_at") @db.Timestamptz(3)
+  lastSeenAt DateTime @default(now()) @map("last_seen_at") @db.Timestamptz(3)
+  userAgent  String?  @map("user_agent")
+  ip         String?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// ───────────── Catalog ─────────────
+
+model Category {
+  id       String    @id @default(uuid(7)) @db.Uuid
+  slug     String    @unique
+  name     String
+  order    Int       @default(0)
+  products Product[]
+
+  @@map("categories")
+}
+
+model Brand {
+  id       String    @id @default(uuid(7)) @db.Uuid
+  slug     String    @unique
+  name     String    @unique
+  products Product[]
+
+  @@map("brands")
+}
+
+model Product {
+  id             String         @id @default(uuid(7)) @db.Uuid
+  slug           String         @unique
+  name           String
+  shortName      String?        @map("short_name")
+  brandId        String         @map("brand_id") @db.Uuid
+  brand          Brand          @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  categoryId     String         @map("category_id") @db.Uuid
+  category       Category       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  volume         String         @default("")
+  priceKgs       Int            @map("price_kgs")
+  purpose        String         @default("")
+  description    String         @default("")
+  howToUse       String         @default("") @map("how_to_use")
+  inci           String?
+  badge          String?
+  inStock        Boolean        @default(true) @map("in_stock")
+  published      Boolean        @default(true)
+  order          Int            @default(0)
+  seoTitle       String?        @map("seo_title")
+  seoDescription String?        @map("seo_description")
+  images         ProductImage[]
+  programItems   ProgramItem[]
+  routineSteps   ProgramStep[]
+  orders         Order[]
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([categoryId, published])
+  @@index([brandId])
+  @@map("products")
+}
+
+model ProductImage {
+  productId String  @map("product_id") @db.Uuid
+  mediaId   String  @map("media_id") @db.Uuid
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  media     Media   @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+  order     Int     @default(0)
+  alt       String  @default("")
+
+  @@id([productId, mediaId])
+  @@index([productId, order])
+  @@map("product_images")
+}
+
+model Program {
+  id              String        @id @default(uuid(7)) @db.Uuid
+  slug            String        @unique
+  title           String
+  headline        String?
+  symptom         String        @default("")
+  description     String        @default("")
+  course          String        @default("")
+  fit             String[]
+  priceKgs        Int           @map("price_kgs")
+  badge           String?
+  quizGoal        QuizGoal?     @map("quiz_goal")
+  quizSkins       SkinType[]    @map("quiz_skins")
+  published       Boolean       @default(false)
+  inStock         Boolean       @default(true) @map("in_stock")
+  videoId         String?       @map("video_id") @db.Uuid
+  video           Video?        @relation("ProgramVideo", fields: [videoId], references: [id], onDelete: SetNull)
+  protocolMediaId String?       @map("protocol_media_id") @db.Uuid
+  protocol        Media?        @relation("ProgramProtocol", fields: [protocolMediaId], references: [id], onDelete: SetNull)
+  order           Int           @default(0)
+  seoTitle        String?       @map("seo_title")
+  seoDescription  String?       @map("seo_description")
+  items           ProgramItem[]
+  steps           ProgramStep[]
+  orders          Order[]
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([published, order])
+  @@map("programs")
+}
+
+model ProgramItem {
+  programId String  @map("program_id") @db.Uuid
+  productId String  @map("product_id") @db.Uuid
+  program   Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  order     Int     @default(0)
+
+  @@id([programId, productId])
+  @@index([programId, order])
+  @@map("program_items")
+}
+
+model ProgramStep {
+  id        String        @id @default(uuid(7)) @db.Uuid
+  programId String        @map("program_id") @db.Uuid
+  program   Program       @relation(fields: [programId], references: [id], onDelete: Cascade)
+  period    RoutinePeriod
+  order     Int           @default(0)
+  productId String        @map("product_id") @db.Uuid
+  product   Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  text      String
+
+  @@index([programId, period, order])
+  @@map("program_steps")
+}
+
+model Review {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  mediaId   String   @unique @map("media_id") @db.Uuid
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+  order     Int      @default(0)
+  isHidden  Boolean  @default(false) @map("is_hidden")
+  isDemo    Boolean  @default(false) @map("is_demo")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([isHidden, order])
+  @@map("reviews")
+}
+
+// ───────────── Media and video ─────────────
+
+model Media {
+  id            String         @id @default(uuid(7)) @db.Uuid
+  bucket        MediaBucket
+  kind          MediaKind
+  status        MediaStatus    @default(pending)
+  key           String?
+  mime          String?
+  originalName  String?        @map("original_name")
+  width         Int?
+  height        Int?
+  bytes         Int?
+  blurDataUrl   String?        @map("blur_data_url")
+  variants      Json?
+  error         String?
+  uploadedById  String?        @map("uploaded_by_id") @db.Uuid
+  expiresAt     DateTime?      @map("expires_at") @db.Timestamptz(3)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  processedAt   DateTime?      @map("processed_at") @db.Timestamptz(3)
+  productImages ProductImage[]
+  protocolOf    Program[]      @relation("ProgramProtocol")
+  review        Review?
+
+  @@index([status, expiresAt])
+  @@map("media")
+}
+
+model Video {
+  id           String      @id @default(uuid(7)) @db.Uuid
+  provider     String      @default("bunny")
+  libraryId    String      @map("library_id")
+  externalId   String      @unique @map("external_id")
+  status       VideoStatus @default(created)
+  title        String
+  originalName String?     @map("original_name")
+  bytes        Int?
+  durationSec  Int?        @map("duration_sec")
+  width        Int?
+  height       Int?
+  thumbnailUrl String?     @map("thumbnail_url")
+  hlsUrl       String?     @map("hls_url")
+  mp4Url       String?     @map("mp4_url")
+  error        String?
+  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+  programs     Program[]   @relation("ProgramVideo")
+
+  @@index([status])
+  @@map("videos")
+}
+
+// ───────────── Content and settings ─────────────
+
+model ContentBlock {
+  key         String   @id
+  data        Json
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedById String?  @map("updated_by_id") @db.Uuid
+
+  @@map("content_blocks")
+}
+
+model Setting {
+  key         String   @id
+  value       Json
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedById String?  @map("updated_by_id") @db.Uuid
+
+  @@map("settings")
+}
+
+model Redirect {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  fromPath   String   @unique @map("from_path")
+  toPath     String   @map("to_path")
+  statusCode Int      @default(308) @map("status_code")
+  hits       Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([toPath])
+  @@map("redirects")
+}
+
+// ───────────── Orders and leads ─────────────
+
+model Order {
+  id              String        @id @default(uuid(7)) @db.Uuid
+  number          Int           @unique @default(autoincrement())
+  status          OrderStatus   @default(new)
+  itemType        OrderItemType @map("item_type")
+  productId       String?       @map("product_id") @db.Uuid
+  product         Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+  programId       String?       @map("program_id") @db.Uuid
+  program         Program?      @relation(fields: [programId], references: [id], onDelete: SetNull)
+  itemTitle       String        @map("item_title")
+  unitPriceKgs    Int           @map("unit_price_kgs")
+  qty             Int
+  totalKgs        Int           @map("total_kgs")
+  name            String
+  phone           String
+  address         String
+  comment         String?
+  displayCurrency String        @default("KGS") @map("display_currency")
+  displayRate     Float?        @map("display_rate")
+  message         String
+  fromQuiz        Boolean       @default(false) @map("from_quiz")
+  note            String        @default("")
+  pageUrl         String?       @map("page_url")
+  referrer        String?
+  utm             Json?
+  clientRef       String        @unique @map("client_ref")
+  ipHash          String?       @map("ip_hash")
+  userAgent       String?       @map("user_agent")
+  statusChangedAt DateTime      @default(now()) @map("status_changed_at") @db.Timestamptz(3)
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([status, createdAt])
+  @@index([createdAt])
+  @@index([phone])
+  @@index([programId, createdAt])
+  @@index([productId, createdAt])
+  @@map("orders")
+}
+
+model Lead {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  kind        LeadKind
+  answers     Json
+  recommended String[]
+  choose      Boolean  @default(false)
+  message     String
+  pageUrl     String?  @map("page_url")
+  referrer    String?
+  utm         Json?
+  clientRef   String   @unique @map("client_ref")
+  ipHash      String?  @map("ip_hash")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([kind, createdAt])
+  @@map("leads")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  userId    String?  @map("user_id") @db.Uuid
+  entity    String
+  entityId  String   @map("entity_id")
+  action    String
+  diff      Json     @default("{}")
+  ip        String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}

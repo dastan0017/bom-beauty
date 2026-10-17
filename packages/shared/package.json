@@ -16,6 +16,16 @@
         "types": "./dist/index.d.cts",
         "default": "./dist/index.cjs"
       }
+    },
+    "./api": {
+      "import": {
+        "types": "./dist/api/index.d.ts",
+        "default": "./dist/api/index.js"
+      },
+      "require": {
+        "types": "./dist/api/index.d.cts",
+        "default": "./dist/api/index.cjs"
+      }
     }
   },
   "files": [
@@ -31,6 +41,7 @@
   },
   "dependencies": {
     "libphonenumber-js": "1.13.15",
+    "openapi-fetch": "0.17.0",
     "zod": "4.6.7"
   },
   "devDependencies": {

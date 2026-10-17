@@ -422,8 +422,8 @@ new ──► sent
 - 13 products and 5 programs (with items, morning/evening steps, fit lists, quiz matching, courses, headlines) exactly as in
   `design/Bom Beauty Prototype.dc.html` (`P`, `PROGRAMS`) and `design/BomAdmin.dc.html` (`P0`, `PROGRAMS0`); badges
   "Хит продаж" (cica) and "Выбор Нурайым" (pdrn).
-- Product photos, protocol PDFs and 14 demo review screenshots from `design/assets/` uploaded through the media pipeline
-  (when the files are present); reviews flagged `isDemo`.
+- No media: photos, videos, protocol PDFs and review screenshots are uploaded by the owner through the admin after
+  deploy; the site shows placeholders until then.
 - Settings: shop (WhatsApp `+996706304803`), appearance defaults, currencies with the design's rates, notifications off.
 - Content: home, wholesale (`WS0`), delivery, placeholder privacy and offer texts marked `[...]`.
 - Dev only: ~20 demo orders across statuses (the design's `ORDERS0`) and a few leads.

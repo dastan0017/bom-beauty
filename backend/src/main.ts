@@ -1,9 +1,13 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import { SwaggerModule } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
+import { configureApp } from './app.setup';
 import { parseEnv } from './config/env';
 import { loadDevEnv } from './config/load-env';
+import { buildOpenApiDocument } from './openapi';
 import { WorkerModule } from './worker/worker.module';
 
 async function bootstrap(): Promise<void> {
@@ -20,12 +24,10 @@ async function bootstrap(): Promise<void> {
     return;
   }
 
-  const app = await NestFactory.create(AppModule.forRoot(env), { bufferLogs: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule.forRoot(env), { bufferLogs: true });
   app.useLogger(app.get(Logger));
-  app.setGlobalPrefix('v1', { exclude: ['health'] });
-  // Per-route CORS rules (credentials only for the admin origin) arrive with auth in M1.
-  app.enableCors({ origin: [env.WEB_ORIGIN, env.ADMIN_ORIGIN], credentials: true });
-  app.enableShutdownHooks();
+  configureApp(app, env);
+  if (env.NODE_ENV !== 'production') SwaggerModule.setup('docs', app, buildOpenApiDocument(app));
   await app.listen(env.API_PORT);
 }
 

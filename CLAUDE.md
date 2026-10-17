@@ -38,7 +38,8 @@ Node 24 (see `.tool-versions`), pnpm via corepack (`packageManager` in `package.
 - Work milestone by milestone (`docs/TASKS.md`). Gate: lint, typecheck, tests green → `pnpm dev` → check in the browser →
   commit → 5-line status. Never skip the browser check for UI work.
 - Conventional commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`).
-- **Ask before adding a dependency** not listed in `docs/ARCHITECTURE.md` §14.
+- Add dependencies when needed (owner's go-ahead, 2026-10-17): boring, maintained libraries only, and record each in
+  `docs/ARCHITECTURE.md` §14 in the same commit.
 - The stack is fixed; no swaps without asking.
 - No secrets in the repo. Every env var goes into `infra/.env.example` and the app's zod env schema.
 
@@ -55,6 +56,8 @@ Node 24 (see `.tool-versions`), pnpm via corepack (`packageManager` in `package.
 - All user-facing copy is **Russian**. Single locale, no i18n library.
 - Never invent real data. Seed data comes from the design (marked demo in `docs/HANDOFF.md`); gaps use `[...]`, and every
   new placeholder gets a HANDOFF line.
+- No media in the repo: photos, videos and PDFs are uploaded by the owner through the admin after deploy. Every screen
+  must look right with no images (placeholders).
 - Copy taken verbatim from the design stays verbatim. Copy we write never uses em-dashes (—): colons, commas or shorter
   sentences instead.
 - Tone: warm, short sentences, "вы".
@@ -102,4 +105,6 @@ Node 24 (see `.tool-versions`), pnpm via corepack (`packageManager` in `package.
 - Vitest: shared helpers (money, currency, theme vars, quiz ranking parity with the design, phone, plural, slug, WhatsApp
   texts), order/lead creation, idempotency, auth guards, CSRF, dashboard and customer aggregation.
 - Playwright smoke: home, catalog filter, order sheet (WhatsApp mocked), quiz, admin login + status change.
+- Backend integration tests (`backend/test/`) run the real app against the `bom_test` database (migrated by the test
+  global setup through `MIGRATE_DATABASE_URL`) and Redis db 15, so Docker services must be up. Each file re-seeds.
 - A bug fix comes with a test that fails without it.

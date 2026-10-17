@@ -8,7 +8,7 @@ const flag = z.enum(['true', 'false']).transform((value) => value === 'true');
 export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   API_PORT: z.coerce.number().int().positive().default(4000),
-  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
+  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 
   DATABASE_URL: z.string().startsWith('postgres'),
   REDIS_URL: z.string().startsWith('redis'),
@@ -21,6 +21,10 @@ export const envSchema = z.object({
   IP_HASH_SALT: z.string().min(16),
   REVALIDATE_SECRET: z.string().min(16),
   RUN_WORKER_IN_API: flag.default(false),
+  /** Number of reverse proxies in front of the API (prod: Caddy = 1). Used for the client IP in rate limits. */
+  TRUST_PROXY: z.coerce.number().int().min(0).default(0),
+  /** Disables rate limiting; only for automated tests. */
+  THROTTLE_ENABLED: flag.default(true),
 
   S3_ENDPOINT: z.url(),
   S3_REGION: z.string().min(1),
@@ -38,6 +42,7 @@ export const envSchema = z.object({
   SMTP_URL: optionalString,
   MAIL_FROM: optionalString,
   SENTRY_DSN: optionalString,
+  TURNSTILE_SITE_KEY: optionalString,
   TURNSTILE_SECRET_KEY: optionalString,
   INDEXNOW_KEY: optionalString,
 });
