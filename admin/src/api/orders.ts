@@ -8,18 +8,14 @@ import {
   type InfiniteData,
 } from '@tanstack/react-query';
 import { api, unwrap } from '@/lib/api';
+import { keys } from './keys';
 
 export interface OrderFilters {
   status?: OrderStatus;
   q?: string;
 }
 
-export const orderKeys = {
-  all: ['orders'] as const,
-  counters: ['orders', 'counters'] as const,
-  list: (filters: OrderFilters) => ['orders', 'list', filters] as const,
-  detail: (id: string) => ['orders', 'detail', id] as const,
-};
+const orderKeys = keys.orders;
 
 /** Tab counts and the nav badge; polled every 15 s and on window focus (docs/TASKS.md M3). */
 export function useOrderCounters() {
@@ -67,9 +63,16 @@ export function useUpdateOrder() {
   return useMutation({
     mutationFn: ({ id, change }: { id: string; change: UpdateOrder }) =>
       unwrap(api.PATCH('/v1/admin/orders/{id}', { params: { path: { id } }, body: change })),
-    // Lists show the new status at once; the server answer replaces it.
-    onMutate: ({ id, change }) => {
-      if (change.status) setRowStatus(queryClient, id, change.status);
+    // Lists show the new status at once; on failure the previous lists come back (rollback).
+    onMutate: async ({ id, change }) => {
+      if (!change.status) return { previous: [] };
+      await queryClient.cancelQueries({ queryKey: orderKeys.lists });
+      const previous = queryClient.getQueriesData<InfiniteData<OrderList>>({ queryKey: orderKeys.lists });
+      setRowStatus(queryClient, id, change.status);
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      for (const [key, data] of context?.previous ?? []) queryClient.setQueryData(key, data);
     },
     onSuccess: (order: OrderDetail) => {
       queryClient.setQueryData(orderKeys.detail(order.id), order);
@@ -77,8 +80,8 @@ export function useUpdateOrder() {
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: orderKeys.counters });
-      void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      void queryClient.invalidateQueries({ queryKey: ['customers'] });
+      void queryClient.invalidateQueries({ queryKey: keys.dashboard() });
+      void queryClient.invalidateQueries({ queryKey: keys.customers() });
     },
   });
 }
@@ -89,14 +92,14 @@ export function useDeleteOrder() {
     mutationFn: (id: string) => unwrap(api.DELETE('/v1/admin/orders/{id}', { params: { path: { id } } })),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: orderKeys.all });
-      void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      void queryClient.invalidateQueries({ queryKey: ['customers'] });
+      void queryClient.invalidateQueries({ queryKey: keys.dashboard() });
+      void queryClient.invalidateQueries({ queryKey: keys.customers() });
     },
   });
 }
 
 function setRowStatus(queryClient: ReturnType<typeof useQueryClient>, id: string, status: OrderStatus): void {
-  queryClient.setQueriesData<InfiniteData<OrderList>>({ queryKey: ['orders', 'list'] }, (data) =>
+  queryClient.setQueriesData<InfiniteData<OrderList>>({ queryKey: orderKeys.lists }, (data) =>
     data
       ? {
           ...data,

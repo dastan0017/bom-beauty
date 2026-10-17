@@ -78,6 +78,29 @@ test('orders: status change, note, history; leads and customers render', async (
   await expect(page.getByRole('row').filter({ hasText: '+996 555 00 11 22' }).first()).toBeVisible();
 });
 
+test('catalog: create a product, see it on the site, delete it', async ({ request }) => {
+  const name = `E2E товар ${Date.now().toString().slice(-6)}`;
+  await page.getByRole('link', { name: 'Товары' }).first().click();
+  await page.getByRole('button', { name: 'Добавить товар' }).click();
+  await page.getByLabel('Название', { exact: true }).fill(name);
+  await page.getByLabel('Бренд').fill('Dr. SGN');
+  await page.getByLabel('Цена, сом').fill('2500');
+  await page.getByLabel('Коротко, для карточки').fill('Проверка e2e');
+  await page.getByRole('button', { name: 'Сохранить' }).click();
+  await expect(page.getByText('Изменения сохранены')).toBeVisible();
+  await expect(page).toHaveURL(/\/products\/[0-9a-f-]{36}$/);
+
+  const slug = await page.getByLabel('Адрес страницы').inputValue();
+  const site = await request.get(`${process.env.E2E_SITE_URL ?? 'http://localhost:3100'}/catalog/${slug}`);
+  expect(site.status()).toBe(200);
+  expect(await site.text()).toContain(name);
+
+  await page.getByRole('button', { name: 'Удалить товар' }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Удалить' }).click();
+  await expect(page).toHaveURL(/\/products$/);
+  await expect(page.getByText(name)).toHaveCount(0);
+});
+
 test('logout returns to the login screen', async () => {
   await page.getByRole('button', { name: 'Выйти' }).click();
   await expect(page.getByRole('heading', { name: 'Вход в админ-панель' })).toBeVisible();

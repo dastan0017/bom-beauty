@@ -1,4 +1,4 @@
-import type { FileRef, ImageRef, VideoRef } from '@bom/shared';
+import type { AdminMedia, AdminVideo, FileRef, ImageRef, VideoRef } from '@bom/shared';
 import { z } from 'zod';
 import type { Prisma } from '../generated/prisma/client';
 
@@ -74,4 +74,32 @@ export function toVideoRef(video: VideoRow | null | undefined): VideoRef | null 
     hls: video.hlsUrl,
     mp4: video.mp4Url,
   };
+}
+
+export const adminMediaSelect = { ...imageMediaSelect, ...fileMediaSelect } satisfies Prisma.MediaSelect;
+export type AdminMediaRow = Prisma.MediaGetPayload<{ select: typeof adminMediaSelect }>;
+
+/** Media as the admin sees it: status plus a preview once processed. */
+export function toAdminMedia(media: AdminMediaRow, mediaPublicUrl: string): AdminMedia {
+  return {
+    id: media.id,
+    status: media.status,
+    image: toImageRef(media, media.originalName ?? ''),
+    file: toFileRef(media, mediaPublicUrl),
+  };
+}
+
+export const adminVideoSelect = {
+  id: true,
+  status: true,
+  title: true,
+  durationSec: true,
+  thumbnailUrl: true,
+  bytes: true,
+  createdAt: true,
+} satisfies Prisma.VideoSelect;
+export type AdminVideoRow = Prisma.VideoGetPayload<{ select: typeof adminVideoSelect }>;
+
+export function toAdminVideo(video: AdminVideoRow): AdminVideo {
+  return { ...video, createdAt: video.createdAt.toISOString() };
 }

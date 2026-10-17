@@ -77,15 +77,19 @@ Scaffold
 
 ## M4 Admin: catalog, content, appearance
 
-- [ ] Товары: categories (add, delete empty), table with stock toggle, editor (all fields, brand autocomplete, 3 photos, badge, publish, SEO, slug)
-- [ ] Программы: list (video/protocol/publish status), editor (basics, fit list, ordered items with catalog picker, steps, price with savings, quiz matching, publish/stock, protocol PDF, video slot)
-- [ ] Оптовикам editor (all `wholesale` content, featured products, delivery table, catalog PDF, video slot)
-- [ ] Отзывы: multi-upload, drag and drop, order, hide/show, delete, demo banner
-- [ ] Тексты: home, delivery + FAQ, privacy, offer
-- [ ] Оформление: presets, header and accent swatches + custom colour, contrast warnings, currencies, live preview
-- [ ] Настройки: shop, notifications (+ test), SEO/analytics, users, audit log, revoke sessions
-- [ ] Revalidation of the site on every save (verified end to end); redirects on slug change
-- [ ] Gate + `feat(admin): catalog, content, appearance, settings`
+- [x] Товары: categories (add, delete empty), table with stock toggle, editor (all fields, brand autocomplete, 3 photos, badge, publish, SEO, slug)
+- [x] Программы: list (video/protocol/publish status), editor (basics, fit list, ordered items with catalog picker, steps, price with savings, quiz matching, publish/stock, protocol PDF, video slot)
+- [x] Оптовикам editor (all `wholesale` content, featured products, delivery table, catalog PDF, video slot)
+- [x] Отзывы: multi-upload, drag and drop, order, hide/show, delete, demo banner
+- [x] Тексты: home, delivery + FAQ, privacy, offer
+- [x] Оформление: presets, header and accent swatches + custom colour, contrast warnings, currencies, live preview
+- [x] Настройки: shop, notifications (+ test), SEO/analytics, users, audit log, revoke sessions
+- [x] Revalidation of the site on every save (verified end to end); redirects on slug change
+- [x] Media slots show current files and processing state; uploading photos, PDFs, videos and review screenshots is wired
+      in M5 with the media pipeline, as is the notifications test button
+- [x] Tests: `backend/test/admin-catalog.test.ts` (categories, products, programs, reviews, content, settings, users,
+      revalidation calls), `admin/e2e` product flow
+- [x] Gate + `feat(admin): catalog, content, appearance, settings`
 
 ## M5 Media, video and jobs
 

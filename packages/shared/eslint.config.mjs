@@ -1,3 +1,3 @@
 import { baseConfig } from '@bom/config/eslint/base';
 
-export default baseConfig({ tsconfigRootDir: import.meta.dirname });
+export default baseConfig({ tsconfigRootDir: import.meta.dirname, ignores: ['src/api/schema.d.ts'] });

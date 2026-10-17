@@ -388,6 +388,294 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminCatalogController_categories"];
+        put?: never;
+        post: operations["AdminCatalogController_createCategory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/categories/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["AdminCatalogController_renameCategory"];
+        post?: never;
+        delete: operations["AdminCatalogController_deleteCategory"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/brands": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminCatalogController_brands"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminCatalogController_productList"];
+        put?: never;
+        post: operations["AdminCatalogController_createProduct"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/products/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminCatalogController_product"];
+        put: operations["AdminCatalogController_updateProduct"];
+        post?: never;
+        delete: operations["AdminCatalogController_deleteProduct"];
+        options?: never;
+        head?: never;
+        patch: operations["AdminCatalogController_patchProduct"];
+        trace?: never;
+    };
+    "/v1/admin/programs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminCatalogController_programList"];
+        put?: never;
+        post: operations["AdminCatalogController_createProgram"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/programs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminCatalogController_program"];
+        put: operations["AdminCatalogController_updateProgram"];
+        post?: never;
+        delete: operations["AdminCatalogController_deleteProgram"];
+        options?: never;
+        head?: never;
+        patch: operations["AdminCatalogController_patchProgram"];
+        trace?: never;
+    };
+    "/v1/admin/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminCatalogController_reviewList"];
+        put?: never;
+        post: operations["AdminCatalogController_createReviews"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/reviews/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["AdminCatalogController_reorderReviews"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/reviews/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["AdminCatalogController_deleteReview"];
+        options?: never;
+        head?: never;
+        patch: operations["AdminCatalogController_patchReview"];
+        trace?: never;
+    };
+    "/v1/admin/content/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminContentController_content"];
+        put: operations["AdminContentController_putContent"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminContentController_settings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/settings/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["AdminContentController_putSetting"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminContentController_users"];
+        put?: never;
+        post: operations["AdminContentController_createUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/users/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["AdminContentController_updateUser"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/users/{id}/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminContentController_setPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/sessions/revoke-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminContentController_revokeAll"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminContentController_audit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -453,8 +741,11 @@ export interface components {
             csrfToken: string;
         };
         CategoryDto_Output: {
+            /** Format: uuid */
+            id: string;
             slug: string;
             name: string;
+            order: number;
             count: number;
         };
         ProductCardDto_Output: {
@@ -654,6 +945,8 @@ export interface components {
             updatedAt: string;
         };
         BrandDto_Output: {
+            /** Format: uuid */
+            id: string;
             slug: string;
             name: string;
         };
@@ -1006,6 +1299,399 @@ export interface components {
                 count: number;
             }[];
             programOrdersTotal: number;
+        };
+        CategoryInputDto: {
+            name: string;
+        };
+        ProductRowDto_Output: {
+            /** Format: uuid */
+            id: string;
+            slug: string;
+            name: string;
+            brand: string;
+            category: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+            };
+            volume: string;
+            priceKgs: number;
+            badge: string | null;
+            inStock: boolean;
+            published: boolean;
+            image: {
+                /** Format: uuid */
+                id: string;
+                width: number;
+                height: number;
+                alt: string;
+                blurDataUrl: string | null;
+                widths: number[];
+            } | null;
+            programCount: number;
+        };
+        ProductInputDto: {
+            name: string;
+            /** @default  */
+            slug: string | "";
+            shortName: string | null;
+            brandName: string;
+            /** Format: uuid */
+            categoryId: string;
+            volume: string;
+            priceKgs: number;
+            purpose: string;
+            description: string;
+            howToUse: string;
+            inci: string | null;
+            badge: ("Выбор Нурайым" | "Хит продаж" | "Хит эксперта" | "Новинка" | "Для зрелой кожи") | null;
+            inStock: boolean;
+            published: boolean;
+            imageIds: string[];
+            seoTitle: string | null;
+            seoDescription: string | null;
+        };
+        ProductDto_Output: {
+            /** Format: uuid */
+            id: string;
+            slug: string;
+            name: string;
+            shortName: string | null;
+            brandName: string;
+            /** Format: uuid */
+            categoryId: string;
+            volume: string;
+            priceKgs: number;
+            purpose: string;
+            description: string;
+            howToUse: string;
+            inci: string | null;
+            badge: ("Выбор Нурайым" | "Хит продаж" | "Хит эксперта" | "Новинка" | "Для зрелой кожи") | null;
+            inStock: boolean;
+            published: boolean;
+            images: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                status: "pending" | "processing" | "ready" | "failed";
+                image: {
+                    /** Format: uuid */
+                    id: string;
+                    width: number;
+                    height: number;
+                    alt: string;
+                    blurDataUrl: string | null;
+                    widths: number[];
+                } | null;
+                file: {
+                    url: string;
+                    name: string;
+                    bytes: number | null;
+                } | null;
+            }[];
+            seoTitle: string | null;
+            seoDescription: string | null;
+            programs: {
+                /** Format: uuid */
+                id: string;
+                title: string;
+            }[];
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ProductPatchDto: {
+            inStock?: boolean;
+            published?: boolean;
+        };
+        ProgramRowDto_Output: {
+            /** Format: uuid */
+            id: string;
+            slug: string;
+            title: string;
+            symptom: string;
+            badge: string | null;
+            priceKgs: number;
+            itemCount: number;
+            published: boolean;
+            inStock: boolean;
+            quizGoal: ("age" | "pigment" | "acne" | "barrier") | null;
+            videoStatus: ("created" | "uploading" | "processing" | "ready" | "failed") | null;
+            protocolStatus: ("pending" | "processing" | "ready" | "failed") | null;
+            thumbs: ({
+                /** Format: uuid */
+                id: string;
+                width: number;
+                height: number;
+                alt: string;
+                blurDataUrl: string | null;
+                widths: number[];
+            } | null)[];
+        };
+        ProgramInputDto: {
+            title: string;
+            /** @default  */
+            slug: string | "";
+            headline: string | null;
+            symptom: string;
+            description: string;
+            course: string;
+            fit: string[];
+            priceKgs: number;
+            badge: ("Выбор Нурайым" | "Хит продаж" | "Хит эксперта" | "Новинка" | "Для зрелой кожи") | null;
+            quizGoal: ("age" | "pigment" | "acne" | "barrier") | null;
+            quizSkins: ("dry" | "oily" | "normal" | "sens")[];
+            published: boolean;
+            inStock: boolean;
+            itemIds: string[];
+            steps: {
+                am: {
+                    /** Format: uuid */
+                    productId: string;
+                    text: string;
+                }[];
+                pm: {
+                    /** Format: uuid */
+                    productId: string;
+                    text: string;
+                }[];
+            };
+            videoId: string | null;
+            protocolMediaId: string | null;
+            seoTitle: string | null;
+            seoDescription: string | null;
+        };
+        ProgramDto_Output: {
+            /** Format: uuid */
+            id: string;
+            slug: string;
+            title: string;
+            headline: string | null;
+            symptom: string;
+            description: string;
+            course: string;
+            fit: string[];
+            priceKgs: number;
+            badge: ("Выбор Нурайым" | "Хит продаж" | "Хит эксперта" | "Новинка" | "Для зрелой кожи") | null;
+            quizGoal: ("age" | "pigment" | "acne" | "barrier") | null;
+            quizSkins: ("dry" | "oily" | "normal" | "sens")[];
+            published: boolean;
+            inStock: boolean;
+            items: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+                shortName: string;
+                brand: string;
+                volume: string;
+                priceKgs: number;
+                image: {
+                    /** Format: uuid */
+                    id: string;
+                    width: number;
+                    height: number;
+                    alt: string;
+                    blurDataUrl: string | null;
+                    widths: number[];
+                } | null;
+            }[];
+            steps: {
+                am: {
+                    /** Format: uuid */
+                    productId: string;
+                    text: string;
+                }[];
+                pm: {
+                    /** Format: uuid */
+                    productId: string;
+                    text: string;
+                }[];
+            };
+            sumKgs: number;
+            video: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                status: "created" | "uploading" | "processing" | "ready" | "failed";
+                title: string;
+                durationSec: number | null;
+                thumbnailUrl: string | null;
+                bytes: number | null;
+                /** Format: date-time */
+                createdAt: string;
+            } | null;
+            protocol: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                status: "pending" | "processing" | "ready" | "failed";
+                image: {
+                    /** Format: uuid */
+                    id: string;
+                    width: number;
+                    height: number;
+                    alt: string;
+                    blurDataUrl: string | null;
+                    widths: number[];
+                } | null;
+                file: {
+                    url: string;
+                    name: string;
+                    bytes: number | null;
+                } | null;
+            } | null;
+            seoTitle: string | null;
+            seoDescription: string | null;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ProgramPatchDto: {
+            published?: boolean;
+            inStock?: boolean;
+        };
+        ReviewDto_Output: {
+            /** Format: uuid */
+            id: string;
+            order: number;
+            isHidden: boolean;
+            isDemo: boolean;
+            media: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                status: "pending" | "processing" | "ready" | "failed";
+                image: {
+                    /** Format: uuid */
+                    id: string;
+                    width: number;
+                    height: number;
+                    alt: string;
+                    blurDataUrl: string | null;
+                    widths: number[];
+                } | null;
+                file: {
+                    url: string;
+                    name: string;
+                    bytes: number | null;
+                } | null;
+            };
+            /** Format: date-time */
+            createdAt: string;
+        };
+        CreateReviewsDto: {
+            mediaIds: string[];
+        };
+        ReviewOrderDto: {
+            ids: string[];
+        };
+        ReviewPatchDto: {
+            isHidden: boolean;
+        };
+        ContentDto_Output: {
+            /** @enum {string} */
+            key: "home" | "wholesale" | "delivery" | "privacy" | "offer";
+            data: {
+                [key: string]: unknown;
+            };
+            media: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                status: "pending" | "processing" | "ready" | "failed";
+                image: {
+                    /** Format: uuid */
+                    id: string;
+                    width: number;
+                    height: number;
+                    alt: string;
+                    blurDataUrl: string | null;
+                    widths: number[];
+                } | null;
+                file: {
+                    url: string;
+                    name: string;
+                    bytes: number | null;
+                } | null;
+            }[];
+            videos: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                status: "created" | "uploading" | "processing" | "ready" | "failed";
+                title: string;
+                durationSec: number | null;
+                thumbnailUrl: string | null;
+                bytes: number | null;
+                /** Format: date-time */
+                createdAt: string;
+            }[];
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        ContentInputDto: {
+            data: {
+                [key: string]: unknown;
+            };
+        };
+        SettingsDto_Output: {
+            [key: string]: {
+                [key: string]: unknown;
+            };
+        };
+        SettingInputDto: {
+            value: {
+                [key: string]: unknown;
+            };
+        };
+        SettingValueDto_Output: {
+            [key: string]: unknown;
+        };
+        UserDto_Output: {
+            /** Format: uuid */
+            id: string;
+            email: string;
+            name: string;
+            /** @enum {string} */
+            role: "owner" | "manager";
+            isActive: boolean;
+            lastLoginAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        CreateUserDto: {
+            /** Format: email */
+            email: string;
+            name: string;
+            /** @enum {string} */
+            role: "owner" | "manager";
+            password: string;
+        };
+        UpdateUserDto: {
+            name?: string;
+            /** @enum {string} */
+            role?: "owner" | "manager";
+            isActive?: boolean;
+        };
+        UserPasswordDto: {
+            password: string;
+        };
+        RevokedDto_Output: {
+            revoked: number;
+        };
+        AuditListDto_Output: {
+            items: {
+                /** Format: uuid */
+                id: string;
+                /** Format: date-time */
+                at: string;
+                userName: string | null;
+                entity: string;
+                entityId: string;
+                action: string;
+                diff: {
+                    [key: string]: unknown;
+                };
+            }[];
+            nextCursor: string | null;
         };
     };
     responses: never;
@@ -1583,6 +2269,809 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DashboardDto_Output"];
+                };
+            };
+        };
+    };
+    AdminCatalogController_categories: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryDto_Output"][];
+                };
+            };
+        };
+    };
+    AdminCatalogController_createCategory: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CategoryInputDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryDto_Output"];
+                };
+            };
+        };
+    };
+    AdminCatalogController_renameCategory: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CategoryInputDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryDto_Output"];
+                };
+            };
+        };
+    };
+    AdminCatalogController_deleteCategory: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminCatalogController_brands: {
+        parameters: {
+            query?: {
+                q?: string;
+            };
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandDto_Output"][];
+                };
+            };
+        };
+    };
+    AdminCatalogController_productList: {
+        parameters: {
+            query?: {
+                category?: string;
+                q?: string;
+            };
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductRowDto_Output"][];
+                };
+            };
+        };
+    };
+    AdminCatalogController_createProduct: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductInputDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductDto_Output"];
+                };
+            };
+        };
+    };
+    AdminCatalogController_product: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductDto_Output"];
+                };
+            };
+        };
+    };
+    AdminCatalogController_updateProduct: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductInputDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductDto_Output"];
+                };
+            };
+        };
+    };
+    AdminCatalogController_deleteProduct: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminCatalogController_patchProduct: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductPatchDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductDto_Output"];
+                };
+            };
+        };
+    };
+    AdminCatalogController_programList: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgramRowDto_Output"][];
+                };
+            };
+        };
+    };
+    AdminCatalogController_createProgram: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProgramInputDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgramDto_Output"];
+                };
+            };
+        };
+    };
+    AdminCatalogController_program: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgramDto_Output"];
+                };
+            };
+        };
+    };
+    AdminCatalogController_updateProgram: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProgramInputDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgramDto_Output"];
+                };
+            };
+        };
+    };
+    AdminCatalogController_deleteProgram: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminCatalogController_patchProgram: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProgramPatchDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgramDto_Output"];
+                };
+            };
+        };
+    };
+    AdminCatalogController_reviewList: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewDto_Output"][];
+                };
+            };
+        };
+    };
+    AdminCatalogController_createReviews: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReviewsDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewDto_Output"][];
+                };
+            };
+        };
+    };
+    AdminCatalogController_reorderReviews: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewOrderDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewDto_Output"][];
+                };
+            };
+        };
+    };
+    AdminCatalogController_deleteReview: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewDto_Output"][];
+                };
+            };
+        };
+    };
+    AdminCatalogController_patchReview: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewPatchDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewDto_Output"][];
+                };
+            };
+        };
+    };
+    AdminContentController_content: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                key: "home" | "wholesale" | "delivery" | "privacy" | "offer";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentDto_Output"];
+                };
+            };
+        };
+    };
+    AdminContentController_putContent: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                key: "home" | "wholesale" | "delivery" | "privacy" | "offer";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContentInputDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentDto_Output"];
+                };
+            };
+        };
+    };
+    AdminContentController_settings: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingsDto_Output"];
+                };
+            };
+        };
+    };
+    AdminContentController_putSetting: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                key: "shop" | "appearance" | "currencies" | "notifications" | "seo" | "analytics" | "antispam";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SettingInputDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SettingValueDto_Output"];
+                };
+            };
+        };
+    };
+    AdminContentController_users: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserDto_Output"][];
+                };
+            };
+        };
+    };
+    AdminContentController_createUser: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateUserDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserDto_Output"][];
+                };
+            };
+        };
+    };
+    AdminContentController_updateUser: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateUserDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserDto_Output"][];
+                };
+            };
+        };
+    };
+    AdminContentController_setPassword: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserPasswordDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminContentController_revokeAll: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevokedDto_Output"];
+                };
+            };
+        };
+    };
+    AdminContentController_audit: {
+        parameters: {
+            query?: {
+                entity?: string;
+                cursor?: string;
+                limit?: number;
+            };
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditListDto_Output"];
                 };
             };
         };

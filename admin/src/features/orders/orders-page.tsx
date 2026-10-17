@@ -27,7 +27,7 @@ import { download, saveBlob } from '@/lib/api';
 import { errorText, itemLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { OrderDrawer } from './order-drawer';
-import { useOrderCounters, useOrders, useUpdateOrder } from './queries';
+import { useOrderCounters, useOrders, useUpdateOrder } from '@/api/orders';
 
 type Tab = 'all' | OrderStatus;
 const TABS: Tab[] = ['all', 'new', 'sent', 'cancelled'];

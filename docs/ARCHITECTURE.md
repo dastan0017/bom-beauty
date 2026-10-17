@@ -163,7 +163,8 @@ column and the price card on the right. Copy always comes from the mobile protot
 
 - Server Components fetch `INTERNAL_API_URL` with `next: { tags, revalidate: 3600 }`. Tags: `products`, `product:{slug}`,
   `programs`, `program:{slug}`, `categories`, `reviews`, `content`, `content:{key}`, `settings`, `redirects`.
-- Admin mutations enqueue `web.revalidate`; the worker calls `POST web:3000/api/revalidate` and retries while `web` restarts.
+- Admin mutations call `RevalidateService` (`POST web:3000/api/revalidate` with the tags, three retries over ~20 s so a
+  restarting `web` still gets them). M5 moves this onto the `web.revalidate` BullMQ queue.
 - Pages render per request (`connection()` in the fetch helper), so `next build` never needs the backend; the API
   responses themselves sit in Next's data cache until their tags are revalidated, so a render costs no API call.
 - Cloudflare caches only `/_next/static/*`, fonts and media; HTML is not cached at the edge.

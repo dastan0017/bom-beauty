@@ -4,7 +4,7 @@ import { Toaster } from 'sonner';
 import { copy } from '@/content/copy';
 import { env } from '@/env';
 import { useLogout, useUser } from '@/features/auth/auth';
-import { useOrderCounters } from '@/features/orders/queries';
+import { useOrderCounters } from '@/api/orders';
 import { cn } from '@/lib/utils';
 import { ExternalIcon } from './ui';
 

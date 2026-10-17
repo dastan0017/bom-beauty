@@ -3,6 +3,8 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ZodSerializerInterceptor, ZodValidationPipe } from 'nestjs-zod';
 import { AdminModule } from './admin/admin.module';
+import { AdminCatalogModule } from './admin-catalog/admin-catalog.module';
+import { AdminContentModule } from './admin-content/admin-content.module';
 import { AuditModule } from './audit/audit.module';
 import { AuthModule } from './auth/auth.module';
 import { CatalogModule } from './catalog/catalog.module';
@@ -18,6 +20,7 @@ import { OrdersModule } from './orders/orders.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedirectsModule } from './redirects/redirects.controller';
 import { RedisModule } from './redis/redis.module';
+import { RevalidateModule } from './revalidate/revalidate.service';
 import { ReviewsModule } from './reviews/reviews.controller';
 import { SettingsModule } from './settings/settings.module';
 
@@ -40,6 +43,7 @@ export class AppModule {
         PrismaModule,
         RedisModule,
         AuditModule,
+        RevalidateModule,
         SettingsModule,
         AuthModule,
         CatalogModule,
@@ -49,6 +53,8 @@ export class AppModule {
         OrdersModule,
         LeadsModule,
         AdminModule,
+        AdminCatalogModule,
+        AdminContentModule,
       ],
       controllers: [HealthController],
       providers: [

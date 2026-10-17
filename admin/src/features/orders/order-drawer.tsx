@@ -13,7 +13,7 @@ import { Button, CloseIcon, PhoneIcon, Spinner, StatusSelect, WhatsAppLink } fro
 import { copy } from '@/content/copy';
 import { useUser } from '@/features/auth/auth';
 import { errorText } from '@/lib/format';
-import { useDeleteOrder, useOrder, useUpdateOrder } from './queries';
+import { useDeleteOrder, useOrder, useUpdateOrder } from '@/api/orders';
 
 /** Order details (gap: the design has no detail view; the brief asks for one with a note). */
 export function OrderDrawer({ id, onClose }: { id: string | null; onClose: () => void }) {

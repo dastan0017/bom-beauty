@@ -23,6 +23,7 @@ import {
 } from '@/components/ui';
 import { copy } from '@/content/copy';
 import { useUser } from '@/features/auth/auth';
+import { keys } from '@/api/keys';
 import { api, unwrap } from '@/lib/api';
 import { itemLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -91,7 +92,7 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const [period, setPeriod] = useState<DashboardPeriod>('today');
   const dashboard = useQuery({
-    queryKey: ['dashboard', period],
+    queryKey: keys.dashboard(period),
     queryFn: () => unwrap(api.GET('/v1/admin/dashboard', { params: { query: { period } } })),
     placeholderData: keepPreviousData,
     refetchInterval: 60_000,

@@ -95,9 +95,9 @@ export default async function WholesalePage() {
               {data.subtitle}
             </p>
           )}
-          {data.facts.length > 0 && (
+          {data.facts.some(Boolean) && (
             <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-2 self-stretch">
-              {data.facts.map((fact) => (
+              {data.facts.filter(Boolean).map((fact) => (
                 <li
                   key={fact}
                   className="inline-flex items-center gap-1.5 text-sm leading-[1.3] font-semibold text-hero-ink"
@@ -146,7 +146,7 @@ export default async function WholesalePage() {
                 «{data.quote}»
               </p>
             )}
-            {data.intro.map((paragraph) => (
+            {data.intro.filter(Boolean).map((paragraph) => (
               <p key={paragraph} className="text-base leading-[1.55] text-pretty text-muted">
                 {paragraph}
               </p>
@@ -166,18 +166,20 @@ export default async function WholesalePage() {
                 ))}
               </div>
             )}
-            {data.expertise.length > 0 && (
+            {data.expertise.some((item) => item.trim()) && (
               <div className="mt-1.5 flex flex-col gap-2.5">
                 <span className="text-sm font-semibold">{copy.wholesale.expertise}</span>
                 <div className="flex flex-wrap gap-2">
-                  {data.expertise.map((item) => (
-                    <span
-                      key={item}
-                      className="inline-flex min-h-[34px] items-center rounded-full bg-accent-soft px-3 py-1.5 text-sm leading-[1.3] font-semibold text-accent-ink"
-                    >
-                      {item}
-                    </span>
-                  ))}
+                  {data.expertise
+                    .filter((item) => item.trim())
+                    .map((item) => (
+                      <span
+                        key={item}
+                        className="inline-flex min-h-[34px] items-center rounded-full bg-accent-soft px-3 py-1.5 text-sm leading-[1.3] font-semibold text-accent-ink"
+                      >
+                        {item}
+                      </span>
+                    ))}
                 </div>
               </div>
             )}

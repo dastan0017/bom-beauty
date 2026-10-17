@@ -14,6 +14,7 @@ import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
 import { useState, type CSSProperties } from 'react';
 import { Button, Card, PageHeader, Segmented, Spinner, TableHead, TableMessage } from '@/components/ui';
 import { copy } from '@/content/copy';
+import { keys } from '@/api/keys';
 import { api, unwrap } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -40,7 +41,7 @@ function answersText(lead: LeadRow): string[] {
 export function LeadsPage() {
   const [tab, setTab] = useState<Tab>('all');
   const leads = useInfiniteQuery({
-    queryKey: ['leads', tab],
+    queryKey: keys.leads(tab),
     queryFn: ({ pageParam }) =>
       unwrap(
         api.GET('/v1/admin/leads', {

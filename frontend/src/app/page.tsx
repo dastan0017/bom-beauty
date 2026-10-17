@@ -127,7 +127,7 @@ export default async function HomePage() {
                 {data.comparison.mass.title}
               </span>
             </div>
-            {data.comparison.mass.points.map((point) => (
+            {data.comparison.mass.points.filter(Boolean).map((point) => (
               <div key={point} className="flex items-start gap-2">
                 <span className="mt-px flex size-5 flex-none items-center justify-center rounded-full bg-line text-muted">
                   <DashIcon size={10} />
@@ -141,7 +141,7 @@ export default async function HomePage() {
               <span className="text-xs font-semibold text-accent-ink">{data.comparison.pro.eyebrow}</span>
               <span className="text-base leading-[1.25] font-semibold">{data.comparison.pro.title}</span>
             </div>
-            {data.comparison.pro.points.map((point) => (
+            {data.comparison.pro.points.filter(Boolean).map((point) => (
               <div key={point} className="flex items-start gap-2">
                 <span className="mt-px flex size-5 flex-none items-center justify-center rounded-full bg-accent text-white">
                   <CheckIcon size={11} />

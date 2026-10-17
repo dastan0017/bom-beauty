@@ -3,6 +3,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { Card, inputClass, PageHeader, TableHead, TableMessage, WhatsAppLink } from '@/components/ui';
 import { copy } from '@/content/copy';
+import { keys } from '@/api/keys';
 import { api, unwrap } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -17,7 +18,7 @@ export function CustomersPage() {
     return () => window.clearTimeout(timer);
   }, [query]);
   const customers = useQuery({
-    queryKey: ['customers', q],
+    queryKey: keys.customers(q),
     queryFn: () => unwrap(api.GET('/v1/admin/customers', { params: { query: q ? { q } : {} } })),
     placeholderData: keepPreviousData,
   });

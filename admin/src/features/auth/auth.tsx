@@ -3,9 +3,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createContext, use, useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Button, Field, inputClass } from '@/components/ui';
 import { copy } from '@/content/copy';
+import { keys } from '@/api/keys';
 import { api, ApiError, setCsrfToken, setUnauthenticatedHandler, unwrap } from '@/lib/api';
 
-const ME_KEY = ['me'] as const;
+const ME_KEY = keys.me;
 
 const SessionContext = createContext<SessionUser | null>(null);
 
