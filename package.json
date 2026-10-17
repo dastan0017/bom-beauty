@@ -18,7 +18,7 @@
     "db:migrate": "pnpm --filter @bom/backend db:migrate",
     "db:seed": "pnpm --filter @bom/backend db:seed",
     "gen:api": "pnpm --filter @bom/backend gen:api",
-    "e2e": "pnpm --filter @bom/frontend test:e2e"
+    "e2e": "pnpm --filter @bom/frontend test:e2e && pnpm --filter @bom/admin test:e2e"
   },
   "devDependencies": {
     "@bom/config": "workspace:*",
@@ -36,6 +36,9 @@
       "prisma",
       "sharp",
       "unrs-resolver"
-    ]
+    ],
+    "patchedDependencies": {
+      "nestjs-zod@5.5.0": "patches/nestjs-zod@5.5.0.patch"
+    }
   }
 }

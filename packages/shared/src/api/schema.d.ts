@@ -276,6 +276,118 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminOrdersController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/orders/counters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminOrdersController_counters"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/orders/export.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminOrdersController_exportCsv"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/orders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminOrdersController_detail"];
+        put?: never;
+        post?: never;
+        delete: operations["AdminOrdersController_remove"];
+        options?: never;
+        head?: never;
+        patch: operations["AdminOrdersController_update"];
+        trace?: never;
+    };
+    "/v1/admin/leads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminInsightsController_leads"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/customers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminInsightsController_customers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminInsightsController_dashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -320,7 +432,7 @@ export interface components {
                 umamiWebsiteId: string | null;
                 metaPixelId: string | null;
             };
-            turnstileSiteKey: string[];
+            turnstileSiteKey: string | null;
         };
         LoginDto: {
             /** Format: email */
@@ -359,7 +471,7 @@ export interface components {
             volume: string;
             purpose: string;
             priceKgs: number;
-            badge: string[];
+            badge: string | null;
             inStock: boolean;
             image: {
                 /** Format: uuid */
@@ -385,7 +497,7 @@ export interface components {
             volume: string;
             purpose: string;
             priceKgs: number;
-            badge: string[];
+            badge: string | null;
             inStock: boolean;
             image: {
                 /** Format: uuid */
@@ -398,7 +510,7 @@ export interface components {
             } | null;
             description: string;
             howToUse: string;
-            inci: string[];
+            inci: string | null;
             images: {
                 /** Format: uuid */
                 id: string;
@@ -425,7 +537,7 @@ export interface components {
             slug: string;
             title: string;
             symptom: string;
-            badge: string[];
+            badge: string | null;
             priceKgs: number;
             inStock: boolean;
             itemCount: number;
@@ -446,8 +558,7 @@ export interface components {
                 poster: string | null;
             } | null;
             quiz: {
-                /** @enum {string|null} */
-                goal: "age" | "pigment" | "acne" | "barrier" | null;
+                goal: ("age" | "pigment" | "acne" | "barrier") | null;
                 skins: ("dry" | "oily" | "normal" | "sens")[];
             };
         };
@@ -457,7 +568,7 @@ export interface components {
             slug: string;
             title: string;
             symptom: string;
-            badge: string[];
+            badge: string | null;
             priceKgs: number;
             inStock: boolean;
             itemCount: number;
@@ -484,11 +595,10 @@ export interface components {
                 mp4: string | null;
             } | null;
             quiz: {
-                /** @enum {string|null} */
-                goal: "age" | "pigment" | "acne" | "barrier" | null;
+                goal: ("age" | "pigment" | "acne" | "barrier") | null;
                 skins: ("dry" | "oily" | "normal" | "sens")[];
             };
-            headline: string[];
+            headline: string | null;
             course: string;
             fit: string[];
             description: string;
@@ -660,11 +770,11 @@ export interface components {
             website?: string;
             turnstileToken?: string;
             item: {
-                /** @enum {string} */
+                /** @constant */
                 type: "product";
                 slug: string;
             } | {
-                /** @enum {string} */
+                /** @constant */
                 type: "program";
                 slug: string;
             };
@@ -742,6 +852,161 @@ export interface components {
                 country?: "kg" | "kz" | "uz" | "ru";
             };
         };
+        OrderListDto_Output: {
+            items: {
+                /** Format: uuid */
+                id: string;
+                number: number;
+                name: string;
+                phone: string;
+                itemTitle: string;
+                /** @enum {string} */
+                itemType: "product" | "program";
+                qty: number;
+                address: string;
+                city: string;
+                totalKgs: number;
+                /** @enum {string} */
+                status: "new" | "sent" | "cancelled";
+                /** Format: date-time */
+                createdAt: string;
+            }[];
+            nextCursor: string | null;
+        };
+        OrderCountersDto_Output: {
+            all: number;
+            new: number;
+            sent: number;
+            cancelled: number;
+        };
+        OrderDetailDto_Output: {
+            /** Format: uuid */
+            id: string;
+            number: number;
+            name: string;
+            phone: string;
+            itemTitle: string;
+            /** @enum {string} */
+            itemType: "product" | "program";
+            qty: number;
+            address: string;
+            city: string;
+            totalKgs: number;
+            /** @enum {string} */
+            status: "new" | "sent" | "cancelled";
+            /** Format: date-time */
+            createdAt: string;
+            unitPriceKgs: number;
+            comment: string | null;
+            message: string;
+            note: string;
+            displayCurrency: string;
+            displayRate: number | null;
+            fromQuiz: boolean;
+            pageUrl: string | null;
+            referrer: string | null;
+            utm: {
+                source?: string;
+                medium?: string;
+                campaign?: string;
+                content?: string;
+                term?: string;
+            } | null;
+            /** Format: date-time */
+            statusChangedAt: string;
+            history: {
+                /** Format: date-time */
+                at: string;
+                action: string;
+                from: ("new" | "sent" | "cancelled") | null;
+                to: ("new" | "sent" | "cancelled") | null;
+                userName: string | null;
+            }[];
+        };
+        UpdateOrderDto: {
+            /** @enum {string} */
+            status?: "new" | "sent" | "cancelled";
+            note?: string;
+        };
+        LeadListDto_Output: {
+            items: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                kind: "quiz" | "wholesale";
+                answers: {
+                    [key: string]: string;
+                };
+                recommended: {
+                    slug: string;
+                    title: string;
+                }[];
+                choose: boolean;
+                message: string;
+                pageUrl: string | null;
+                utm: {
+                    source?: string;
+                    medium?: string;
+                    campaign?: string;
+                    content?: string;
+                    term?: string;
+                } | null;
+                /** Format: date-time */
+                createdAt: string;
+            }[];
+            nextCursor: string | null;
+            counts: {
+                all: number;
+                quiz: number;
+                wholesale: number;
+            };
+        };
+        CustomerDto_Output: {
+            name: string;
+            phone: string;
+            city: string;
+            count: number;
+            totalKgs: number;
+            /** Format: date-time */
+            lastOrderAt: string;
+            favorite: string;
+        };
+        DashboardDto_Output: {
+            /** @enum {string} */
+            period: "today" | "week" | "month";
+            cards: {
+                orders: number;
+                previousOrders: number;
+                awaiting: number;
+                sumKgs: number;
+                avgKgs: number;
+                cancelled: number;
+                cancelledWeek: number;
+            };
+            recent: {
+                /** Format: uuid */
+                id: string;
+                number: number;
+                name: string;
+                phone: string;
+                itemTitle: string;
+                /** @enum {string} */
+                itemType: "product" | "program";
+                qty: number;
+                address: string;
+                city: string;
+                totalKgs: number;
+                /** @enum {string} */
+                status: "new" | "sent" | "cancelled";
+                /** Format: date-time */
+                createdAt: string;
+            }[];
+            byProgram: {
+                title: string;
+                count: number;
+            }[];
+            programOrdersTotal: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -760,7 +1025,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -783,7 +1048,7 @@ export interface operations {
             };
         };
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -819,7 +1084,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -838,7 +1103,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -859,7 +1124,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -880,7 +1145,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -899,7 +1164,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -920,7 +1185,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -939,7 +1204,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -958,7 +1223,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -979,7 +1244,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -998,7 +1263,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1019,7 +1284,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            default: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1094,6 +1359,230 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CreateLeadResponseDto_Output"];
+                };
+            };
+        };
+    };
+    AdminOrdersController_list: {
+        parameters: {
+            query?: {
+                status?: "new" | "sent" | "cancelled";
+                q?: string;
+                from?: string;
+                to?: string;
+                cursor?: string;
+                limit?: number;
+            };
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderListDto_Output"];
+                };
+            };
+        };
+    };
+    AdminOrdersController_counters: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderCountersDto_Output"];
+                };
+            };
+        };
+    };
+    AdminOrdersController_exportCsv: {
+        parameters: {
+            query?: {
+                status?: "new" | "sent" | "cancelled";
+                q?: string;
+                from?: string;
+                to?: string;
+            };
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminOrdersController_detail: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderDetailDto_Output"];
+                };
+            };
+        };
+    };
+    AdminOrdersController_remove: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminOrdersController_update: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateOrderDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderDetailDto_Output"];
+                };
+            };
+        };
+    };
+    AdminInsightsController_leads: {
+        parameters: {
+            query?: {
+                kind?: "quiz" | "wholesale";
+                cursor?: string;
+                limit?: number;
+            };
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeadListDto_Output"];
+                };
+            };
+        };
+    };
+    AdminInsightsController_customers: {
+        parameters: {
+            query?: {
+                q?: string;
+            };
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerDto_Output"][];
+                };
+            };
+        };
+    };
+    AdminInsightsController_dashboard: {
+        parameters: {
+            query?: {
+                period?: "today" | "week" | "month";
+            };
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardDto_Output"];
                 };
             };
         };

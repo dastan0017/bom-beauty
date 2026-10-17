@@ -65,14 +65,15 @@ Scaffold
 
 ## M3 Admin: orders and overview
 
-- [ ] Login, `/auth/me` bootstrap, CSRF header, 401 handling, role-aware nav, sidebar/topbar layout from the design
-- [ ] Обзор: period tabs, 4 cards, recent orders, orders by program
-- [ ] Заказы: tabs with counts, search, status select, WhatsApp button, detail drawer with note, CSV export, delete (owner)
-- [ ] Nav counter polling (15 s) and refetch on focus
-- [ ] Заявки (quiz, wholesale) list
-- [ ] Клиенты aggregation
-- [ ] Tests: status changes, export format, customers aggregation, role restrictions
-- [ ] Gate + `feat(admin): orders, overview, customers`
+- [x] Login, `/auth/me` bootstrap, CSRF header, 401 handling, role-aware nav, sidebar/topbar layout from the design
+- [x] Обзор: period tabs, 4 cards, recent orders, orders by program
+- [x] Заказы: tabs with counts, search, status select, WhatsApp button, detail drawer with note, CSV export, delete (owner)
+- [x] Nav counter polling (15 s) and refetch on focus
+- [x] Заявки (quiz, wholesale) list
+- [x] Клиенты aggregation
+- [x] Tests: status changes, export format, customers aggregation, role restrictions (`backend/test/admin.test.ts`)
+- [x] Playwright flows in `admin/e2e` (login error, status change, note and history, leads, customers, logout)
+- [x] Gate + `feat(admin): orders, overview, customers`
 
 ## M4 Admin: catalog, content, appearance
 

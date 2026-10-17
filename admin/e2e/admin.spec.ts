@@ -1,0 +1,84 @@
+import { randomUUID } from 'node:crypto';
+import { expect, test, type Page } from '@playwright/test';
+
+// One login per run: the API allows 5 login attempts per minute per IP (docs/API.md §3).
+test.describe.configure({ mode: 'serial' });
+let page: Page;
+
+test.beforeAll(async ({ browser }) => {
+  page = await browser.newPage();
+});
+test.afterAll(async () => {
+  await page.close();
+});
+
+const API = process.env.E2E_API_URL ?? 'http://localhost:4000/v1';
+const OWNER = {
+  email: process.env.SEED_OWNER_EMAIL ?? 'owner@bombeauty.kg',
+  password: process.env.SEED_OWNER_PASSWORD ?? 'change-me-please',
+};
+
+async function login(): Promise<void> {
+  await page.goto('/');
+  await page.getByLabel('Почта').fill(OWNER.email);
+  await page.getByLabel('Пароль').fill(OWNER.password);
+  await page.getByRole('button', { name: 'Войти' }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(/Доброе|Добрый|Доброй/);
+}
+
+test('wrong password shows a generic error', async () => {
+  await page.goto('/');
+  await page.getByLabel('Почта').fill(OWNER.email);
+  await page.getByLabel('Пароль').fill('definitely-wrong');
+  await page.getByRole('button', { name: 'Войти' }).click();
+  await expect(page.getByRole('alert')).toHaveText('Неверная почта или пароль');
+});
+
+test('orders: status change, note, history; leads and customers render', async ({ request }) => {
+  const name = `E2E ${randomUUID().slice(0, 6)}`;
+  const created = await request.post(`${API}/orders`, {
+    data: {
+      clientRef: randomUUID(),
+      item: { type: 'product', slug: 'dr-sgn-cica-serum' },
+      qty: 1,
+      name,
+      phone: '+996 555 00 11 22',
+      address: 'Бишкек, ул. Тестовая, 5',
+      message: 'Здравствуйте! Хочу заказать',
+      pageUrl: 'http://localhost:3100/catalog',
+    },
+  });
+  expect(created.status()).toBe(201);
+
+  await login();
+  await page
+    .getByRole('link', { name: /Заказы/ })
+    .first()
+    .click();
+  await page.getByRole('searchbox', { name: 'Поиск по имени, телефону или заказу' }).fill(name);
+  const row = page.getByRole('row').filter({ hasText: name });
+  await expect(row).toHaveCount(1);
+
+  await row.getByRole('combobox').selectOption('sent');
+  await expect(page.getByText('Статус изменён').first()).toBeVisible();
+
+  await row.click();
+  const drawer = page.getByRole('dialog');
+  await expect(drawer.getByText('Отправлен → ', { exact: false })).toHaveCount(0);
+  await expect(drawer.getByText('Новый → Отправлен')).toBeVisible();
+  await drawer.getByLabel('Заметка').fill('Оплата получена (e2e)');
+  await drawer.getByRole('button', { name: 'Сохранить заметку' }).click();
+  await expect(drawer.getByText('Изменена заметка')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page).toHaveURL(/\/orders(\?|$)/);
+
+  await page.getByRole('link', { name: 'Заявки' }).first().click();
+  await expect(page.getByRole('heading', { name: 'Заявки' })).toBeVisible();
+  await page.getByRole('link', { name: 'Клиенты' }).first().click();
+  await expect(page.getByRole('row').filter({ hasText: '+996 555 00 11 22' }).first()).toBeVisible();
+});
+
+test('logout returns to the login screen', async () => {
+  await page.getByRole('button', { name: 'Выйти' }).click();
+  await expect(page.getByRole('heading', { name: 'Вход в админ-панель' })).toBeVisible();
+});

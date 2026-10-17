@@ -15,3 +15,5 @@ export * from './schemas/auth';
 export * from './schemas/catalog';
 export * from './schemas/settings';
 export * from './schemas/content';
+export * from './time';
+export * from './schemas/admin';

@@ -88,6 +88,9 @@ export const AdminAuth = (...roles: UserRole[]) =>
     ApiHeader({ name: 'X-CSRF-Token', required: false, description: 'Required on mutations' }),
   );
 
+/** Narrows a method of an `@AdminAuth()` controller to these roles without re-running the guards. */
+export const Roles = (...roles: UserRole[]) => SetMetadata(ROLES_KEY, roles);
+
 export const CurrentSession = createParamDecorator(
   (_data: unknown, context: ExecutionContext): ActiveSession => {
     const { session } = context.switchToHttp().getRequest<AuthedRequest>();

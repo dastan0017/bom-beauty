@@ -386,6 +386,12 @@ dev containers SeaweedFS (S3) and Mailpit. Since 2026-10-17 dependencies are add
 - M2: `react-hook-form` (order sheet field state; validation runs synchronously with the shared zod schemas so
   WhatsApp opens inside the click), `react-markdown` (delivery and legal pages, raw HTML off), `@playwright/test` (dev,
   end-to-end flows in `frontend/e2e`).
+- M3: `radix-ui` (admin order drawer and delete confirmation: focus trap, Escape, ARIA), `sonner` (admin toasts),
+  `@playwright/test` (dev, admin flows in `admin/e2e`). `patches/nestjs-zod@5.5.0.patch` (pnpm `patchedDependencies`):
+  zod ≥ 4.4 writes simple nullable fields as `type: [T, "null"]`, which `@nestjs/swagger` read as arrays, so every
+  nullable field came out as `T[]` in `openapi.json`; the patch expands them to `anyOf` before Swagger sees them. Drop
+  it once nestjs-zod handles type arrays. The OpenAPI document is now 3.1, and `default` responses are promoted to
+  `200` so the typed client reads them as success (`backend/src/openapi.ts`).
 
 ## 15. Decisions and deviations
 

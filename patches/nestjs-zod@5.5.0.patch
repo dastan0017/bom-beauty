@@ -1,0 +1,76 @@
+diff --git a/dist/dto-CHeB-l1i.mjs b/dist/dto-CHeB-l1i.mjs
+index 71150dbea8fed02a5f524d4db5c0193bd77f0e65..b39e22d8814473fc4a237ca7a933cdab8d8fbd57 100644
+--- a/dist/dto-CHeB-l1i.mjs
++++ b/dist/dto-CHeB-l1i.mjs
+@@ -336,7 +336,8 @@ function openApiMetadataFactory({ schema, io }) {
+ 	};
+ 	const { hasRefs, usesThreePointOneSyntax } = getSchemaMetadata(jsonSchema);
+ 	const properties = {};
+-	for (const [propertyKey, propertySchema] of Object.entries(jsonSchema.properties || {})) {
++	for (const [propertyKey, rawPropertySchema] of Object.entries(jsonSchema.properties || {})) {
++		const propertySchema = expandNullableTypeArray(rawPropertySchema);
+ 		const newPropertySchema = {
+ 			...propertySchema,
+ 			type: propertySchema.type || ""
+@@ -367,6 +368,23 @@ function openApiMetadataFactory({ schema, io }) {
+ 	}
+ 	return properties;
+ }
++/**
++* bom-beauty patch: zod >= 4.4 collapses `anyOf: [{ type: T }, { type: "null" }]` into `type: [T, "null"]`.
++* @nestjs/swagger reads a `type` array as an array property, so expand it back into the anyOf form that the
++* rest of nestjs-zod (and cleanupOpenApiDoc) already handles.
++*/
++function expandNullableTypeArray(schema) {
++	if (!schema || !Array.isArray(schema.type)) return schema;
++	const { type: types, ...rest } = schema;
++	const nonNull = types.filter((t) => t !== "null");
++	if (nonNull.length === types.length) return schema;
++	const { default: defaultValue, description, title, ...branch } = rest;
++	const out = { anyOf: [...nonNull.map((t) => ({ ...branch, type: t })), { type: "null" }] };
++	if (defaultValue !== void 0) out.default = defaultValue;
++	if (description !== void 0) out.description = description;
++	if (title !== void 0) out.title = title;
++	return out;
++}
+ function generateJsonSchema(schema, io) {
+ 	const generatedJsonSchema = "_zod" in schema ? toJSONSchema(schema, { io }) : zodV3ToOpenAPI(schema);
+ 	const $defs = "$defs" in generatedJsonSchema && generatedJsonSchema.$defs ? generatedJsonSchema.$defs : void 0;
+diff --git a/dist/dto-sWxCeI9D.cjs b/dist/dto-sWxCeI9D.cjs
+index b01e7e7d7ca3fc93a9eb88857d715ba409edfe96..066a33d49dab4b35c3dea6de6e2b98c052a3fd19 100644
+--- a/dist/dto-sWxCeI9D.cjs
++++ b/dist/dto-sWxCeI9D.cjs
+@@ -359,7 +359,8 @@ function openApiMetadataFactory({ schema, io }) {
+ 	};
+ 	const { hasRefs, usesThreePointOneSyntax } = getSchemaMetadata(jsonSchema);
+ 	const properties = {};
+-	for (const [propertyKey, propertySchema] of Object.entries(jsonSchema.properties || {})) {
++	for (const [propertyKey, rawPropertySchema] of Object.entries(jsonSchema.properties || {})) {
++		const propertySchema = expandNullableTypeArray(rawPropertySchema);
+ 		const newPropertySchema = {
+ 			...propertySchema,
+ 			type: propertySchema.type || ""
+@@ -390,6 +391,23 @@ function openApiMetadataFactory({ schema, io }) {
+ 	}
+ 	return properties;
+ }
++/**
++* bom-beauty patch: zod >= 4.4 collapses `anyOf: [{ type: T }, { type: "null" }]` into `type: [T, "null"]`.
++* @nestjs/swagger reads a `type` array as an array property, so expand it back into the anyOf form that the
++* rest of nestjs-zod (and cleanupOpenApiDoc) already handles.
++*/
++function expandNullableTypeArray(schema) {
++	if (!schema || !Array.isArray(schema.type)) return schema;
++	const { type: types, ...rest } = schema;
++	const nonNull = types.filter((t) => t !== "null");
++	if (nonNull.length === types.length) return schema;
++	const { default: defaultValue, description, title, ...branch } = rest;
++	const out = { anyOf: [...nonNull.map((t) => ({ ...branch, type: t })), { type: "null" }] };
++	if (defaultValue !== void 0) out.default = defaultValue;
++	if (description !== void 0) out.description = description;
++	if (title !== void 0) out.title = title;
++	return out;
++}
+ function generateJsonSchema(schema, io) {
+ 	const generatedJsonSchema = "_zod" in schema ? (0, zod_v4_core.toJSONSchema)(schema, { io }) : zodV3ToOpenAPI(schema);
+ 	const $defs = "$defs" in generatedJsonSchema && generatedJsonSchema.$defs ? generatedJsonSchema.$defs : void 0;

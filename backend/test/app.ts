@@ -71,3 +71,41 @@ export async function request<T = unknown>(
   const text = await response.text();
   return { status: response.status, body: (text ? JSON.parse(text) : null) as T, headers: response.headers };
 }
+
+export interface AdminClient {
+  /** Headers for GETs (cookie) and mutations (cookie, Origin, CSRF token). */
+  read: Record<string, string>;
+  write: Record<string, string>;
+}
+
+/** Logs in through the API like the admin SPA does. */
+export async function loginAs(
+  ctx: TestContext,
+  credentials: { email: string; password: string } = OWNER,
+): Promise<AdminClient> {
+  const res = await request<{ csrfToken: string }>(ctx.url('/v1/auth/login'), {
+    method: 'POST',
+    headers: { Origin: ctx.env.ADMIN_ORIGIN },
+    json: { ...credentials, remember: false },
+  });
+  if (res.status !== 200) throw new Error(`login failed: ${res.status}`);
+  const cookie = (res.headers.getSetCookie().find((c) => c.startsWith('bb_sid=')) ?? '').split(';')[0] ?? '';
+  return {
+    read: { Cookie: cookie },
+    write: { Cookie: cookie, Origin: ctx.env.ADMIN_ORIGIN, 'X-CSRF-Token': res.body.csrfToken },
+  };
+}
+
+export const MANAGER = { email: 'manager@test.kg', password: 'manager-test-password', name: 'Менеджер' };
+
+export async function createManager(ctx: TestContext): Promise<void> {
+  const { hash } = await import('@node-rs/argon2');
+  await ctx.prisma.user.create({
+    data: {
+      email: MANAGER.email,
+      name: MANAGER.name,
+      role: 'manager',
+      passwordHash: await hash(MANAGER.password),
+    },
+  });
+}
