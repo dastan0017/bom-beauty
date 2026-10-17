@@ -26,7 +26,9 @@ COPY --from=prune /repo/out/full/ ./
 RUN pnpm turbo run build --filter=@bom/backend...
 # Self-contained production tree: dist, prisma/ (migrations), runtime dependencies incl. @bom/shared.
 RUN --mount=type=cache,id=pnpm-store,target=/root/.local/share/pnpm/store \
-    pnpm --filter @bom/backend deploy --prod --legacy /out
+    pnpm --filter @bom/backend deploy --prod --legacy /out \
+    # Optional peers of the Prisma CLI that `migrate deploy` never loads: its embedded dev database and TypeScript.
+    && rm -rf /out/node_modules/.pnpm/@electric-sql+pglite@* /out/node_modules/.pnpm/typescript@*
 
 FROM ${NODE_IMAGE} AS runtime
 # openssl for Prisma's schema engine (migrate deploy); tini reaps and forwards signals.

@@ -134,3 +134,17 @@ jobs:
             curl -fsS --retry 10 --retry-delay 6 --retry-all-errors -o /dev/null "$url"
             echo "ok $url"
           done
+
+  # Private GHCR storage is small on free plans: keep the running release and two to roll back to.
+  prune-images:
+    needs: deploy
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        package: [bom-api, bom-web, bom-admin, bom-backup]
+    steps:
+      - uses: actions/delete-package-versions@v5
+        with:
+          package-name: ${{ matrix.package }}
+          package-type: container
+          min-versions-to-keep: 3

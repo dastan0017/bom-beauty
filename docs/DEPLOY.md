@@ -168,6 +168,11 @@ Repository → Settings:
 **Deploy**: every push to `main` that passes CI. Images are tagged with the commit SHA; `/opt/bom/.deployed` records the
 running one.
 
+**Image storage**: the repository is private, so its GHCR images count against GitHub Packages storage (500 MB on the
+Free plan; one release is about 330 MB compressed, mostly shared layers). The deploy keeps the three newest versions of
+each image (`prune-images`). If storage still runs over, upgrade the plan or make the packages public (the code in them
+is not secret; secrets live only in the server's `.env`).
+
 **Rollback**: `cd /opt/bom && IMAGE_TAG=<previous sha> docker compose -f docker-compose.prod.yml up -d`. Migrations
 only go forward: keep schema changes additive (new columns nullable, drop in a later release), so the previous image
 still runs on the new schema. If data was damaged, restore the database (`infra/scripts/restore.md`).
