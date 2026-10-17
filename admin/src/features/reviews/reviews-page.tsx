@@ -1,7 +1,8 @@
 import type { AdminReview } from '@bom/shared';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { useReviewActions, useReviews } from '@/api/catalog';
+import { uploadMedia } from '@/api/media';
 import { PageHeader, Spinner } from '@/components/ui';
 import { DropZone, MediaPreview } from '@/components/ui/media';
 import { copy } from '@/content/copy';
@@ -9,13 +10,49 @@ import { env } from '@/env';
 import { errorText } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
-/** Отзывы (design: isReviews). Upload arrives with the media pipeline (M5). */
+/** Отзывы (design: isReviews). Screenshots upload one by one, then become reviews in one request. */
 export function ReviewsPage() {
   const reviews = useReviews();
   const actions = useReviewActions();
   const list = reviews.data ?? [];
   const shown = list.filter((r) => !r.isHidden).length;
   const hasDemo = list.some((r) => r.isDemo && !r.isHidden);
+  const [uploading, setUploading] = useState<number | null>(null);
+  const [message, setMessage] = useState('');
+
+  const addFiles = async (files: File[]) => {
+    const images = files.filter(
+      (file) => file.type.startsWith('image/') || /\.(heic|heif)$/i.test(file.name),
+    );
+    if (!images.length || uploading !== null) return;
+    setUploading(images.length);
+    setMessage('');
+    const hadReal = list.some((r) => !r.isDemo);
+    const ids: string[] = [];
+    let failed = 0;
+    for (const file of images) {
+      try {
+        const media = await uploadMedia(file, 'review');
+        if (media.status === 'ready') ids.push(media.id);
+        else failed += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+    try {
+      if (ids.length) {
+        await actions.create.mutateAsync(ids);
+        const text = copy.reviews.added(ids.length, !hadReal && hasDemo);
+        setMessage(text);
+        toast.success(text);
+      }
+      if (failed) toast.error(copy.reviews.someFailed(failed));
+    } catch (error) {
+      toast.error(errorText(error));
+    } finally {
+      setUploading(null);
+    }
+  };
 
   const notify = {
     onError: (error: unknown) => toast.error(errorText(error)),
@@ -33,14 +70,49 @@ export function ReviewsPage() {
   return (
     <>
       <PageHeader title={copy.reviews.title} lead={copy.reviews.lead}>
-        <a
-          href={env.VITE_SITE_URL}
-          target="_blank"
-          rel="noopener"
-          className="inline-flex h-11 items-center rounded-xl border border-input bg-surface px-4 text-[15px] font-semibold whitespace-nowrap"
-        >
-          {copy.openSite}
-        </a>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <a
+            href={env.VITE_SITE_URL}
+            target="_blank"
+            rel="noopener"
+            className="inline-flex h-11 items-center rounded-xl border border-input bg-surface px-4 text-[15px] font-semibold whitespace-nowrap"
+          >
+            {copy.openSite}
+          </a>
+          <label
+            className={cn(
+              'relative inline-flex h-11 flex-none cursor-pointer items-center gap-2 overflow-hidden rounded-xl bg-ink px-[18px] text-[15px] font-semibold whitespace-nowrap text-white focus-within:ring-2 focus-within:ring-ink focus-within:ring-offset-2',
+              uploading !== null && 'cursor-default opacity-60',
+            )}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            {copy.reviews.upload}
+            <input
+              type="file"
+              accept="image/*,.heic,.heif"
+              multiple
+              disabled={uploading !== null}
+              className="sr-only"
+              onChange={(event) => {
+                const files = [...(event.target.files ?? [])];
+                event.target.value = '';
+                void addFiles(files);
+              }}
+            />
+          </label>
+        </div>
       </PageHeader>
 
       {hasDemo && (
@@ -49,7 +121,16 @@ export function ReviewsPage() {
         </div>
       )}
       <div className="mt-4">
-        <DropZone title={copy.reviews.drop} hint={copy.reviews.dropHint} accept="image/*" />
+        <DropZone
+          title={copy.reviews.drop}
+          hint={copy.reviews.dropHint}
+          accept="image/*,.heic,.heif"
+          multiple
+          onFiles={(files) => void addFiles(files)}
+          busy={uploading !== null ? copy.reviews.uploading(uploading) : undefined}
+          note={message}
+          large
+        />
       </div>
 
       <div className="mt-[26px] flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1.5">

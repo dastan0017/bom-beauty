@@ -676,6 +676,118 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/media/presign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminMediaController_presign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/media/{id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminMediaController_complete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/media/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminMediaController_getMedia"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/videos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminMediaController_createVideo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/videos/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminMediaController_getVideo"];
+        put?: never;
+        post?: never;
+        delete: operations["AdminMediaController_deleteVideo"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/settings/notifications/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminMediaController_testNotifications"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/webhooks/bunny": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["WebhooksController_bunny"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1692,6 +1804,97 @@ export interface components {
                 };
             }[];
             nextCursor: string | null;
+        };
+        PresignDto: {
+            /** @enum {string} */
+            purpose: "product" | "review" | "content" | "protocol" | "catalog" | "seo";
+            contentType: string;
+            size: number;
+            fileName: string;
+        };
+        PresignResponseDto_Output: {
+            /** Format: uuid */
+            mediaId: string;
+            upload: {
+                url: string;
+                fields: {
+                    [key: string]: string;
+                };
+            };
+            /** Format: date-time */
+            expiresAt: string;
+        };
+        MediaDto_Output: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            status: "pending" | "processing" | "ready" | "failed";
+            image: {
+                /** Format: uuid */
+                id: string;
+                width: number;
+                height: number;
+                alt: string;
+                blurDataUrl: string | null;
+                widths: number[];
+            } | null;
+            file: {
+                url: string;
+                name: string;
+                bytes: number | null;
+            } | null;
+        };
+        CreateVideoDto: {
+            title: string;
+            fileName: string;
+            size: number;
+        };
+        CreateVideoResponseDto_Output: {
+            video: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                status: "created" | "uploading" | "processing" | "ready" | "failed";
+                title: string;
+                durationSec: number | null;
+                thumbnailUrl: string | null;
+                bytes: number | null;
+                /** Format: date-time */
+                createdAt: string;
+            };
+            tus: {
+                endpoint: string;
+                headers: {
+                    AuthorizationSignature: string;
+                    AuthorizationExpire: string;
+                    VideoId: string;
+                    LibraryId: string;
+                };
+            };
+        };
+        VideoDto_Output: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            status: "created" | "uploading" | "processing" | "ready" | "failed";
+            title: string;
+            durationSec: number | null;
+            thumbnailUrl: string | null;
+            bytes: number | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        NotificationTestDto_Output: {
+            /** @enum {string} */
+            telegram: "sent" | "off" | "not_configured" | "failed";
+            /** @enum {string} */
+            email: "sent" | "off" | "not_configured" | "failed";
+            error: string | null;
+        };
+        BunnyWebhookDto: {
+            VideoGuid?: string;
+            VideoLibraryId?: string;
+            Status?: number;
         };
     };
     responses: never;
@@ -3073,6 +3276,195 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["AuditListDto_Output"];
                 };
+            };
+        };
+    };
+    AdminMediaController_presign: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PresignDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PresignResponseDto_Output"];
+                };
+            };
+        };
+    };
+    AdminMediaController_complete: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaDto_Output"];
+                };
+            };
+        };
+    };
+    AdminMediaController_getMedia: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MediaDto_Output"];
+                };
+            };
+        };
+    };
+    AdminMediaController_createVideo: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateVideoDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateVideoResponseDto_Output"];
+                };
+            };
+        };
+    };
+    AdminMediaController_getVideo: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VideoDto_Output"];
+                };
+            };
+        };
+    };
+    AdminMediaController_deleteVideo: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminMediaController_testNotifications: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationTestDto_Output"];
+                };
+            };
+        };
+    };
+    WebhooksController_bunny: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BunnyWebhookDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

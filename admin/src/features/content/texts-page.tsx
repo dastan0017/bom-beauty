@@ -1,4 +1,5 @@
-import type { AdminContent, ContentValue } from '@bom/shared';
+import type { AdminContent, AdminMedia, AdminVideo, ContentValue } from '@bom/shared';
+import { useState } from 'react';
 import { NavLink, Navigate, useParams } from 'react-router';
 import { useContent, type ContentKey } from '@/api/content';
 import { CloseIcon, inputClass, Spinner } from '@/components/ui';
@@ -60,10 +61,11 @@ function Block({ contentKey }: { contentKey: ContentKey }) {
 
 function HomeForm({ content }: { content: AdminContent }) {
   const { form, update, submit, errors, saved, dirty, saving } = useContentEditor('home', content);
-  const media = (id: string | null) => (id ? (content.media.find((m) => m.id === id) ?? null) : null);
-  const video = form.greetingVideoId
-    ? (content.videos.find((v) => v.id === form.greetingVideoId) ?? null)
-    : null;
+  const [known, setKnown] = useState<AdminMedia[]>(content.media);
+  const [videos, setVideos] = useState<AdminVideo[]>(content.videos);
+  const remember = (item: AdminMedia) => setKnown((list) => [...list.filter((m) => m.id !== item.id), item]);
+  const media = (id: string | null) => (id ? (known.find((m) => m.id === id) ?? null) : null);
+  const video = form.greetingVideoId ? (videos.find((v) => v.id === form.greetingVideoId) ?? null) : null;
   type Home = ContentValue<'home'>;
   const setSide = (side: 'mass' | 'pro', patch: Partial<Home['comparison']['mass']>) =>
     update({ comparison: { ...form.comparison, [side]: { ...form.comparison[side], ...patch } } });
@@ -119,6 +121,15 @@ function HomeForm({ content }: { content: AdminContent }) {
                 <ImageSlot
                   media={media(entry.imageMediaId)}
                   label={copy.media.photo}
+                  purpose="content"
+                  onChange={(uploaded) => {
+                    remember(uploaded);
+                    update({
+                      entries: form.entries.map((e, i) =>
+                        i === index ? { ...e, imageMediaId: uploaded.id } : e,
+                      ),
+                    });
+                  }}
                   className="w-24 rounded-xl"
                   {...(entry.imageMediaId
                     ? {
@@ -290,6 +301,11 @@ function HomeForm({ content }: { content: AdminContent }) {
             <ImageSlot
               media={media(form.heroPhotoMediaId)}
               label={copy.media.photo}
+              purpose="content"
+              onChange={(uploaded) => {
+                remember(uploaded);
+                update({ heroPhotoMediaId: uploaded.id });
+              }}
               {...(form.heroPhotoMediaId ? { onRemove: () => update({ heroPhotoMediaId: null }) } : {})}
             />
           </Panel>
@@ -300,6 +316,11 @@ function HomeForm({ content }: { content: AdminContent }) {
             <VideoSlot
               video={video}
               hint={copy.media.videoHint}
+              title={copy.texts.greetingVideo}
+              onChange={(uploaded) => {
+                setVideos((list) => [...list, uploaded]);
+                update({ greetingVideoId: uploaded.id });
+              }}
               onRemove={() => update({ greetingVideoId: null })}
             />
           </Panel>
@@ -307,6 +328,11 @@ function HomeForm({ content }: { content: AdminContent }) {
             <ImageSlot
               media={media(form.about.photoMediaId)}
               label={copy.media.photo}
+              purpose="content"
+              onChange={(uploaded) => {
+                remember(uploaded);
+                update({ about: { ...form.about, photoMediaId: uploaded.id } });
+              }}
               {...(form.about.photoMediaId
                 ? { onRemove: () => update({ about: { ...form.about, photoMediaId: null } }) }
                 : {})}

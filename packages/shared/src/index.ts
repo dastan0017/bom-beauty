@@ -18,3 +18,4 @@ export * from './schemas/content';
 export * from './time';
 export * from './schemas/admin';
 export * from './schemas/admin-catalog';
+export * from './schemas/media';

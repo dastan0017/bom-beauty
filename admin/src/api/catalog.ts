@@ -161,6 +161,10 @@ export function useReviewActions() {
   const queryClient = useQueryClient();
   const settle = { onSuccess: (rows: AdminReview[]) => queryClient.setQueryData(keys.reviews, rows) };
   return {
+    create: useMutation({
+      mutationFn: (mediaIds: string[]) => unwrap(api.POST('/v1/admin/reviews', { body: { mediaIds } })),
+      ...settle,
+    }),
     reorder: useMutation({
       mutationFn: (ids: string[]) => unwrap(api.PUT('/v1/admin/reviews/order', { body: { ids } })),
       ...settle,

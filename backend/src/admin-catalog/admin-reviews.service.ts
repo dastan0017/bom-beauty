@@ -44,17 +44,17 @@ export class AdminReviewsService {
   /** New screenshots go to the end; the first real ones hide the demo examples (design: revDemoOn). */
   async create(mediaIds: string[], actor: Actor): Promise<AdminReview[]> {
     const unique = [...new Set(mediaIds)];
-    const media = await this.prisma.media.count({ where: { id: { in: unique }, kind: 'image' } });
+    const media = await this.prisma.media.count({
+      where: { id: { in: unique }, kind: 'image', status: 'ready' },
+    });
     if (media !== unique.length) throw invalidField('mediaIds', 'media.not_found');
     const taken = await this.prisma.review.count({ where: { mediaId: { in: unique } } });
     if (taken) throw invalidField('mediaIds', 'media.duplicate');
-    const last = await this.prisma.review.aggregate({ _max: { order: true } });
-    const start = (last._max.order ?? -1) + 1;
+    // As in the design, fresh screenshots go first and the demo examples leave the site.
     await this.prisma.$transaction([
+      this.prisma.review.updateMany({ data: { order: { increment: unique.length } } }),
       this.prisma.review.updateMany({ where: { isDemo: true }, data: { isHidden: true } }),
-      this.prisma.review.createMany({
-        data: unique.map((mediaId, index) => ({ mediaId, order: start + index })),
-      }),
+      this.prisma.review.createMany({ data: unique.map((mediaId, order) => ({ mediaId, order })) }),
     ]);
     await this.audit.log({
       userId: actor.userId,
@@ -107,7 +107,7 @@ export class AdminReviewsService {
     return this.list();
   }
 
-  /** The screenshot file stays until the M5 cleanup job removes unreferenced media. */
+  /** The screenshot file stays in storage; only unfinished uploads are cleaned up automatically. */
   async remove(id: string, actor: Actor): Promise<AdminReview[]> {
     const deleted = await this.prisma.review.deleteMany({ where: { id } });
     if (!deleted.count) throw notFound('Отзыв не найден');

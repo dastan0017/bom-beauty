@@ -7,6 +7,13 @@ const schema = z.object({
   NEXT_PUBLIC_SITE_URL: z.url(),
   NEXT_PUBLIC_API_URL: z.url(),
   NEXT_PUBLIC_MEDIA_URL: z.url(),
+  // Same value as the backend's INDEXNOW_KEY; empty switches the key file off.
+  INDEXNOW_KEY: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z0-9-]{8,128}$/)
+    .optional()
+    .or(z.literal('').transform(() => undefined)),
 });
 
 const result = schema.safeParse({
@@ -15,6 +22,7 @@ const result = schema.safeParse({
   NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   NEXT_PUBLIC_MEDIA_URL: process.env.NEXT_PUBLIC_MEDIA_URL,
+  INDEXNOW_KEY: process.env.INDEXNOW_KEY,
 });
 
 if (!result.success) {

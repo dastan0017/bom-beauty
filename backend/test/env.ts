@@ -21,6 +21,17 @@ export function testEnv(overrides: Record<string, string> = {}): Env {
     THROTTLE_ENABLED: 'false',
     LOG_LEVEL: 'silent',
     TURNSTILE_SECRET_KEY: '',
+    // Own buckets so tests never touch dev media (created by the global setup).
+    S3_PUBLIC_BUCKET: 'bom-test-public',
+    S3_PRIVATE_BUCKET: 'bom-test-private',
+    MEDIA_PUBLIC_URL: `${base.S3_ENDPOINT ?? 'http://localhost:9000'}/bom-test-public`,
+    // Jobs run inside the test app; real Telegram/SMTP/Bunny are never configured unless a test sets them.
+    RUN_WORKER_IN_API: 'true',
+    TELEGRAM_BOT_TOKEN: '',
+    SMTP_URL: '',
+    BUNNY_LIBRARY_ID: '',
+    BUNNY_API_KEY: '',
+    BUNNY_CDN_HOST: '',
     ...overrides,
   });
 }

@@ -274,10 +274,15 @@ Admin picks a file → `POST /v1/admin/media/presign` → browser uploads to `in
 `POST /v1/admin/media/:id/complete` → `media.process` job:
 
 - images: sharp auto-rotate, strip metadata (EXIF/GPS), AVIF + WebP at 320/640/960/1280/1920 (never upscaled), 24 px
-  blur data URL, dimensions; output to the public bucket as `p/{id}/{w}.{ext}` with `max-age=31536000, immutable`;
+  blur data URL, dimensions, plus `p/{id}/share.jpg` (≤ 1200 px) for Open Graph cards, since next/og's renderer
+  draws no WebP or AVIF; output to the public bucket as `p/{id}/{w}.{ext}` with `max-age=31536000, immutable`;
   original moved to `orig/` in the private bucket. HEIC from desktop uploads is decoded with a WASM fallback.
 - PDFs (protocols, brand catalog, ≤ 20 MB): magic-byte check, copied to `d/{id}/{filename}.pdf` in the public bucket with
   `Content-Disposition: attachment`.
+
+The presigned POST policy pins the key, the content type and `content-length-range`, so the bucket itself refuses other
+files. The admin polls `GET /v1/admin/media/:id` until `ready` or `failed`; the worker processes one file at a time to
+keep sharp's memory flat. Presigned uploads never completed within an hour are removed by `uploads.cleanup`.
 
 ### 7.6 Video (Bunny Stream)
 
@@ -288,6 +293,9 @@ Admin picks a file → `POST /v1/admin/media/presign` → browser uploads to `in
    a polling `video.sync` job update status, duration, dimensions, thumbnail, HLS and MP4 URLs.
 4. The video is attached to a program, the home greeting or the wholesale page; the site shows it once `ready`.
 
+Bunny library settings (M7 checklist): MP4 fallback on (720p, the `<video>` fallback where HLS is not native), webhook
+URL `https://api.bombeauty.kg/v1/webhooks/bunny`. Without `BUNNY_*` keys the upload answers 503 `video.not_configured`.
+
 ### 7.7 Slug changes
 
 Changing a product or program slug creates `Redirect(from → to)` and collapses chains. The page's not-found branch calls
@@ -296,8 +304,9 @@ Changing a product or program slug creates `Redirect(from → to)` and collapses
 ### 7.8 Notifications
 
 New order → `notify.telegram` (bot token in env, chat id in settings): number, item × qty, total, name, phone, address,
-link to `https://admin.bombeauty.kg/orders?open={id}`. Leads notify only if enabled. If Telegram fails after retries or is
-off, `notify.email` sends the same over SMTP. Settings has a test button.
+link to `https://admin.bombeauty.kg/orders/{id}`. Leads notify only if enabled. If Telegram fails after retries or is
+off, `notify.email` sends the same over SMTP. Customer input is HTML-escaped. Settings has a test button that reports each
+channel (sent, off, not configured, failed).
 
 ## 8. Security
 
@@ -393,6 +402,11 @@ dev containers SeaweedFS (S3) and Mailpit. Since 2026-10-17 dependencies are add
   nullable field came out as `T[]` in `openapi.json`; the patch expands them to `anyOf` before Swagger sees them. Drop
   it once nestjs-zod handles type arrays. The OpenAPI document is now 3.1, and `default` responses are promoted to
   `200` so the typed client reads them as success (`backend/src/openapi.ts`).
+- M5: `bullmq` + `@nestjs/bullmq` 11.0.5 (12.x is ESM-only and does not load in the CJS Nest build), `sharp` (variants,
+  blur, metadata strip), `heic-decode` (WASM HEIC fallback; sharp's prebuilt libvips has no HEVC), `@aws-sdk/client-s3`,
+  `@aws-sdk/s3-presigned-post`, `@aws-sdk/s3-request-presigner`, `nodemailer` + `@types/nodemailer` (dev, email
+  notifications), `tus-js-client` (admin, resumable video upload to Bunny), `vitest` + `sharp` (frontend dev: share-card
+  tests that check drawn pixels).
 
 ## 15. Decisions and deviations
 
@@ -418,11 +432,11 @@ dev containers SeaweedFS (S3) and Mailpit. Since 2026-10-17 dependencies are add
 
 ## 16. Risks to verify early
 
-| Risk                                                                     | Check                                                  | Fallback                                |
-| ------------------------------------------------------------------------ | ------------------------------------------------------ | --------------------------------------- |
-| Hetzner Object Storage: browser presigned POST with policy + bucket CORS | M5 spike against a real bucket                         | presigned PUT + `HeadObject` size check |
-| Prisma 7 CJS output inside a Nest 11 build                               | M1                                                     | Prisma 6.x classic generator            |
-| Native HLS support across target browsers                                | M5 on real devices                                     | MP4 fallback is always present          |
-| Bunny webhook reliability                                                | M5                                                     | `video.sync` polling until ready        |
-| Cloudflare proxying `media.` to the bucket host                          | M7                                                     | Caddy proxy (default)                   |
-| Theme colours chosen by the owner breaking contrast                      | Admin shows the design's warnings; site clamps nothing | Owner picks a darker accent             |
+| Risk                                                                     | Check                                                                               | Fallback                                |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- | --------------------------------------- |
+| Hetzner Object Storage: browser presigned POST with policy + bucket CORS | M5 spike passed on SeaweedFS (policy, CORS); a real Hetzner bucket is checked at M7 | presigned PUT + `HeadObject` size check |
+| Prisma 7 CJS output inside a Nest 11 build                               | M1                                                                                  | Prisma 6.x classic generator            |
+| Native HLS support across target browsers                                | M5 on real devices                                                                  | MP4 fallback is always present          |
+| Bunny webhook reliability                                                | M5                                                                                  | `video.sync` polling until ready        |
+| Cloudflare proxying `media.` to the bucket host                          | M7                                                                                  | Caddy proxy (default)                   |
+| Theme colours chosen by the owner breaking contrast                      | Admin shows the design's warnings; site clamps nothing                              | Owner picks a darker accent             |

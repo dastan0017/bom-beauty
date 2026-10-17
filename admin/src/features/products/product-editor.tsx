@@ -147,12 +147,24 @@ function ProductForm({ product, initial }: { product: AdminProduct | null; initi
       form.imageIds.filter((imageId) => imageId !== id),
     );
   };
+  const setImageAt = (index: number, media: AdminMedia) => {
+    const next = [...images];
+    next[index] = media;
+    const compact = next.filter((image): image is AdminMedia => Boolean(image));
+    setImages(compact);
+    set(
+      'imageIds',
+      compact.map((image) => image.id),
+    );
+  };
   const slot = (index: number, label: string, className?: string) => {
     const media = images[index] ?? null;
     return (
       <ImageSlot
         media={media}
         label={label}
+        purpose="product"
+        onChange={(uploaded) => setImageAt(Math.min(index, images.length), uploaded)}
         {...(media ? { onRemove: () => removeImage(media.id) } : {})}
         {...(className ? { className } : {})}
       />

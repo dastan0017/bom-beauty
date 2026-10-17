@@ -1,7 +1,8 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { buildThemeVars, splitAccent, type Appearance } from '@bom/shared';
+import { buildThemeVars, splitAccent, type Appearance, type ImageRef } from '@bom/shared';
 import { ImageResponse } from 'next/og';
+import { shareUrl } from './media';
 
 // Open Graph cards (1200×630) rendered with next/og. Satori reads TTF but not WOFF2 or variable fonts, so static
 // instances live in packages/config/fonts/og (traced into the standalone build, see next.config.ts).
@@ -31,13 +32,29 @@ function readAssets() {
 
 let assets: ReturnType<typeof readAssets> | null = null;
 
+/**
+ * The photo's JPEG share copy as a data URL for Satori, whose renderer draws no WebP or AVIF. Fetched here rather than
+ * passed by URL, because next/og refuses image hosts on private addresses (media is on localhost in dev).
+ * Undefined when there is no photo or it cannot be loaded.
+ */
+export async function ogPhoto(image: ImageRef | null | undefined): Promise<string | undefined> {
+  if (!image) return undefined;
+  try {
+    const response = await fetch(shareUrl(image.id), { signal: AbortSignal.timeout(5_000) });
+    if (!response.ok) return undefined;
+    return `data:image/jpeg;base64,${Buffer.from(await response.arrayBuffer()).toString('base64')}`;
+  } catch {
+    return undefined;
+  }
+}
+
 export interface OgCard {
   appearance: Appearance;
   eyebrow?: string;
   /** May contain one `*accent*` word. */
   title: string;
   meta?: string;
-  /** Absolute URL of a product photo shown on the right. */
+  /** Product photo shown on the right, as a data URL from `ogPhoto`. */
   image?: string;
 }
 

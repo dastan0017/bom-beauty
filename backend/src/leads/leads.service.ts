@@ -9,6 +9,7 @@ import type { Env } from '../config/env';
 import { ENV } from '../config/env.module';
 import { hashIp } from '../common/client-ip';
 import { fakeId, isBot, isDuplicateClientRef, utmJson } from '../common/submission';
+import { NotificationsService } from '../notifications/notifications.service';
 import { TurnstileService } from '../common/turnstile.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -19,6 +20,7 @@ export class LeadsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly turnstile: TurnstileService,
+    private readonly notifications: NotificationsService,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
@@ -45,7 +47,7 @@ export class LeadsService {
         : [];
 
     try {
-      return await this.prisma.lead.create({
+      const lead = await this.prisma.lead.create({
         data: {
           kind: input.kind,
           answers: data.answers,
@@ -60,6 +62,8 @@ export class LeadsService {
         },
         select: { id: true },
       });
+      await this.notifications.enqueue({ entity: 'lead', id: lead.id }).catch(() => undefined);
+      return lead;
     } catch (error) {
       if (isDuplicateClientRef(error)) {
         const winner = await this.findByClientRef(data.clientRef);

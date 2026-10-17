@@ -5,6 +5,7 @@ import { ENV } from '../config/env.module';
 import { hashIp } from '../common/client-ip';
 import { ApiException, invalidField } from '../common/errors';
 import { fakeId, isBot, isDuplicateClientRef, utmJson } from '../common/submission';
+import { NotificationsService } from '../notifications/notifications.service';
 import { TurnstileService } from '../common/turnstile.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -20,6 +21,7 @@ export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly turnstile: TurnstileService,
+    private readonly notifications: NotificationsService,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
@@ -49,7 +51,7 @@ export class OrdersService {
     const title = 'name' in item ? item.name : item.title;
 
     try {
-      return await this.prisma.order.create({
+      const order = await this.prisma.order.create({
         data: {
           itemType: input.item.type,
           ...(input.item.type === 'product' ? { productId: item.id } : { programId: item.id }),
@@ -74,6 +76,8 @@ export class OrdersService {
         },
         select: { id: true, number: true },
       });
+      await this.notifications.enqueue({ entity: 'order', id: order.id }).catch(() => undefined);
+      return order;
     } catch (error) {
       // Two retries of the same submission raced; return the one that won.
       if (isDuplicateClientRef(error)) {

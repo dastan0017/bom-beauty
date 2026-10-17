@@ -1,4 +1,11 @@
-import { WHOLESALE_COUNTRY_LABELS, type AdminContent, type ContentValue } from '@bom/shared';
+import { useState } from 'react';
+import {
+  WHOLESALE_COUNTRY_LABELS,
+  type AdminContent,
+  type AdminMedia,
+  type AdminVideo,
+  type ContentValue,
+} from '@bom/shared';
 import { useContent } from '@/api/content';
 import { useProducts } from '@/api/catalog';
 import { inputClass, Spinner } from '@/components/ui';
@@ -28,8 +35,11 @@ export function WholesalePage() {
 function WholesaleForm({ content }: { content: AdminContent }) {
   const products = useProducts({});
   const { form, update, submit, errors, saved, dirty, saving } = useContentEditor('wholesale', content);
-  const media = (id: string | null) => (id ? (content.media.find((m) => m.id === id) ?? null) : null);
-  const video = form.videoId ? (content.videos.find((v) => v.id === form.videoId) ?? null) : null;
+  const [known, setKnown] = useState<AdminMedia[]>(content.media);
+  const [videos, setVideos] = useState<AdminVideo[]>(content.videos);
+  const remember = (item: AdminMedia) => setKnown((list) => [...list.filter((m) => m.id !== item.id), item]);
+  const media = (id: string | null) => (id ? (known.find((m) => m.id === id) ?? null) : null);
+  const video = form.videoId ? (videos.find((v) => v.id === form.videoId) ?? null) : null;
   const setList = <K extends 'facts' | 'stats' | 'benefits' | 'steps' | 'delivery'>(
     key: K,
     index: number,
@@ -306,6 +316,11 @@ function WholesaleForm({ content }: { content: AdminContent }) {
             <PdfSlot
               media={media(form.catalogMediaId)}
               hint={copy.wholesale.catalogHint}
+              purpose="catalog"
+              onChange={(uploaded) => {
+                remember(uploaded);
+                update({ catalogMediaId: uploaded.id });
+              }}
               onRemove={() => update({ catalogMediaId: null })}
             />
           </Panel>
@@ -313,6 +328,11 @@ function WholesaleForm({ content }: { content: AdminContent }) {
             <VideoSlot
               video={video}
               hint={copy.wholesale.videoHint}
+              title={copy.wholesale.video}
+              onChange={(uploaded) => {
+                setVideos((list) => [...list, uploaded]);
+                update({ videoId: uploaded.id });
+              }}
               onRemove={() => update({ videoId: null })}
             />
           </Panel>
@@ -320,6 +340,11 @@ function WholesaleForm({ content }: { content: AdminContent }) {
             <ImageSlot
               media={media(form.portraitMediaId)}
               label={copy.media.photo}
+              purpose="content"
+              onChange={(uploaded) => {
+                remember(uploaded);
+                update({ portraitMediaId: uploaded.id });
+              }}
               {...(form.portraitMediaId ? { onRemove: () => update({ portraitMediaId: null }) } : {})}
             />
           </Panel>

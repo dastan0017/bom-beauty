@@ -111,6 +111,8 @@ function ProgramForm({ program }: { program: AdminProgram | null }) {
   const [baseline, setBaseline] = useState(initial);
   const [form, setForm] = useState(initial);
   const [current, setCurrent] = useState(program);
+  const [video, setVideo] = useState(program?.video ?? null);
+  const [protocol, setProtocol] = useState(program?.protocol ?? null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   // A just-created item arrives here with { saved: true } after the redirect to its own URL.
   const location = useLocation();
@@ -164,6 +166,8 @@ function ProgramForm({ program }: { program: AdminProgram | null }) {
           setBaseline(next);
           setForm(next);
           setCurrent(result);
+          setVideo(result.video);
+          setProtocol(result.protocol);
           setErrors({});
           setSaved(true);
           if (!program)
@@ -522,8 +526,13 @@ function ProgramForm({ program }: { program: AdminProgram | null }) {
         <div className="flex max-w-[440px] min-w-0 flex-[1_1_320px] flex-col gap-4">
           <Panel title={copy.program.video} aside={<span className="text-[13px] text-muted">9:16</span>}>
             <VideoSlot
-              video={form.videoId ? (current?.video ?? null) : null}
+              video={form.videoId ? video : null}
               hint={copy.media.videoHint}
+              title={form.title || copy.program.new}
+              onChange={(uploaded) => {
+                setVideo(uploaded);
+                set('videoId', uploaded.id);
+              }}
               onRemove={() => set('videoId', null)}
             />
           </Panel>
@@ -533,8 +542,13 @@ function ProgramForm({ program }: { program: AdminProgram | null }) {
             aside={<span className="text-[13px] text-muted">PDF</span>}
           >
             <PdfSlot
-              media={form.protocolMediaId ? (current?.protocol ?? null) : null}
+              media={form.protocolMediaId ? protocol : null}
               hint={copy.media.pdfHint}
+              purpose="protocol"
+              onChange={(uploaded) => {
+                setProtocol(uploaded);
+                set('protocolMediaId', uploaded.id);
+              }}
               onRemove={() => set('protocolMediaId', null)}
             />
           </Panel>

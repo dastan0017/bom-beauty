@@ -93,13 +93,14 @@ Scaffold
 
 ## M5 Media, video and jobs
 
-- [ ] Spike: presigned POST + CORS against a real Hetzner bucket (fallback presigned PUT)
-- [ ] BullMQ queues, worker, schedules (Asia/Bishkek), failure logging
-- [ ] `media.process` (variants, blur, metadata strip, HEIC fallback, PDF publish)
-- [ ] Bunny Stream: create + TUS signature, admin upload with progress (`tus-js-client` pending approval), webhook + `video.sync`, player wiring
-- [ ] `notify.telegram`, `notify.email`, `uploads.cleanup`, `sessions.cleanup`, `web.revalidate`, `indexnow.submit`
-- [ ] Tests: variant generation, EXIF removal (fixture with GPS), Bunny signature, notification formatting
-- [ ] Gate + `feat(backend): media, video, jobs`
+- [x] Spike: presigned POST + CORS (passed on SeaweedFS; a real Hetzner bucket is re-checked in M7, no account yet)
+- [x] BullMQ queues, worker, schedules (Asia/Bishkek), failure logging
+- [x] `media.process` (variants, blur, metadata strip, HEIC fallback, PDF publish)
+- [x] Bunny Stream: create + TUS signature, admin upload with progress (`tus-js-client`), webhook + `video.sync`, player wiring
+- [x] `notify.telegram`, `notify.email`, `uploads.cleanup`, `sessions.cleanup`, `web.revalidate`, `indexnow.submit`
+- [x] Admin uploads: product photos, program video and protocol, home and wholesale media, review screenshots, share image, notification test
+- [x] Tests: variant generation, EXIF removal (fixture with GPS), Bunny signature, notification formatting
+- [x] Gate + `feat(backend): media, video, jobs`
 
 ## M6 Hardening
 
@@ -118,5 +119,5 @@ Scaffold
 - [ ] `ci.yml` (lint, typecheck, test with services, build, OpenAPI drift) and `deploy.yml` (GHCR, SSH, migrate, up, health)
 - [ ] Backups: nightly `pg_dump`, weekly bucket sync, 30-day retention, `infra/scripts/restore.md` tested once
 - [ ] Umami, optional Uptime Kuma
-- [ ] `docs/DEPLOY.md`, final `docs/HANDOFF.md`, first production deploy checklist
+- [ ] `docs/DEPLOY.md`, final `docs/HANDOFF.md`, first production deploy checklist (incl. Hetzner presigned POST + CORS check, Bunny MP4 fallback and webhook URL, Telegram bot)
 - [ ] Gate + `chore(infra): production deploy`

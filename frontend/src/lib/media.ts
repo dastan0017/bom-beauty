@@ -7,6 +7,11 @@ export function variantUrl(id: string, width: number, format: 'avif' | 'webp'): 
   return `${MEDIA_URL}/p/${id}/${width}.${format}`;
 }
 
+/** JPEG copy (≤ 1200 px) made for share cards. */
+export function shareUrl(id: string): string {
+  return `${MEDIA_URL}/p/${id}/share.jpg`;
+}
+
 export function srcSet(image: ImageRef, format: 'avif' | 'webp'): string {
   return image.widths.map((width) => `${variantUrl(image.id, width, format)} ${width}w`).join(', ');
 }

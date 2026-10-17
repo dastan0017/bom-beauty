@@ -27,6 +27,8 @@ export const keys = {
     detail: (id: string) => ['programs', 'detail', id] as const,
   },
   reviews: ['reviews'] as const,
+  media: (id: string) => ['media', id] as const,
+  video: (id: string) => ['video', id] as const,
   content: (key: string) => ['content', key] as const,
   settings: ['settings'] as const,
   users: ['users'] as const,

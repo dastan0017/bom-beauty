@@ -412,6 +412,7 @@ new ──► sent
 | private | `incoming/{mediaId}`              | presigned POST target; removed after processing             |
 | private | `orig/{mediaId}.{ext}`            | original image, never linked                                |
 | public  | `p/{mediaId}/{width}.{avif,webp}` | immutable, `max-age=31536000, immutable`                    |
+| public  | `p/{mediaId}/share.jpg`           | JPEG ≤ 1200 px for share cards (next/og draws no WebP)      |
 | public  | `d/{mediaId}/{filename}.pdf`      | protocols, brand catalog; `Content-Disposition: attachment` |
 
 ## 7. Seed (M1)

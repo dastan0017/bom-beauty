@@ -13,6 +13,11 @@ export function useSettings() {
   });
 }
 
+/** Sends a check message through the saved channels. */
+export function useNotificationTest() {
+  return useMutation({ mutationFn: () => unwrap(api.POST('/v1/admin/settings/notifications/test')) });
+}
+
 export function useSaveSetting<K extends SettingKey>(key: K) {
   const queryClient = useQueryClient();
   return useMutation({

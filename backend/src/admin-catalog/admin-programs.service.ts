@@ -188,6 +188,7 @@ export class AdminProgramsService {
       diff: { slug },
     });
     this.revalidator.revalidate(programTags(slug));
+    this.revalidator.indexNow([`/programs/${slug}`, '/programs']);
     return this.detail(row.id);
   }
 
@@ -225,6 +226,7 @@ export class AdminProgramsService {
       ...programTags(current.slug, slug),
       ...(slug !== current.slug ? [SITE_TAGS.redirects] : []),
     ]);
+    this.revalidator.indexNow([`/programs/${current.slug}`, `/programs/${slug}`]);
     return this.detail(id);
   }
 
@@ -242,6 +244,7 @@ export class AdminProgramsService {
       diff: change,
     });
     this.revalidator.revalidate(programTags(row.slug));
+    if (change.published !== undefined) this.revalidator.indexNow([`/programs/${row.slug}`, '/programs']);
     return this.detail(id);
   }
 
@@ -264,6 +267,7 @@ export class AdminProgramsService {
       diff: { slug: row.slug },
     });
     this.revalidator.revalidate([...programTags(row.slug), SITE_TAGS.redirects]);
+    this.revalidator.indexNow([`/programs/${row.slug}`, '/programs']);
   }
 
   private fields(input: ProgramData) {

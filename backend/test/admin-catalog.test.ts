@@ -294,20 +294,21 @@ describe('admin: catalog, content, settings, users', () => {
       json: { mediaIds: [m1.id, m2.id] },
     });
     expect(created.status).toBe(201);
-    expect(created.body.map((r) => [r.isDemo, r.isHidden])).toEqual([
-      [true, true],
-      [false, false],
-      [false, false],
+    // New screenshots go first, in upload order; the demo example is hidden.
+    expect(created.body.map((r) => [r.media.id, r.isDemo, r.isHidden])).toEqual([
+      [m1.id, false, false],
+      [m2.id, false, false],
+      [demoMedia.id, true, true],
     ]);
     const ids = created.body.map((r) => r.id);
     const reordered = await request<AdminReview[]>(api('/reviews/order'), {
       method: 'PUT',
       headers: manager.write,
-      json: { ids: [ids[2], ids[1]] },
+      json: { ids: [ids[1], ids[0]] },
     });
-    expect(reordered.body.map((r) => r.id)).toEqual([ids[2], ids[1], ids[0]]);
+    expect(reordered.body.map((r) => r.id)).toEqual([ids[1], ids[0], ids[2]]);
     const publicReviews = await request<{ id: string }[]>(ctx.url('/v1/reviews'));
-    expect(publicReviews.body.map((r) => r.id)).toEqual([ids[2], ids[1]]);
+    expect(publicReviews.body.map((r) => r.id)).toEqual([ids[1], ids[0]]);
   });
 
   it('validates content blocks and serves the saved version on the site', async () => {

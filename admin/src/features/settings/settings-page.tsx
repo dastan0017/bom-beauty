@@ -3,7 +3,9 @@ import {
   relativeDateTime,
   USER_ROLE_LABELS,
   USER_ROLES,
+  type AdminMedia,
   type AdminUser,
+  type NotificationTestResult,
   type SettingKey,
   type SettingValue,
   type UserRole,
@@ -11,7 +13,8 @@ import {
 import { useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import { NavLink, Navigate, useParams } from 'react-router';
 import { toast } from 'sonner';
-import { useSaveSetting, useSettings, type AdminSettings } from '@/api/settings';
+import { useMedia } from '@/api/media';
+import { useNotificationTest, useSaveSetting, useSettings, type AdminSettings } from '@/api/settings';
 import { useAudit, useUserActions, useUsers } from '@/api/users';
 import { Button, Card, inputClass, Spinner, TableHead, TableMessage } from '@/components/ui';
 import {
@@ -22,6 +25,7 @@ import {
   Toggle,
   useUnsavedGuard,
 } from '@/components/ui/editor';
+import { ImageSlot } from '@/components/ui/media';
 import { copy } from '@/content/copy';
 import { useUser } from '@/features/auth/auth';
 import { Text } from '@/features/products/product-editor';
@@ -284,9 +288,7 @@ function SeoForm({ settings }: { settings: AdminSettings }) {
               spellCheck={false}
             />
           </Text>
-          <span className="text-[13px] text-muted">
-            {copy.settings.seo.ogImage}: {copy.settings.seo.ogImageHint}. {copy.media.later}.
-          </span>
+          <OgImage id={form.seo.ogMediaId} onChange={(ogMediaId) => set('seo', { ogMediaId })} />
         </Panel>
         <Panel>
           <Text
@@ -329,9 +331,55 @@ function SeoForm({ settings }: { settings: AdminSettings }) {
   );
 }
 
+/** Share image (1200 × 630): stored as an id in the `seo` setting, shown from the media record. */
+function OgImage({ id, onChange }: { id: string | null; onChange: (id: string | null) => void }) {
+  const stored = useMedia(id);
+  const [uploaded, setUploaded] = useState<AdminMedia | null>(null);
+  const media = id ? (uploaded?.id === id ? uploaded : (stored.data ?? null)) : null;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-sm font-semibold">{copy.settings.seo.ogImage}</span>
+      <ImageSlot
+        media={media}
+        label="1200 × 630"
+        purpose="seo"
+        onChange={(next) => {
+          setUploaded(next);
+          onChange(next.id);
+        }}
+        {...(id ? { onRemove: () => onChange(null) } : {})}
+        className="aspect-[1200/630] w-full max-w-[420px] rounded-xl"
+      />
+      <span className="text-[13px] leading-normal text-muted">{copy.settings.seo.ogImageHint}</span>
+    </div>
+  );
+}
+
+function testSummary(result: NotificationTestResult): string {
+  const t = copy.settings.notifications;
+  return (['telegram', 'email'] as const)
+    .filter((channel) => result[channel] !== 'off')
+    .map((channel) => `${t.channel[channel]}: ${t.result[result[channel]]}`)
+    .join('. ');
+}
+
 function NotificationsForm({ settings }: { settings: AdminSettings }) {
   const { form, set, submit, errors, saved, dirty, saving } = useSettingsForm(['notifications'], settings);
   const n = form.notifications;
+  const test = useNotificationTest();
+  const anyChannel = n.telegramEnabled || n.emailEnabled;
+  const runTest = () =>
+    test.mutate(undefined, {
+      onSuccess: (result) => {
+        const ok =
+          result.telegram !== 'failed' &&
+          result.email !== 'failed' &&
+          (result.telegram === 'sent' || result.email === 'sent');
+        if (ok) toast.success(testSummary(result));
+        else toast.error(testSummary(result));
+      },
+      onError: (error) => toast.error(errorText(error)),
+    });
   return (
     <>
       <EditorHeader
@@ -386,6 +434,21 @@ function NotificationsForm({ settings }: { settings: AdminSettings }) {
             checked={n.notifyLeads}
             onChange={(notifyLeads) => set('notifications', { notifyLeads })}
           />
+        </Panel>
+        <Panel>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="text-[13px] leading-normal text-muted">
+              {dirty
+                ? copy.settings.notifications.testSaveFirst
+                : anyChannel
+                  ? copy.settings.notifications.testHint
+                  : copy.settings.notifications.testNothing}
+            </span>
+            <Button variant="outline" onClick={runTest} disabled={dirty || !anyChannel || test.isPending}>
+              {test.isPending && <Spinner />}
+              {copy.settings.notifications.test}
+            </Button>
+          </div>
         </Panel>
       </div>
     </>

@@ -241,6 +241,7 @@ export class AdminProductsService {
       diff: { slug },
     });
     this.revalidator.revalidate([...productTags(slug), SITE_TAGS.categories]);
+    this.revalidator.indexNow([`/catalog/${slug}`, '/catalog']);
     return this.detail(row.id);
   }
 
@@ -278,6 +279,7 @@ export class AdminProductsService {
       SITE_TAGS.categories,
       ...(slug !== current.slug ? [SITE_TAGS.redirects] : []),
     ]);
+    this.revalidator.indexNow([`/catalog/${current.slug}`, `/catalog/${slug}`]);
     return this.detail(id);
   }
 
@@ -294,6 +296,7 @@ export class AdminProductsService {
       diff: change,
     });
     this.revalidator.revalidate([...productTags(row.slug), SITE_TAGS.categories]);
+    if (change.published !== undefined) this.revalidator.indexNow([`/catalog/${row.slug}`, '/catalog']);
     return this.detail(id);
   }
 
@@ -318,6 +321,7 @@ export class AdminProductsService {
       diff: { slug: row.slug },
     });
     this.revalidator.revalidate([...productTags(row.slug), SITE_TAGS.categories]);
+    this.revalidator.indexNow([`/catalog/${row.slug}`, '/catalog']);
   }
 
   private fields(input: ProductData) {

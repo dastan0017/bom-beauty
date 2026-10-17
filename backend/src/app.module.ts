@@ -21,6 +21,10 @@ import { PrismaModule } from './prisma/prisma.module';
 import { RedirectsModule } from './redirects/redirects.controller';
 import { RedisModule } from './redis/redis.module';
 import { RevalidateModule } from './revalidate/revalidate.service';
+import { JobsModule } from './jobs/jobs.module';
+import { AdminMediaModule } from './media/admin-media.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { StorageModule } from './storage/storage.service';
 import { ReviewsModule } from './reviews/reviews.controller';
 import { SettingsModule } from './settings/settings.module';
 
@@ -43,7 +47,10 @@ export class AppModule {
         PrismaModule,
         RedisModule,
         AuditModule,
+        JobsModule.forRoot(env, { processors: env.RUN_WORKER_IN_API }),
+        StorageModule,
         RevalidateModule,
+        NotificationsModule,
         SettingsModule,
         AuthModule,
         CatalogModule,
@@ -55,6 +62,7 @@ export class AppModule {
         AdminModule,
         AdminCatalogModule,
         AdminContentModule,
+        AdminMediaModule,
       ],
       controllers: [HealthController],
       providers: [
