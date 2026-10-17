@@ -8,7 +8,7 @@ import { cn } from '@/lib/cn';
 import { BbImage, PhotoPlaceholder } from '../bb-image';
 import { useCurrency } from '../currency';
 import { useOverlays, type OrderItem } from '../overlays/site-overlays';
-import { QtyStepper } from '../overlays/order-sheet';
+import { QtyStepper } from '../overlays/form-parts';
 import { StickyBar } from '../sticky-bar';
 import { BackLink, primaryButton } from '../ui';
 
@@ -39,7 +39,11 @@ export function ProductGallery({ images, name }: { images: ImageRef[]; name: str
           if (index !== active) setActive(index);
         }}
         className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto rounded-card border border-line bg-surface"
+        role="region"
         aria-roledescription="carousel"
+        aria-label={copy.product.gallery}
+        // Arrow keys scroll the gallery (snapping to each photo) when it has focus.
+        tabIndex={slides.length > 1 ? 0 : undefined}
       >
         {slides.map((image, index) => (
           <div
@@ -61,17 +65,16 @@ export function ProductGallery({ images, name }: { images: ImageRef[]; name: str
       </div>
       {slides.length > 1 && (
         <div className="flex justify-center gap-1.5 pt-3">
+          {/* Dots are a pointer shortcut, as in the design; keyboards scroll the focused gallery. */}
           {slides.map((image, index) => (
-            <button
+            <span
               key={image?.id ?? index}
-              type="button"
-              aria-label={copy.product.photoOf(index + 1)}
-              aria-current={index === active || undefined}
+              aria-hidden="true"
               onClick={() => {
                 const element = track.current;
                 if (element) element.scrollTo({ left: index * element.clientWidth, behavior: 'smooth' });
               }}
-              className="flex h-6 items-center"
+              className="flex h-6 cursor-pointer items-center"
             >
               <span
                 className={cn(
@@ -79,8 +82,11 @@ export function ProductGallery({ images, name }: { images: ImageRef[]; name: str
                   index === active ? 'w-[18px] bg-ink' : 'w-1.5 bg-line-hover',
                 )}
               />
-            </button>
+            </span>
           ))}
+          <span className="sr-only" aria-live="polite">
+            {copy.product.photoOf(active + 1)}
+          </span>
         </div>
       )}
     </div>

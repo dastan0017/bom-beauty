@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { splitAccent } from './schemas/content';
+import { splitAccent } from './text';
 import { createOrderSchema } from './schemas/orders';
 import { SETTING_DEFAULTS, SETTING_KEYS, SETTING_SCHEMAS } from './schemas/settings';
 

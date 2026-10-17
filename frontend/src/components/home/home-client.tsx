@@ -58,7 +58,10 @@ export function HeroPhoto({
         alt={ownerName}
         priority
         placeholder={
-          <span className="flex size-full items-center justify-center bg-accent-soft heading text-[34px] text-accent-ink">
+          <span
+            aria-hidden="true"
+            className="flex size-full items-center justify-center bg-accent-soft heading text-[34px] text-accent-ink"
+          >
             {initials}
           </span>
         }

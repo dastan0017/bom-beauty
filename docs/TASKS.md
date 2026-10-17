@@ -104,13 +104,13 @@ Scaffold
 
 ## M6 Hardening
 
-- [ ] Anti-spam review (honeypot, limits, optional Turnstile)
-- [ ] Security headers and CSP (Caddy + Next), cookie flags in prod mode, CORS review
-- [ ] Error pages and empty states audit
-- [ ] Accessibility pass (focus, labels, 44 px targets, contrast incl. owner-chosen colours, keyboard paths, screen reader on sheets and quiz)
-- [ ] Playwright e2e: home, catalog filter, product order sheet (WhatsApp mocked), quiz, admin login + status change
-- [ ] Performance pass: bundles, images, video lazy load, API p95
-- [ ] Gate + `fix: hardening pass`
+- [x] Anti-spam review (honeypot, limits, optional Turnstile with timeout); site server reads exempt via internal secret, admin limited per session
+- [x] Security headers and CSP (Next for the site, build-time meta for the admin, API headers; Caddy part in M7), cookie flags in prod mode, CORS review
+- [x] Error pages and empty states audit (admin route error boundary inside the shell)
+- [x] Accessibility pass (axe WCAG 2.2 AA in both e2e suites, 44 px targets via `tap`, contrast fixes, keyboard paths for sheet and quiz, label-in-name)
+- [x] Playwright e2e: home, catalog filter (with and without JS), product order sheet (WhatsApp mocked), quiz, admin login + status change
+- [x] Performance pass: first-load JS 305 → 166 KB gz, admin route chunks, video lazy, API p95 (`docs/lighthouse/2026-10-17-m6.md`)
+- [x] Gate + `fix: hardening pass`
 
 ## M7 Deploy
 

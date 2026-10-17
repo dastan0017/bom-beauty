@@ -125,7 +125,7 @@ export default async function ProductPage({ params }: Params) {
                     <Link
                       key={program.slug}
                       href={`/programs/${program.slug}`}
-                      className="inline-flex h-10 items-center gap-1.5 rounded-full bg-accent-soft px-3.5 text-sm font-semibold text-accent-ink"
+                      className="tap inline-flex h-10 items-center gap-1.5 rounded-full bg-accent-soft px-3.5 text-sm font-semibold text-accent-ink"
                     >
                       {program.title}
                       <ArrowRightIcon size={14} strokeWidth={2.4} />

@@ -1,4 +1,4 @@
-import { formatKgs } from '@bom/shared';
+import { formatKgs } from '@bom/shared/web';
 import { copy } from '@/content/copy';
 import { getProduct, getSettings } from '@/lib/data';
 import { OG_CONTENT_TYPE, OG_SIZE, ogPhoto, renderOgCard } from '@/lib/og';

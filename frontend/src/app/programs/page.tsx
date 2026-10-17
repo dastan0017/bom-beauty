@@ -1,4 +1,4 @@
-import { GENERIC_QUESTION_MESSAGE, waLink } from '@bom/shared';
+import { GENERIC_QUESTION_MESSAGE, waLink } from '@bom/shared/web';
 import type { Metadata } from 'next';
 import { TrackedLink } from '@/components/header-client';
 import { QuizLink } from '@/components/home/home-client';

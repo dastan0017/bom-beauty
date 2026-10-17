@@ -3,7 +3,6 @@ import {
   categorySchema,
   CONTENT_SCHEMAS,
   contentResponseSchema,
-  FOREIGN_CURRENCY_CODES,
   productCardSchema,
   productDetailSchema,
   programCardSchema,
@@ -13,12 +12,9 @@ import {
   reviewCardSchema,
   SETTING_DEFAULTS,
   sitemapSchema,
-  type ContentKey,
-  type ContentResponse,
-  type ContentValue,
-  type ProgramCard,
-  type PublicSettings,
 } from '@bom/shared';
+import type { ContentKey, ContentResponse, ContentValue, ProgramCard, PublicSettings } from '@bom/shared';
+import { FOREIGN_CURRENCY_CODES } from '@bom/shared/web';
 import { cache } from 'react';
 import { z } from 'zod';
 import { apiGet, apiGetOrNull, TAGS } from './api';

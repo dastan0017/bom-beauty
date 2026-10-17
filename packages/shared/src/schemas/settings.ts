@@ -1,9 +1,10 @@
-import { z } from 'zod';
+import { z } from '../zod';
 import { FOREIGN_CURRENCY_CODES, type ForeignCurrencyCode, CURRENCIES } from '../currency';
 import { CURRENCY_CODES, THEME_KEYS } from '../enums';
 import { normalizePhone } from '../phone';
 import { DEFAULT_APPEARANCE } from '../theme';
 import { imageRefSchema } from './common';
+import { DEFAULT_SHOP_WHATSAPP } from '../whatsapp';
 
 // Setting values (docs/DATA-MODEL.md §3). Stored values are merged over these defaults on read.
 
@@ -77,7 +78,7 @@ export const SETTING_KEYS = Object.keys(SETTING_SCHEMAS) as SettingKey[];
 export const SETTING_DEFAULTS: { [K in SettingKey]: SettingValue<K> } = {
   shop: {
     name: 'Bom Beauty',
-    whatsapp: '+996706304803',
+    whatsapp: DEFAULT_SHOP_WHATSAPP,
     instagramShop: 'bom_beauty.kr',
     instagramOwner: 'nurai.krsel',
     ownerName: 'Нурайым Бекиева',

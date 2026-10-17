@@ -1,4 +1,4 @@
-import { splitAccent } from '@bom/shared';
+import { splitAccent } from '@bom/shared/web';
 import Link from 'next/link';
 import type { ComponentProps, ReactNode } from 'react';
 import { copy } from '@/content/copy';

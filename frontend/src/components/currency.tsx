@@ -1,6 +1,7 @@
 'use client';
 
-import { CURRENCIES, formatKgs, formatPrice, type CurrencyCode } from '@bom/shared';
+import type { CurrencyCode } from '@bom/shared';
+import { CURRENCIES, formatKgs, formatPrice } from '@bom/shared/web';
 import { createContext, use, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 // Visitor's display currency (docs/ARCHITECTURE.md §6.2). Prices render in сом on the server; after hydration

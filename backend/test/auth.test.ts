@@ -44,6 +44,19 @@ describe('auth', () => {
     expect(me.body.csrfToken).toBe(session.csrfToken);
   });
 
+  it('sends hardening headers and keeps admin answers out of caches', async () => {
+    const { cookie } = await login();
+    const me = await request(ctx.url('/v1/auth/me'), { headers: { Cookie: cookie } });
+    expect(me.headers.get('cache-control')).toBe('no-store');
+    expect(me.headers.get('x-content-type-options')).toBe('nosniff');
+    const orders = await request(ctx.url('/v1/admin/orders'), { headers: { Cookie: cookie } });
+    expect(orders.headers.get('cache-control')).toBe('no-store');
+    const site = await request(ctx.url('/v1/settings/public'));
+    expect(site.headers.get('cache-control')).not.toBe('no-store');
+    expect(site.headers.get('x-frame-options')).toBe('DENY');
+    expect(site.headers.get('x-powered-by')).toBeNull();
+  });
+
   it('stores only a hash of the session token', async () => {
     const { cookie } = await login();
     const token = cookie.split('=')[1] ?? '';

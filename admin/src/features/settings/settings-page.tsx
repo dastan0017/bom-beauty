@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 import { useMedia } from '@/api/media';
 import { useNotificationTest, useSaveSetting, useSettings, type AdminSettings } from '@/api/settings';
 import { useAudit, useUserActions, useUsers } from '@/api/users';
-import { Button, Card, inputClass, Spinner, TableHead, TableMessage } from '@/components/ui';
+import { Button, Card, inputClass, Spinner, TableHead, TableMessage, TableRow } from '@/components/ui';
 import {
   EditorHeader,
   Panel,
@@ -162,6 +162,7 @@ function ShopForm({ settings }: { settings: AdminSettings }) {
   return (
     <>
       <EditorHeader
+        level={2}
         title={copy.settings.tabs.shop}
         saved={saved}
         saving={saving}
@@ -245,6 +246,7 @@ function SeoForm({ settings }: { settings: AdminSettings }) {
   return (
     <>
       <EditorHeader
+        level={2}
         title={copy.settings.tabs.seo}
         saved={saved}
         saving={saving}
@@ -383,6 +385,7 @@ function NotificationsForm({ settings }: { settings: AdminSettings }) {
   return (
     <>
       <EditorHeader
+        level={2}
         title={copy.settings.tabs.notifications}
         saved={saved}
         saving={saving}
@@ -521,9 +524,8 @@ function UsersTab() {
           {users.data?.map((user) => {
             const self = user.id === me.id;
             return (
-              <div
+              <TableRow
                 key={user.id}
-                role="row"
                 style={{ gridTemplateColumns: USER_COLUMNS }}
                 className="grid min-h-16 min-w-[760px] items-center gap-3 border-b border-line-2 px-[22px] py-2 last:border-b-0"
               >
@@ -561,7 +563,7 @@ function UsersTab() {
                 <Button variant="outline" className="h-10 text-sm" onClick={() => setPasswordFor(user)}>
                   {copy.settings.users.setPassword}
                 </Button>
-              </div>
+              </TableRow>
             );
           })}
           {users.isPending && <TableMessage>{copy.loading}</TableMessage>}
@@ -722,16 +724,15 @@ function AuditTab() {
             <span>{copy.settings.audit.what}</span>
           </TableHead>
           {rows.map((row) => (
-            <div
+            <TableRow
               key={row.id}
-              role="row"
               style={{ gridTemplateColumns: AUDIT_COLUMNS }}
               className="grid min-h-12 min-w-[620px] items-center gap-3 border-b border-line-2 px-[22px] text-sm last:border-b-0"
             >
               <span className="text-muted">{relativeDateTime(new Date(row.at))}</span>
               <span>{row.userName ?? copy.settings.audit.system}</span>
               <span>{describe(row.entity, row.action, row.diff)}</span>
-            </div>
+            </TableRow>
           ))}
           {audit.isPending && <TableMessage>{copy.loading}</TableMessage>}
           {audit.data && rows.length === 0 && <TableMessage>{copy.settings.audit.empty}</TableMessage>}

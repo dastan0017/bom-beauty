@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../zod';
 import { QUIZ_GOALS, SKIN_TYPES, USER_ROLES } from '../enums';
 import { BADGES } from '../labels';
 import { fileRefSchema, imageRefSchema, slugSchema } from './common';

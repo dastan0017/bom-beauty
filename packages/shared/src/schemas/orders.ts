@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../zod';
 import { CURRENCY_CODES } from '../enums';
 import { normalizePhone } from '../phone';
 import { slugSchema, submissionMetaShape } from './common';

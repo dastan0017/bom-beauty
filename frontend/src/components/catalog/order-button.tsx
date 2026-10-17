@@ -1,6 +1,6 @@
 'use client';
 
-import { waLink } from '@bom/shared';
+import { waLink } from '@bom/shared/web';
 import type { ReactNode } from 'react';
 import { copy } from '@/content/copy';
 import { useOverlays, type OrderItem } from '../overlays/site-overlays';

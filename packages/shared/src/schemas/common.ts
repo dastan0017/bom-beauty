@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../zod';
 
 // Building blocks shared by request and response schemas. Messages are codes; apps map them to texts in copy.ts.
 

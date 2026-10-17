@@ -1,5 +1,13 @@
 import { ORDER_STATUS_LABELS, type OrderStatus } from '@bom/shared';
-import type { ButtonHTMLAttributes, ReactNode, SVGProps } from 'react';
+import {
+  Children,
+  cloneElement,
+  isValidElement,
+  type ButtonHTMLAttributes,
+  type HTMLAttributes,
+  type ReactNode,
+  type SVGProps,
+} from 'react';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/utils';
 
@@ -110,7 +118,10 @@ export function Segmented<K extends string>({
             )}
           >
             {option.label}
-            {option.count !== undefined && <span className="font-normal opacity-75">{option.count}</span>}
+            {/* Faded only on the dark active tab: on white the muted grey is already the lightest that reads 4.5:1. */}
+            {option.count !== undefined && (
+              <span className={cn('font-normal', active && 'opacity-75')}>{option.count}</span>
+            )}
           </button>
         );
       })}
@@ -195,6 +206,19 @@ export function WhatsAppLink({ phone, className }: { phone: string; className?: 
 }
 
 /** Table header / row grid (design: display:grid with fixed column templates and a min width). */
+/** Cells of a div table: plain spans take the role; anything else is wrapped so it keeps its own role. */
+function asCells(children: ReactNode, role: 'cell' | 'columnheader'): ReactNode {
+  return Children.map(children, (child) =>
+    isValidElement<{ role?: string }>(child) && child.type === 'span' && !child.props.role ? (
+      cloneElement(child, { role })
+    ) : (
+      <span role={role} className="grid min-w-0 items-center">
+        {child}
+      </span>
+    ),
+  );
+}
+
 export function TableHead({ columns, children }: { columns: string; children: ReactNode }) {
   return (
     <div
@@ -202,13 +226,26 @@ export function TableHead({ columns, children }: { columns: string; children: Re
       style={{ gridTemplateColumns: columns }}
       className="grid min-w-[var(--table-min)] gap-3 border-b border-line-2 bg-table-head px-[22px] py-3 text-[13px] text-muted"
     >
-      {children}
+      {asCells(children, 'columnheader')}
+    </div>
+  );
+}
+
+/** One row of a div table (`role="table"` container); each child is a cell. */
+export function TableRow({ children, ...props }: HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div role="row" {...props}>
+      {asCells(children, 'cell')}
     </div>
   );
 }
 
 export function TableMessage({ children }: { children: ReactNode }) {
-  return <div className="px-[22px] py-12 text-center text-[15px] text-muted">{children}</div>;
+  return (
+    <div role="row" className="px-[22px] py-12 text-center text-[15px] text-muted">
+      <span role="cell">{children}</span>
+    </div>
+  );
 }
 
 export function Spinner({ className }: { className?: string }) {

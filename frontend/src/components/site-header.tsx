@@ -1,4 +1,4 @@
-import { GENERIC_QUESTION_MESSAGE, waLink } from '@bom/shared';
+import { GENERIC_QUESTION_MESSAGE, waLink } from '@bom/shared/web';
 import Image from 'next/image';
 import Link from 'next/link';
 import { copy } from '@/content/copy';
@@ -11,7 +11,7 @@ export function SiteHeader({ whatsapp, multiCurrency }: { whatsapp: string; mult
     <header className="sticky top-0 z-30 border-b border-header-line bg-header">
       <div className="relative mx-auto max-w-[1100px] lg:flex lg:h-[68px] lg:items-center lg:gap-8 lg:px-6">
         <div className="flex h-14 items-center justify-between pr-4 pl-5 lg:contents">
-          <Link href="/" aria-label={copy.header.logoAlt} className="flex-none lg:order-1">
+          <Link href="/" aria-label={copy.header.logoAlt} className="tap flex-none lg:order-1">
             <Image
               src="/brand/bom-lockup-full.png"
               alt={copy.header.logoAlt}

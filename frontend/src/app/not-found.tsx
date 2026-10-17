@@ -1,4 +1,4 @@
-import { GENERIC_QUESTION_MESSAGE, waLink } from '@bom/shared';
+import { GENERIC_QUESTION_MESSAGE, waLink } from '@bom/shared/web';
 import Link from 'next/link';
 import { TrackedLink } from '@/components/header-client';
 import { WhatsAppIcon } from '@/components/icons';

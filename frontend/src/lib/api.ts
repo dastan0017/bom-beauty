@@ -1,3 +1,4 @@
+import 'server-only';
 import { connection } from 'next/server';
 import type { z } from 'zod';
 import { env } from '@/env';
@@ -20,7 +21,8 @@ export class ApiNotFoundError extends Error {}
 
 /**
  * Server-side GET against the internal API URL. Pages render per request (so `next build` never needs the API),
- * while responses sit in Next's data cache until the API revalidates their tags.
+ * while responses sit in Next's data cache until the API revalidates their tags. The shared secret exempts these
+ * calls from the API's per-IP rate limit: every render comes from this one server.
  */
 export async function apiGet<S extends z.ZodType>(
   path: string,
@@ -28,7 +30,10 @@ export async function apiGet<S extends z.ZodType>(
   tags: string[],
 ): Promise<z.output<S>> {
   await connection();
-  const response = await fetch(`${env.INTERNAL_API_URL}${path}`, { next: { revalidate: 3600, tags } });
+  const response = await fetch(`${env.INTERNAL_API_URL}${path}`, {
+    headers: { 'X-Internal-Secret': env.REVALIDATE_SECRET },
+    next: { revalidate: 3600, tags },
+  });
   if (response.status === 404) throw new ApiNotFoundError(path);
   if (!response.ok) throw new Error(`API ${response.status} for ${path}`);
   return schema.parse(await response.json());

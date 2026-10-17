@@ -1,4 +1,4 @@
-import { plural, productsWord, stepsWord } from '@bom/shared';
+import { plural, productsWord, stepsWord } from '@bom/shared/web';
 
 // Counted phrases from the design ("5 средств", "3 шага").
 

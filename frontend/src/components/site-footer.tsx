@@ -1,4 +1,6 @@
-import { formatPhoneDisplay, GENERIC_QUESTION_MESSAGE, waLink, type PublicSettings } from '@bom/shared';
+import { formatPhoneDisplay } from '@bom/shared';
+import type { PublicSettings } from '@bom/shared';
+import { GENERIC_QUESTION_MESSAGE, waLink } from '@bom/shared/web';
 import Image from 'next/image';
 import Link from 'next/link';
 import { copy } from '@/content/copy';
@@ -37,19 +39,19 @@ export function SiteFooter({ shop }: { shop: PublicSettings['shop'] }) {
           </p>
         </div>
         <nav
-          aria-label={copy.common.sections}
+          aria-label={copy.footer.sections}
           className="flex flex-wrap gap-x-5 gap-y-1 text-[15px] font-semibold text-footer-ink lg:flex-col lg:gap-y-0"
         >
-          <Link href="/catalog" className="flex h-10 items-center">
+          <Link href="/catalog" className="tap flex h-10 items-center">
             {copy.header.tabs.catalog}
           </Link>
-          <Link href="/programs" className="flex h-10 items-center">
+          <Link href="/programs" className="tap flex h-10 items-center">
             {copy.header.tabs.programs}
           </Link>
-          <Link href="/wholesale" className="flex h-10 items-center">
+          <Link href="/wholesale" className="tap flex h-10 items-center">
             {copy.header.tabs.wholesale}
           </Link>
-          <Link href="/delivery" className="flex h-10 items-center">
+          <Link href="/delivery" className="tap flex h-10 items-center">
             {copy.footer.delivery}
           </Link>
         </nav>
@@ -58,7 +60,7 @@ export function SiteFooter({ shop }: { shop: PublicSettings['shop'] }) {
             href={waLink(shop.whatsapp, GENERIC_QUESTION_MESSAGE)}
             event="whatsapp_click"
             place="footer"
-            className="flex h-10 items-center gap-2.5"
+            className="tap flex h-10 items-center gap-2.5"
           >
             <WhatsAppIcon size={18} />
             {formatPhoneDisplay(shop.whatsapp)}
@@ -68,7 +70,7 @@ export function SiteFooter({ shop }: { shop: PublicSettings['shop'] }) {
               href={`https://instagram.com/${shop.instagramShop}`}
               event="instagram_click"
               place="footer"
-              className="flex h-10 items-center gap-2.5"
+              className="tap flex h-10 items-center gap-2.5"
             >
               <InstagramIcon size={18} />@{shop.instagramShop}
             </TrackedLink>
@@ -81,10 +83,10 @@ export function SiteFooter({ shop }: { shop: PublicSettings['shop'] }) {
             {shop.legalLine ? ` · ${shop.legalLine}` : ''}
           </span>
           <span className="flex flex-wrap gap-x-4 gap-y-1">
-            <Link href="/privacy" className="underline-offset-2 hover:underline">
+            <Link href="/privacy" className="tap underline-offset-2 hover:underline">
               {copy.footer.privacy}
             </Link>
-            <Link href="/offer" className="underline-offset-2 hover:underline">
+            <Link href="/offer" className="tap underline-offset-2 hover:underline">
               {copy.footer.offer}
             </Link>
           </span>

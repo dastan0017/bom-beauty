@@ -12,7 +12,16 @@ import {
 } from '@bom/shared';
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
 import { useState, type CSSProperties } from 'react';
-import { Button, Card, PageHeader, Segmented, Spinner, TableHead, TableMessage } from '@/components/ui';
+import {
+  Button,
+  Card,
+  PageHeader,
+  Segmented,
+  Spinner,
+  TableHead,
+  TableMessage,
+  TableRow,
+} from '@/components/ui';
 import { copy } from '@/content/copy';
 import { keys } from '@/api/keys';
 import { api, unwrap } from '@/lib/api';
@@ -87,9 +96,8 @@ export function LeadsPage() {
             <span>{copy.leads.source}</span>
           </TableHead>
           {rows.map((lead) => (
-            <div
+            <TableRow
               key={lead.id}
-              role="row"
               style={{ gridTemplateColumns: COLUMNS }}
               className="grid min-h-16 min-w-[820px] items-center gap-3 border-b border-line-2 px-[22px] py-3 last:border-b-0"
             >
@@ -120,7 +128,7 @@ export function LeadsPage() {
                 )}
               </span>
               <span className="truncate text-sm text-muted">{lead.utm?.source ?? copy.leads.direct}</span>
-            </div>
+            </TableRow>
           ))}
           {leads.isPending && <TableMessage>{copy.loading}</TableMessage>}
           {leads.isError && !leads.data && <TableMessage>{copy.errors.load}</TableMessage>}

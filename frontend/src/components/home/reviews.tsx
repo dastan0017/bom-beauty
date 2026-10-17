@@ -52,7 +52,6 @@ export function Reviews({ reviews }: { reviews: ReviewCard[] }) {
             <button
               key={review.id}
               type="button"
-              aria-label={copy.home.reviewOf(index + 1, count)}
               onClick={() => (index === active ? setLightbox(index) : go(index))}
               className={cn(
                 'relative h-[400px] w-[230px] flex-none snap-center overflow-hidden rounded-[22px] transition-[transform,opacity,box-shadow] duration-[350ms]',
@@ -69,7 +68,7 @@ export function Reviews({ reviews }: { reviews: ReviewCard[] }) {
                 <source type="image/webp" srcSet={srcSet(review.image, 'webp')} sizes="230px" />
                 <img
                   src={variantUrl(review.image.id, pickWidth(review.image, 460), 'webp')}
-                  alt={review.image.alt || copy.home.reviewAlt}
+                  alt={`${review.image.alt || copy.home.reviewAlt}. ${copy.home.reviewOf(index + 1, count)}`}
                   width={review.image.width}
                   height={review.image.height}
                   loading="lazy"
@@ -98,23 +97,27 @@ export function Reviews({ reviews }: { reviews: ReviewCard[] }) {
         </RoundButton>
         <div className="flex items-center gap-1.5">
           {count <= 8 ? (
-            reviews.map((review, index) => (
-              <button
-                key={review.id}
-                type="button"
-                aria-label={copy.home.reviewOf(index + 1, count)}
-                aria-current={index === active || undefined}
-                onClick={() => go(index)}
-                className="flex h-6 items-center"
-              >
+            <>
+              {/* Dots are a pointer shortcut, as in the design; keyboards and screen readers use the arrows. */}
+              {reviews.map((review, index) => (
                 <span
-                  className={cn(
-                    'block h-1.5 rounded-full transition-[width] duration-[250ms]',
-                    index === active ? 'w-[18px] bg-ink' : 'w-1.5 bg-line-hover',
-                  )}
-                />
-              </button>
-            ))
+                  key={review.id}
+                  aria-hidden="true"
+                  onClick={() => go(index)}
+                  className="flex h-6 cursor-pointer items-center"
+                >
+                  <span
+                    className={cn(
+                      'block h-1.5 rounded-full transition-[width] duration-[250ms]',
+                      index === active ? 'w-[18px] bg-ink' : 'w-1.5 bg-line-hover',
+                    )}
+                  />
+                </span>
+              ))}
+              <span className="sr-only" aria-live="polite">
+                {copy.home.reviewOf(active + 1, count)}
+              </span>
+            </>
           ) : (
             <span className="min-w-14 text-center text-[15px] font-semibold" aria-live="polite">
               {active + 1} / {count}

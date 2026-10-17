@@ -1,5 +1,6 @@
 'use client';
 
+import type { ContentValue, FileRef, VideoRef, WholesaleBuyer, WholesaleCountry } from '@bom/shared';
 import {
   buildWholesaleMessage,
   waLink,
@@ -7,12 +8,7 @@ import {
   WHOLESALE_BUYERS,
   WHOLESALE_COUNTRIES,
   WHOLESALE_COUNTRY_LABELS,
-  type ContentValue,
-  type FileRef,
-  type VideoRef,
-  type WholesaleBuyer,
-  type WholesaleCountry,
-} from '@bom/shared';
+} from '@bom/shared/web';
 import Image from 'next/image';
 import { createContext, use, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
@@ -21,7 +17,7 @@ import { cn } from '@/lib/cn';
 import { clockTime, openExternal, submissionMeta, submit, track } from '@/lib/submission';
 import { formatMinutes } from '@/lib/words';
 import { DownloadIcon, PhoneIcon, PlayIcon, WhatsAppBubbleIcon } from '../icons';
-import { Honeypot, SubmitButton } from '../overlays/order-sheet';
+import { Honeypot, SubmitButton } from '../overlays/form-parts';
 import { SentScreen } from '../overlays/sent-screen';
 import { Sheet, SheetHandle, SheetHeader, sheetBodyClass } from '../overlays/sheet';
 import { useOverlays } from '../overlays/site-overlays';

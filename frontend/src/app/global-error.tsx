@@ -1,6 +1,6 @@
 'use client';
 
-import { GENERIC_QUESTION_MESSAGE, SETTING_DEFAULTS, waLink } from '@bom/shared';
+import { DEFAULT_SHOP_WHATSAPP, GENERIC_QUESTION_MESSAGE, waLink } from '@bom/shared/web';
 import { copy } from '@/content/copy';
 
 // Last resort when the root layout itself fails: no theme, no header, just a way out.
@@ -30,7 +30,7 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
               {copy.error.retry}
             </button>
             <a
-              href={waLink(SETTING_DEFAULTS.shop.whatsapp, GENERIC_QUESTION_MESSAGE)}
+              href={waLink(DEFAULT_SHOP_WHATSAPP, GENERIC_QUESTION_MESSAGE)}
               style={{ color: '#B3264F', fontWeight: 600 }}
             >
               {copy.programs.writeNurai}

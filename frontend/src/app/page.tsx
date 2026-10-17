@@ -179,7 +179,7 @@ export default async function HomePage() {
                   href={`https://instagram.com/${shop.instagramOwner}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-sm text-muted"
+                  className="tap flex items-center gap-1.5 text-sm text-muted"
                 >
                   @{shop.instagramOwner}
                   <span className="inline-flex size-3.5 items-center justify-center rounded-full bg-pink text-white">

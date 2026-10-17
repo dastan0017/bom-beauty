@@ -1,6 +1,6 @@
 'use client';
 
-import { GENERIC_QUESTION_MESSAGE, waLink } from '@bom/shared';
+import { GENERIC_QUESTION_MESSAGE, waLink } from '@bom/shared/web';
 import { useEffect } from 'react';
 import { WhatsAppIcon } from '@/components/icons';
 import { useOverlays } from '@/components/overlays/site-overlays';

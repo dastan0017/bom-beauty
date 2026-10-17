@@ -2,7 +2,8 @@ import { resolve } from 'node:path';
 import type { NextConfig } from 'next';
 // Order matters: load the root .env, then fail fast on invalid configuration.
 import './src/load-root-env';
-import './src/env';
+import { env } from './src/env';
+import { securityHeaders } from './src/security-headers';
 
 const nextConfig: NextConfig = {
   output: 'standalone',
@@ -11,6 +12,17 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: { '/**': ['../packages/config/fonts/og/*.ttf'] },
   typedRoutes: true,
   poweredByHeader: false,
+  headers: async () => [
+    {
+      source: '/:path*',
+      headers: securityHeaders({
+        api: env.NEXT_PUBLIC_API_URL,
+        media: env.NEXT_PUBLIC_MEDIA_URL,
+        site: env.NEXT_PUBLIC_SITE_URL,
+        dev: process.env.NODE_ENV !== 'production',
+      }),
+    },
+  ],
 };
 
 export default nextConfig;

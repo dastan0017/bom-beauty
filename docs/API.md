@@ -51,7 +51,7 @@ of login and `/auth/me`; there is no CSRF cookie.
 | `POST /orders`     | 6 / min, 30 / hour                                                 |
 | `POST /leads/*`    | 10 / min, 60 / hour (each)                                         |
 | `POST /auth/login` | 5 / min per IP and 10 / 15 min per email, then exponential lockout |
-| Public GETs        | 120 / min                                                          |
+| Public GETs        | 120 / min; the site's server (`X-Internal-Secret`) is not limited  |
 | Admin              | 600 / min per session                                              |
 
 ## 4. Public endpoints

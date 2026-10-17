@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../zod';
 import { QUIZ_GOALS, SKIN_TYPES } from '../enums';
 import { fileRefSchema, imageRefSchema, videoRefSchema } from './common';
 

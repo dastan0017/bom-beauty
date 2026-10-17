@@ -20,6 +20,7 @@ import {
   StatusPill,
   TableHead,
   TableMessage,
+  TableRow,
 } from '@/components/ui';
 import { copy } from '@/content/copy';
 import { useUser } from '@/features/auth/auth';
@@ -166,9 +167,8 @@ export function DashboardPage() {
                   <span>{copy.table.status}</span>
                 </TableHead>
                 {data?.recent.map((order) => (
-                  <div
+                  <TableRow
                     key={order.id}
-                    role="row"
                     tabIndex={0}
                     onClick={() => void navigate(`/orders/${order.id}`)}
                     onKeyDown={(event) => {
@@ -197,7 +197,7 @@ export function DashboardPage() {
                     <span className="flex">
                       <StatusPill status={order.status} />
                     </span>
-                  </div>
+                  </TableRow>
                 ))}
                 {data && data.recent.length === 0 && <TableMessage>{copy.dash.noRecent}</TableMessage>}
               </div>

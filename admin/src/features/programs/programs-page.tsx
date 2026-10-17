@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { usePatchProgram, usePrograms } from '@/api/catalog';
-import { Button, Card, PageHeader, TableHead, TableMessage } from '@/components/ui';
+import { Button, Card, PageHeader, TableHead, TableMessage, TableRow } from '@/components/ui';
 import { Toggle } from '@/components/ui/editor';
 import { MediaPreview } from '@/components/ui/media';
 import { copy } from '@/content/copy';
@@ -71,9 +71,8 @@ export function ProgramsPage() {
             <span />
           </TableHead>
           {programs.data?.map((program) => (
-            <div
+            <TableRow
               key={program.id}
-              role="row"
               style={{ gridTemplateColumns: COLUMNS }}
               className="grid min-h-[72px] min-w-[1020px] items-center gap-3 border-b border-line-2 px-[22px] py-3.5 last:border-b-0"
             >
@@ -128,7 +127,7 @@ export function ProgramsPage() {
               >
                 {copy.programs.edit}
               </Link>
-            </div>
+            </TableRow>
           ))}
           {programs.isPending && <TableMessage>{copy.loading}</TableMessage>}
           {programs.isError && !programs.data && <TableMessage>{copy.errors.load}</TableMessage>}

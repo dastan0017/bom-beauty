@@ -65,6 +65,23 @@
   }
 }
 
+/*
+ * Invisible hit area of at least 44×44 px around a small link (CLAUDE.md: tap targets ≥ 44 px), centred on it, so the
+ * design's visual size stays. Not for absolutely positioned elements.
+ */
+@utility tap {
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}
+
 /* Horizontal scrollers without a visible scrollbar (chips, carousels). */
 @utility no-scrollbar {
   scrollbar-width: none;

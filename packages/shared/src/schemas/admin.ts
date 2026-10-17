@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../zod';
 import { LEAD_KINDS, ORDER_ITEM_TYPES, ORDER_STATUSES } from '../enums';
 import { utmSchema } from './common';
 

@@ -314,18 +314,32 @@ channel (sent, off, not configured, failed).
 
 zod validation with unknown keys stripped; honeypot field; per-IP rate limits (`@nestjs/throttler`, in-memory, one API
 instance); real client IP from Caddy (which trusts only Cloudflare ranges) with Express trusting only Caddy; phones
-normalised to E.164; IPs stored only as salted hashes; optional Turnstile on order and lead creation (off by default).
+normalised to E.164; IPs stored only as salted hashes; optional Turnstile on order and lead creation (off by default,
+5 s timeout, fails open so a Cloudflare outage never blocks orders). The site's server-side reads all come from one
+internal address, so they send `X-Internal-Secret` (the shared web↔API secret, `REVALIDATE_SECRET`) and skip the
+per-IP limit; admin calls count per session with a higher limit, since uploads come in bursts (API.md §3).
 
 ### 8.2 Admin
 
-Sessions, CSRF and roles as in 7.4; login lockout with backoff; AuditLog for every mutation; markdown rendered without raw HTML.
+Sessions, CSRF and roles as in 7.4; login lockout with backoff; AuditLog for every mutation; markdown rendered without raw
+HTML. Admin and auth responses carry `Cache-Control: no-store`. Screens load as separate chunks; a screen that fails to
+render or load shows "Что-то пошло не так" inside the shell, with a reload button.
 
 ### 8.3 Transport and headers
 
 Cloudflare Full (strict) with an Origin CA certificate in Caddy; Hetzner firewall allows 80/443 only from Cloudflare and
-22 from allowed IPs. Caddy sets HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`,
-`frame-ancestors 'none'`. CSP: strict on admin; pragmatic on the site (Next inline bootstrap, Umami, Bunny media hosts,
-Turnstile and Meta when enabled).
+22 from allowed IPs. Caddy sets HSTS on all hosts and `frame-ancestors 'none'` / `X-Frame-Options: DENY` on the admin.
+
+- Site: Next sends the CSP and the other headers itself (`frontend/src/security-headers.ts`, applied in
+  `next.config.ts`). The CSP is pragmatic: `'unsafe-inline'` scripts for Next's streamed bootstrap, otherwise only the
+  API, media, Bunny (`*.b-cdn.net`), Turnstile and Meta hosts; `frame-ancestors 'none'`, `object-src 'none'`,
+  `upgrade-insecure-requests` when the site URL is https. Dev adds `'unsafe-eval'` and `ws:` for the dev server.
+- Admin: a strict CSP (`script-src 'self'`, no eval) is written into `index.html` at build time from the `VITE_*` URLs
+  (`admin/csp.ts`); a `<meta>` policy cannot carry `frame-ancestors`, which Caddy adds.
+- API: `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Cross-Origin-Resource-Policy: same-site`,
+  no `X-Powered-By`.
+- zod runs `jitless` in browsers (`packages/shared/src/zod.ts`): its JIT probe calls `Function('')`, which both CSPs
+  block and browsers report.
 
 ### 8.4 Secrets and logs
 
@@ -363,7 +377,10 @@ bucket in another Hetzner location, 30-day retention; Bunny keeps its own copies
 ## 13. Performance budgets
 
 Catalog API p95 < 150 ms; mobile Lighthouse Performance ≥ 90, SEO 100, Accessibility ≥ 95; no layout shift; below-the-fold
-images lazy; video loads only on tap; `libphonenumber-js` only inside the order sheet chunk.
+images lazy; video loads only on tap; `libphonenumber-js` and zod only inside the order sheet chunk. The site's client
+code imports runtime helpers from `@bom/shared/web` (no schemas, no phone parsing); the order sheet takes its schema from
+`@bom/shared/forms` and loads about 1.5 s after `load` or at the first "Заказать" (an e2e test guards this). Measured in
+`docs/lighthouse/2026-10-17-m6.md`.
 
 ## 14. Version pins and dependencies
 
@@ -407,28 +424,31 @@ dev containers SeaweedFS (S3) and Mailpit. Since 2026-10-17 dependencies are add
   `@aws-sdk/s3-presigned-post`, `@aws-sdk/s3-request-presigner`, `nodemailer` + `@types/nodemailer` (dev, email
   notifications), `tus-js-client` (admin, resumable video upload to Bunny), `vitest` + `sharp` (frontend dev: share-card
   tests that check drawn pixels).
+- M6: `@axe-core/playwright` (dev, frontend and admin: WCAG 2.2 AA checks in the e2e suites).
 
 ## 15. Decisions and deviations
 
-| #   | Decision                                                                                                                                                            | Why                                                                 |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| D1  | The design wins wherever it shows something; the brief fills gaps (auth, users, settings, notifications, SEO, legal pages, `/delivery`, 404, anti-spam, audit, ops) | Agreed 2026-10-17                                                   |
-| D2  | "Подбор ухода" is the design's quiz; answers go to WhatsApp and are recorded as leads; no skin-photo upload or storage                                              | Agreed 2026-10-17; removes the private-photo pipeline               |
-| D3  | Videos on Bunny Stream, uploaded from the admin over TUS, played with native `<video>` (HLS + MP4 fallback)                                                         | Agreed 2026-10-17; 200 MB uploads exceed Cloudflare's request limit |
-| D4  | Seed = the design's 13 products, 5 categories, 5 programs, 14 demo review screenshots, wholesale content; marked as demo in HANDOFF                                 | Agreed 2026-10-17                                                   |
-| D5  | Order statuses Новый / Отправлен / Отменён; one item with quantity per order                                                                                        | Design                                                              |
-| D6  | Theme and currency are runtime settings; pages stay static (CSS variables from settings, client-side currency swap)                                                 | Design's "Оформление" without losing ISR                            |
-| D7  | Brief routes `/about`, `/reviews`, `/brands`, `/consult` dropped; about and reviews live on home, brands on wholesale                                               | Design layout                                                       |
-| D8  | Inbox kinds collapse to **orders** (with contact data) and **leads** (quiz, wholesale)                                                                              | Design flows                                                        |
-| D9  | Live inbox via 15 s polling and refetch on focus; no SSE                                                                                                            | Simpler, enough for the volume                                      |
-| D10 | Host-only `__Host-` session cookie on `api.`, CSRF token returned in the body                                                                                       | Same-site already; no parent-domain cookie                          |
-| D11 | Validation messages as codes in shared schemas, texts in `copy.ts`                                                                                                  | One schema source, one copy source                                  |
-| D12 | `keepalive` POST + `localStorage` outbox + `clientRef` idempotency before opening WhatsApp                                                                          | No popup blocking, no duplicates                                    |
-| D13 | `sitemap.ping` → IndexNow                                                                                                                                           | Google/Bing pings are gone                                          |
-| D14 | All uploads land in the private bucket; the public bucket holds processed output only                                                                               | No per-prefix policies; no GPS leaks from originals                 |
-| D15 | Slug redirects answer 308                                                                                                                                           | Next's `permanentRedirect`, treated as 301                          |
-| D16 | Order consent is a notice line under the button, not a checkbox                                                                                                     | Keeps the design's flow; legal check in HANDOFF                     |
-| D17 | Copy taken verbatim from the design stays verbatim (it uses dashes); copy we write never uses em-dashes                                                             | Brief rule 6                                                        |
+| #   | Decision                                                                                                                                                             | Why                                                                 |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| D1  | The design wins wherever it shows something; the brief fills gaps (auth, users, settings, notifications, SEO, legal pages, `/delivery`, 404, anti-spam, audit, ops)  | Agreed 2026-10-17                                                   |
+| D2  | "Подбор ухода" is the design's quiz; answers go to WhatsApp and are recorded as leads; no skin-photo upload or storage                                               | Agreed 2026-10-17; removes the private-photo pipeline               |
+| D3  | Videos on Bunny Stream, uploaded from the admin over TUS, played with native `<video>` (HLS + MP4 fallback)                                                          | Agreed 2026-10-17; 200 MB uploads exceed Cloudflare's request limit |
+| D4  | Seed = the design's 13 products, 5 categories, 5 programs, 14 demo review screenshots, wholesale content; marked as demo in HANDOFF                                  | Agreed 2026-10-17                                                   |
+| D5  | Order statuses Новый / Отправлен / Отменён; one item with quantity per order                                                                                         | Design                                                              |
+| D6  | Theme and currency are runtime settings; pages stay static (CSS variables from settings, client-side currency swap)                                                  | Design's "Оформление" without losing ISR                            |
+| D7  | Brief routes `/about`, `/reviews`, `/brands`, `/consult` dropped; about and reviews live on home, brands on wholesale                                                | Design layout                                                       |
+| D8  | Inbox kinds collapse to **orders** (with contact data) and **leads** (quiz, wholesale)                                                                               | Design flows                                                        |
+| D9  | Live inbox via 15 s polling and refetch on focus; no SSE                                                                                                             | Simpler, enough for the volume                                      |
+| D10 | Host-only `__Host-` session cookie on `api.`, CSRF token returned in the body                                                                                        | Same-site already; no parent-domain cookie                          |
+| D11 | Validation messages as codes in shared schemas, texts in `copy.ts`                                                                                                   | One schema source, one copy source                                  |
+| D12 | `keepalive` POST + `localStorage` outbox + `clientRef` idempotency before opening WhatsApp                                                                           | No popup blocking, no duplicates                                    |
+| D13 | `sitemap.ping` → IndexNow                                                                                                                                            | Google/Bing pings are gone                                          |
+| D14 | All uploads land in the private bucket; the public bucket holds processed output only                                                                                | No per-prefix policies; no GPS leaks from originals                 |
+| D15 | Slug redirects answer 308                                                                                                                                            | Next's `permanentRedirect`, treated as 301                          |
+| D16 | Order consent is a notice line under the button, not a checkbox                                                                                                      | Keeps the design's flow; legal check in HANDOFF                     |
+| D17 | Copy taken verbatim from the design stays verbatim (it uses dashes); copy we write never uses em-dashes                                                              | Brief rule 6                                                        |
+| D18 | Contrast beats the design's exact hex where they conflict: admin green `#15805a` → `#137a55` (4.5:1 on its tint), tab counters unfaded on white                      | WCAG 1.4.3; visually the same                                       |
+| D19 | Carousel dots stay small, as in the design, but are pointer-only shortcuts; keyboards and screen readers use the arrows or the focusable gallery, with a live status | WCAG 2.5.8 equivalent-control exception; keeps the design's spacing |
 
 ## 16. Risks to verify early
 

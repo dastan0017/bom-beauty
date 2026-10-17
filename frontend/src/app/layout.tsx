@@ -1,4 +1,4 @@
-import { buildThemeVars } from '@bom/shared';
+import { buildThemeVars } from '@bom/shared/web';
 import type { Metadata, Viewport } from 'next';
 import type { CSSProperties, ReactNode } from 'react';
 import { Analytics } from '@/components/analytics';

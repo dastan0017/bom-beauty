@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../zod';
 import {
   QUIZ_EXPERIENCES,
   QUIZ_FORMATS,

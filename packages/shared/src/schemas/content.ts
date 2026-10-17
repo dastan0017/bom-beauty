@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../zod';
 import { WHOLESALE_COUNTRIES } from '../enums';
 import { productCardSchema } from './catalog';
 import { fileRefSchema, imageRefSchema, videoRefSchema } from './common';
@@ -91,18 +91,6 @@ export const CONTENT_SCHEMAS = {
 export type ContentKey = keyof typeof CONTENT_SCHEMAS;
 export type ContentValue<K extends ContentKey> = z.infer<(typeof CONTENT_SCHEMAS)[K]>;
 export const CONTENT_KEYS = Object.keys(CONTENT_SCHEMAS) as ContentKey[];
-
-/** Splits "Время *расцвета* и сияния" into plain and accent parts for rendering. */
-export function splitAccent(title: string): { text: string; accent: boolean }[] {
-  return title
-    .split(/(\*[^*]+\*)/)
-    .filter(Boolean)
-    .map((part) =>
-      part.startsWith('*') && part.endsWith('*')
-        ? { text: part.slice(1, -1), accent: true }
-        : { text: part, accent: false },
-    );
-}
 
 /** GET /content/:key. `data` matches CONTENT_SCHEMAS[key]; `refs` resolves the ids it mentions. */
 export const contentResponseSchema = z.object({

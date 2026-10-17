@@ -19,6 +19,7 @@ import {
   StatusSelect,
   TableHead,
   TableMessage,
+  TableRow,
   WhatsAppLink,
 } from '@/components/ui';
 import { copy } from '@/content/copy';
@@ -151,9 +152,8 @@ export function OrdersPage() {
             <span />
           </TableHead>
           {rows.map((order) => (
-            <div
+            <TableRow
               key={order.id}
-              role="row"
               tabIndex={0}
               onClick={() => open(order.id)}
               onKeyDown={(event) => {
@@ -187,7 +187,7 @@ export function OrdersPage() {
                 />
               </span>
               <WhatsAppLink phone={order.phone} />
-            </div>
+            </TableRow>
           ))}
           {orders.isPending && <TableMessage>{copy.loading}</TableMessage>}
           {orders.isError && !orders.data && <TableMessage>{copy.errors.load}</TableMessage>}

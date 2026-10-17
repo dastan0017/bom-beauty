@@ -31,7 +31,7 @@ export function HeaderTabs() {
             href={tab.href}
             aria-current={active ? 'page' : undefined}
             className={cn(
-              'flex h-10 flex-1 items-center justify-center rounded-tab text-[15px] font-semibold',
+              'tap flex h-10 flex-1 items-center justify-center rounded-tab text-[15px] font-semibold',
               active
                 ? 'bg-white text-tabs-active-ink shadow-[0_1px_3px_rgba(20,20,43,.12)]'
                 : 'text-tabs-ink hover:bg-tabs-hover',
@@ -73,7 +73,6 @@ export function CurrencyPicker() {
     <div ref={root} className="relative">
       <button
         type="button"
-        aria-label={copy.header.currency}
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
@@ -82,6 +81,7 @@ export function CurrencyPicker() {
           open ? 'bg-white/55' : 'bg-transparent',
         )}
       >
+        <span className="sr-only">{copy.header.currency}: </span>
         <span className="flex h-8 items-center gap-[5px] rounded-full border-[1.5px] border-accent px-3 text-[15px] leading-none font-semibold">
           <span>{currencySymbol(code)}</span>
           <span>{code}</span>

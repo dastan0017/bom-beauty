@@ -1,5 +1,6 @@
 'use client';
 
+import type { ProgramCard, QuizAnswers, QuizKey } from '@bom/shared';
 import {
   buildQuizMessage,
   QUIZ_QUESTIONS,
@@ -7,10 +8,7 @@ import {
   quizResultCaption,
   rankPrograms,
   waLink,
-  type ProgramCard,
-  type QuizAnswers,
-  type QuizKey,
-} from '@bom/shared';
+} from '@bom/shared/web';
 import { useRef, type ReactNode } from 'react';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';

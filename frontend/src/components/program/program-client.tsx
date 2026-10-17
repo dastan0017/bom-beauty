@@ -1,12 +1,7 @@
 'use client';
 
-import {
-  buildProtocolRequestMessage,
-  waLink,
-  type FileRef,
-  type ProgramDetail,
-  type VideoRef,
-} from '@bom/shared';
+import type { FileRef, ProgramDetail, VideoRef } from '@bom/shared';
+import { buildProtocolRequestMessage, waLink } from '@bom/shared/web';
 import { useState } from 'react';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';

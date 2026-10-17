@@ -104,9 +104,12 @@ export function EditorHeader({
   dirty,
   onSave,
   extra,
+  level = 1,
 }: {
   parent?: { to: string; label: string };
   title: string;
+  /** 2 inside a page that already has its own h1 (settings tabs). */
+  level?: 1 | 2;
   status?: { label: string; on: boolean };
   saved: boolean;
   saving: boolean;
@@ -114,6 +117,7 @@ export function EditorHeader({
   onSave: () => void;
   extra?: ReactNode;
 }) {
+  const Heading = level === 1 ? 'h1' : 'h2';
   return (
     <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
       <div className="flex min-w-0 flex-col gap-1.5">
@@ -127,7 +131,7 @@ export function EditorHeader({
           </div>
         )}
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-[30px] leading-[1.15] font-semibold tracking-[-0.03em]">{title}</h1>
+          <Heading className="text-[30px] leading-[1.15] font-semibold tracking-[-0.03em]">{title}</Heading>
           {status && (
             <span
               className={cn(

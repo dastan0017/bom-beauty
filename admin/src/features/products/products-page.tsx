@@ -9,7 +9,7 @@ import {
   usePatchProduct,
   useProducts,
 } from '@/api/catalog';
-import { Button, Card, PageHeader, TableHead, TableMessage } from '@/components/ui';
+import { Button, Card, PageHeader, TableHead, TableMessage, TableRow } from '@/components/ui';
 import { Toggle } from '@/components/ui/editor';
 import { MediaPreview } from '@/components/ui/media';
 import { copy } from '@/content/copy';
@@ -187,9 +187,8 @@ export function ProductsPage() {
             <span />
           </TableHead>
           {products.data?.map((product) => (
-            <div
+            <TableRow
               key={product.id}
-              role="row"
               style={{ gridTemplateColumns: COLUMNS }}
               className="grid min-h-[68px] min-w-[760px] items-center gap-3 border-b border-line-2 px-[22px] last:border-b-0"
             >
@@ -238,7 +237,7 @@ export function ProductsPage() {
               >
                 {copy.products.edit}
               </Link>
-            </div>
+            </TableRow>
           ))}
           {products.isPending && <TableMessage>{copy.loading}</TableMessage>}
           {products.isError && !products.data && <TableMessage>{copy.errors.load}</TableMessage>}

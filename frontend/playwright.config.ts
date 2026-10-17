@@ -1,6 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
 // End-to-end checks against a running stack (`pnpm dev` at the repo root: site, API, Postgres, Redis).
+// Run them on a settled dev server, not right after `next build`: the build rewrites files the dev server watches, and
+// its rebuild refreshes open pages and cancels client navigations mid-test.
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,

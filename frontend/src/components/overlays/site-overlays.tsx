@@ -1,15 +1,20 @@
 'use client';
 
 import type { ProgramCard, QuizKey } from '@bom/shared';
+import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { captureAttribution, flushOutbox } from '@/lib/submission';
 import { CurrencyProvider, type CurrencyOption } from '../currency';
-import { OrderSheet, type OrderItem, type OrderRequest } from './order-sheet';
+import type { OrderItem, OrderRequest } from './order-sheet';
 import { QuizDialog, type QuizState } from './quiz-dialog';
 import { VideoPlayer, type VideoSpec } from './video-player';
 
 export type { OrderItem, VideoSpec };
+
+// The order sheet carries the form validation (zod schemas, phone parsing). It loads in the background once the page
+// is idle, or at the first "Заказать", so it never weighs on the first render.
+const OrderSheet = dynamic(() => import('./order-sheet').then((module) => module.OrderSheet), { ssr: false });
 
 interface Overlays {
   whatsapp: string;
@@ -65,6 +70,7 @@ export function SiteOverlays({
   const pathname = usePathname();
   const [order, setOrder] = useState<OrderRequest | null>(null);
   const [orderOpen, setOrderOpen] = useState(false);
+  const [orderSheetWanted, setOrderSheetWanted] = useState(false);
   const [quiz, setQuiz] = useState<QuizState>({ open: false, step: 0, answers: {} });
   const [quizPickedSlug, setQuizPickedSlug] = useState<string | null>(null);
   const [quizPillHidden, setQuizPillHidden] = useState(false);
@@ -117,10 +123,34 @@ export function SiteOverlays({
 
   useEffect(() => () => window.clearTimeout(advance.current), []);
 
+  // Background load of the order sheet: after the page has loaded and settled, so it never competes with the first
+  // render (the browser is often "idle" while still waiting on the network).
+  useEffect(() => {
+    let timer = 0;
+    let idle = 0;
+    const load = () => setOrderSheetWanted(true);
+    const schedule = () => {
+      timer = window.setTimeout(() => {
+        // Safari before 18.2 has no requestIdleCallback.
+        if (typeof window.requestIdleCallback === 'function')
+          idle = window.requestIdleCallback(load, { timeout: 3000 });
+        else load();
+      }, 1500);
+    };
+    if (document.readyState === 'complete') schedule();
+    else window.addEventListener('load', schedule, { once: true });
+    return () => {
+      window.removeEventListener('load', schedule);
+      window.clearTimeout(timer);
+      if (idle) window.cancelIdleCallback(idle);
+    };
+  }, []);
+
   const openOrder = useCallback<Overlays['openOrder']>((item, options) => {
     setVideo(null);
     setOrder({ item, qty: options?.qty ?? 1, fromQuiz: options?.fromQuiz ?? false });
     setOrderOpen(true);
+    setOrderSheetWanted(true);
   }, []);
 
   const openQuiz = useCallback(() => {
@@ -181,13 +211,15 @@ export function SiteOverlays({
     <CurrencyProvider options={currencies}>
       <OverlaysContext value={value}>
         {children}
-        <OrderSheet
-          request={order}
-          open={orderOpen}
-          onClose={() => setOrderOpen(false)}
-          whatsapp={whatsapp}
-          turnstileSiteKey={turnstileSiteKey}
-        />
+        {orderSheetWanted && (
+          <OrderSheet
+            request={order}
+            open={orderOpen}
+            onClose={() => setOrderOpen(false)}
+            whatsapp={whatsapp}
+            turnstileSiteKey={turnstileSiteKey}
+          />
+        )}
         <QuizDialog
           state={quiz}
           programs={programs}

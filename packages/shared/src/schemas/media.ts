@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '../zod';
 import { adminVideoSchema } from './admin-catalog';
 
 // Uploads (docs/ARCHITECTURE.md §7.5, §7.6). Limits are checked by the API and again by the storage policy.

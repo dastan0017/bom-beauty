@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { buildThemeVars, splitAccent, type Appearance, type ImageRef } from '@bom/shared';
+import type { Appearance, ImageRef } from '@bom/shared';
+import { buildThemeVars, splitAccent } from '@bom/shared/web';
 import { ImageResponse } from 'next/og';
 import { shareUrl } from './media';
 

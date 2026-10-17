@@ -6,6 +6,9 @@ import { quizAnswerLabel, type QuizAnswers } from './quiz';
 
 export const GENERIC_QUESTION_MESSAGE = 'Здравствуйте! У меня вопрос по уходу.';
 
+/** The shop's number until the owner changes it in the admin (default of `settings.shop.whatsapp`). */
+export const DEFAULT_SHOP_WHATSAPP = '+996706304803';
+
 /** https://wa.me/996706304803?text=… */
 export function waLink(phone: string, text?: string): string {
   const digits = phone.replace(/\D/g, '');

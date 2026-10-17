@@ -97,6 +97,7 @@ export const copy = {
     more: 'Больше',
     orderFor: (price: string) => `Заказать · ${price}`,
     backTo: { catalog: 'Каталог', program: 'К программе' },
+    gallery: 'Фото товара',
     photoOf: (n: number) => `Фото ${n}`,
   },
   wholesale: {
@@ -212,6 +213,7 @@ export const copy = {
     minutes: (minutes: number) => `${minutes} мин`,
   },
   footer: {
+    sections: 'Разделы в подвале',
     korean: ' — по-корейски «весна». Время расцвета вашей кожи: обновления, свежести и сияния изнутри.',
     delivery: 'Доставка и оплата',
     privacy: 'Политика конфиденциальности',

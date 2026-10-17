@@ -22,6 +22,56 @@ async function expectWhatsApp(page: Page, action: () => Promise<void>, text: str
   expect(opened).toContain(text);
 }
 
+test('home: hero, programs and the way to WhatsApp', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Подобрать уход за 1 минуту' }).first()).toBeVisible();
+  await expect(page.locator('a[href="/programs"]').first()).toBeVisible();
+  await expect(page.locator('a[href="/catalog"]').first()).toBeVisible();
+  await expect(page.locator('a[href^="https://wa.me/996"]').first()).toBeAttached();
+});
+
+test('first load leaves the order form code (zod, phone parsing) for later', async ({ page }) => {
+  const scripts: Promise<string>[] = [];
+  page.on('response', (response) => {
+    if (response.request().resourceType() === 'script') scripts.push(response.text().catch(() => ''));
+  });
+  await page.goto('/', { waitUntil: 'load' });
+  const initial = await Promise.all([...scripts]);
+  expect(initial.length).toBeGreaterThan(0);
+  expect(initial.some((body) => body.includes('country_calling_codes'))).toBe(false);
+  // It still arrives before anyone needs it.
+  await expect
+    .poll(async () => (await Promise.all(scripts)).some((body) => body.includes('country_calling_codes')), {
+      timeout: 15_000,
+    })
+    .toBe(true);
+});
+
+test.describe('catalog filter', () => {
+  for (const javaScriptEnabled of [true, false]) {
+    test.describe(javaScriptEnabled ? 'with JavaScript' : 'without JavaScript', () => {
+      test.use({ javaScriptEnabled });
+
+      test('category chips narrow the list', async ({ page }) => {
+        await page.goto('/catalog');
+        await expect(page.getByText('Пенка для умывания с центеллой')).toBeVisible();
+        await page
+          .getByRole('navigation', { name: 'Каталог' })
+          .getByRole('link', { name: 'Сыворотки' })
+          .click();
+        await expect(page).toHaveURL(/\/catalog\?category=serums$/);
+        await expect(page.getByRole('link', { name: 'Сыворотки', exact: true })).toHaveAttribute(
+          'aria-current',
+          'page',
+        );
+        await expect(page.getByText('Успокаивающая cica-сыворотка')).toBeVisible();
+        await expect(page.getByText('Пенка для умывания с центеллой')).toHaveCount(0);
+      });
+    });
+  }
+});
+
 test('product order: validation, WhatsApp hand-off, order recorded', async ({ page }) => {
   await page.goto('/catalog');
   await page.getByRole('button', { name: 'Заказать' }).first().click();
