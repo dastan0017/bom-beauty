@@ -1,0 +1,27 @@
+@import 'tailwindcss';
+@import '@bom/config/styles/site.css';
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ac);
+    outline-offset: 2px;
+  }
+}
+
+/* Heading type from the design: size × --fhk, Cormorant via --fh. */
+@utility heading {
+  font-family: var(--fh);
+  font-weight: var(--fhw);
+  letter-spacing: var(--fhls);
+  text-wrap: balance;
+}
+
+@utility accent-word {
+  font-style: var(--fhi);
+}

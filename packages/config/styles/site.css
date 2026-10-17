@@ -1,0 +1,58 @@
+/*
+ * Client-site design tokens. Colour values are runtime CSS custom properties produced by
+ * `buildThemeVars()` in @bom/shared (the owner can change the theme in the admin), so Tailwind
+ * utilities map to variables, never to fixed hex values. Names follow design/Bom Beauty Prototype.dc.html.
+ */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--sf);
+  --color-surface-2: var(--sf2);
+  --color-line: var(--ln);
+  --color-line-2: var(--ln2);
+  --color-line-hover: var(--lnh);
+  --color-ink: var(--ink);
+  --color-muted: var(--mu);
+  --color-accent: var(--ac);
+  --color-accent-ink: var(--aci);
+  --color-accent-soft: var(--acs);
+  --color-pink: var(--pk);
+  --color-highlight: var(--hl);
+  --color-highlight-2: var(--hl2);
+  --color-hero-ink: var(--hink);
+  --color-hero-muted: var(--hmu);
+  --color-header: var(--hdr);
+  --color-header-line: var(--hdrl);
+  --color-tabs-track: var(--tt);
+  --color-tabs-ink: var(--ti);
+  --color-tabs-active-ink: var(--toi);
+  --color-tabs-hover: var(--tth);
+  --color-footer: var(--ft);
+  --color-footer-ink: var(--fti);
+  --color-footer-muted: var(--ftm);
+  --color-footer-line: var(--ftl);
+  --color-chip: var(--chip);
+
+  --radius-card: var(--rc);
+  --radius-button: var(--rb);
+  --radius-tabs: var(--rt);
+  --radius-tab: var(--rti);
+
+  --font-sans: var(--font-onest), system-ui, sans-serif;
+  --font-heading: var(--fh);
+  --font-korean: var(--font-noto-kr), sans-serif;
+}
+
+/* Fixed colours the design uses regardless of theme. */
+@theme {
+  --color-stock: #22b07d;
+  --color-preorder: #e0a030;
+  --color-success-soft: #e3f5ec;
+  --color-success-ink: #15805a;
+  --color-whatsapp: #1fa855;
+  --color-error: #b23a3a;
+  --color-error-border: #d45454;
+  --color-bubble: #e6f6ec;
+  --color-bubble-meta: #4f6b5b;
+  --color-handle: #dcdfe8;
+  --color-media-placeholder: #d9dbe5;
+}

@@ -1,0 +1,36 @@
+/* Admin design tokens: fixed palette from design/BomAdmin.dc.html. */
+@theme {
+  --color-bg: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-ink: #14142b;
+  --color-ink-hover: #2a2a45;
+  --color-muted: #5b5f7a;
+  --color-line: #e4e6eb;
+  --color-line-2: #eef0f3;
+  --color-line-3: #f2f3f6;
+  --color-input: #dcdfe6;
+  --color-input-hover: #b9bed2;
+  --color-dashed: #c9cdd8;
+  --color-dashed-hover: #9ea3bb;
+  --color-subtle: #f0f1f4;
+  --color-table-head: #fafbfc;
+  --color-nav-active: #eef0f4;
+  --color-toggle-off: #d5d8e0;
+  --color-blue: #2a56b8;
+  --color-blue-soft: #e8eefb;
+  --color-green: #15805a;
+  --color-green-soft: #e3f5ec;
+  --color-green-dot: #22b07d;
+  --color-red: #b23a3a;
+  --color-red-soft: #fcebeb;
+  --color-red-border: #f0d2d2;
+  --color-red-hover: #fdf5f5;
+  --color-amber-ink: #6b4e00;
+  --color-amber-soft: #fff8e6;
+  --color-amber-border: #f3e2b3;
+
+  --radius-control: 10px;
+  --radius-card: 16px;
+
+  --font-sans: 'Onest', system-ui, sans-serif;
+}

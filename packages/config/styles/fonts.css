@@ -1,0 +1,8 @@
+/* @font-face for apps that don't use next/font (admin). The site loads the same files with next/font/local. */
+@font-face {
+  font-family: 'Onest';
+  src: url('../fonts/onest-var.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}

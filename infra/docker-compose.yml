@@ -1,0 +1,88 @@
+# Local development services. `pnpm dev` runs `docker compose up -d --wait` with this file.
+# Production services live in docker-compose.prod.yml (M7).
+name: bom-beauty
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: bom
+      POSTGRES_PASSWORD: bom
+      POSTGRES_DB: bom
+    ports:
+      - '5434:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U bom -d bom']
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    # BullMQ needs noeviction.
+    command: ['redis-server', '--maxmemory-policy', 'noeviction', '--appendonly', 'yes']
+    ports:
+      - '6379:6379'
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  # S3-compatible storage. MinIO no longer publishes community images, so dev uses SeaweedFS:
+  # presigned POST, per-bucket anonymous read (dev/s3.json) and CORS for the site and admin origins.
+  s3:
+    image: chrislusf/seaweedfs:4.48
+    command: >-
+      server -dir=/data -ip=s3 -ip.bind=0.0.0.0 -master.volumeSizeLimitMB=64
+      -s3 -s3.port=9000 -s3.config=/etc/seaweedfs/s3.json
+      -s3.allowedOrigins=http://localhost:3100,http://localhost:5173
+    ports:
+      - '9000:9000'
+    volumes:
+      - s3data:/data
+      - ./dev/s3.json:/etc/seaweedfs/s3.json:ro
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'wget -q -O /dev/null http://127.0.0.1:9333/cluster/status && wget -q -O /dev/null http://127.0.0.1:9000/status',
+        ]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  # Creates the buckets once S3 is up (idempotent).
+  s3-init:
+    image: chrislusf/seaweedfs:4.48
+    depends_on:
+      s3:
+        condition: service_healthy
+    entrypoint: ['/bin/sh', '-c']
+    command:
+      - |
+        for bucket in bom-public bom-private; do
+          echo "s3.bucket.create -name $$bucket" | weed shell -master=s3:9333 >/dev/null 2>&1 || true
+        done
+        echo "s3.bucket.list" | weed shell -master=s3:9333
+    restart: 'no'
+
+  mailpit:
+    image: axllent/mailpit:v1.31
+    ports:
+      - '8025:8025'
+      - '1025:1025'
+    healthcheck:
+      test: ['CMD', '/mailpit', 'readyz']
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  pgdata:
+  redisdata:
+  s3data:

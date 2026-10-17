@@ -1,0 +1,11 @@
+pnpm-lock.yaml
+design/
+**/dist/
+**/.next/
+**/.turbo/
+**/coverage/
+backend/src/generated/
+packages/shared/src/api/schema.d.ts
+backend/openapi.json
+*.woff2
+frontend/next-env.d.ts
