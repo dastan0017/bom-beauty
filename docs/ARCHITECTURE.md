@@ -49,7 +49,7 @@ No cart, no online payment, no customer accounts.
 | Prod host            | Service       | Notes                                                                                   |
 | -------------------- | ------------- | --------------------------------------------------------------------------------------- |
 | `bombeauty.kg`       | `web:3000`    | Client site; `www.` 301 to apex                                                         |
-| `admin.bombeauty.kg` | `admin:80`    | Static Vite build, `noindex`, strict CSP                                                |
+| `admin.bombeauty.kg` | `admin:8080`  | Static Vite build (unprivileged nginx), `noindex`, strict CSP                           |
 | `api.bombeauty.kg`   | `api:4000`    | REST `/v1`; Swagger UI only in dev                                                      |
 | `media.bombeauty.kg` | public bucket | Caddy proxies to the bucket endpoint; Cloudflare caches (keys are immutable)            |
 | `stats.bombeauty.kg` | `umami:3000`  | Owner analytics UI; the tracker is proxied as `bombeauty.kg/s/*` to survive ad blockers |
@@ -367,12 +367,26 @@ Kuma optional plus an external free monitor (a monitor on the same VPS can't rep
 
 ## 12. Infra and delivery
 
-Compose services: `caddy`, `web`, `api`, `worker`, `admin`, `postgres`, `redis` (`noeviction`), `umami`, optional
-`uptime-kuma`. Multi-stage non-root images, Next `output: 'standalone'`. CI: lint, typecheck, test (Postgres/Redis
-services), build, OpenAPI drift. Deploy on push to `main`: GHCR images, SSH, `compose pull`, `prisma migrate deploy`,
-`up -d`, health check. Backups: nightly `pg_dump` (app + umami) and weekly sync of both buckets via rclone to a backups
-bucket in another Hetzner location, 30-day retention; Bunny keeps its own copies. Times stored in UTC, shown in
-`Asia/Bishkek`.
+Compose services (`infra/docker-compose.prod.yml`): `caddy`, `web`, `api`, `worker`, `admin`, `postgres`, `redis`
+(`noeviction`, AOF), `umami` (own database on the same Postgres), `backup`, optional `uptime-kuma` (profile
+`monitoring`). Images, all multi-stage from a `turbo prune`d workspace:
+
+- `bom-api` (`backend/Dockerfile`): Node 24 Alpine, `pnpm deploy --prod` tree, user `node`, tini. One image for the API,
+  the worker (`--worker`), migrations (`prisma` is a runtime dependency for `migrate deploy`), the seed
+  (`dist/seed/seed.js`) and the CLI (`dist/cli.js`).
+- `bom-web` (`frontend/Dockerfile`): Next standalone, user `node`; `NEXT_PUBLIC_*` as build args.
+- `bom-admin` (`admin/Dockerfile`): the Vite build behind `nginx-unprivileged` on 8080; `VITE_*` as build args (they
+  also shape the CSP meta tag).
+- `bom-backup` (`infra/backup`): Alpine with `pg_dump` 16, rclone and cron (03:30 database, Sunday 04:00 buckets).
+
+Third-party images are pinned: `caddy:2.10.2-alpine`, `postgres:16.10-alpine`, `redis:7.4-alpine`,
+`umami:postgresql-v2.19.0`, `uptime-kuma:1.23.16`, `nginx-unprivileged:1.29-alpine`, `node:24.22.0-alpine`,
+`alpine:3.22`. CI (`.github/workflows/ci.yml`): format, lint, typecheck, test (the dev compose services), build,
+OpenAPI drift. Deploy (`deploy.yml`) after CI passes on `main`: GHCR images tagged with the commit SHA, rsync of the
+infra files, `compose pull`, `prisma migrate deploy`, `up -d --wait`, health checks. Backups: nightly `pg_dump` (app +
+umami) and a weekly mirror of both buckets (replaced or deleted files kept under `removed/<date>/`) to a backups bucket
+in another Hetzner location, 30-day retention, Telegram alert on failure; Bunny keeps its own copies. Runbook:
+`docs/DEPLOY.md`; restore: `infra/scripts/restore.md`. Times stored in UTC, shown in `Asia/Bishkek`.
 
 ## 13. Performance budgets
 

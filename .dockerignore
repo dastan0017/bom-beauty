@@ -1,0 +1,15 @@
+# Build context for backend/, frontend/ and admin/ Dockerfiles (context: repo root).
+.git
+**/node_modules
+**/dist
+**/.next
+**/.turbo
+**/*.tsbuildinfo
+**/coverage
+**/test-results
+**/playwright-report
+.env
+.env.*
+infra/.env
+design
+docs

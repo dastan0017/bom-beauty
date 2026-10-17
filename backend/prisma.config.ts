@@ -15,7 +15,7 @@ export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {
     path: 'prisma/migrations',
-    seed: 'tsx prisma/seed.ts',
+    seed: 'tsx src/seed/seed.ts',
   },
   datasource: {
     // MIGRATE_DATABASE_URL targets another database explicitly (the test setup migrates bom_test with it),

@@ -1,7 +1,4 @@
 import { randomUUID } from 'node:crypto';
-import { existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { parseEnv } from 'node:util';
 import { hash } from '@node-rs/argon2';
 import { PrismaPg } from '@prisma/adapter-pg';
 import {
@@ -16,7 +13,8 @@ import {
   type ContentKey,
   type ContentValue,
 } from '@bom/shared';
-import { PrismaClient } from '../src/generated/prisma/client';
+import { loadDevEnv } from '../config/load-env';
+import { PrismaClient } from '../generated/prisma/client';
 import {
   BRANDS,
   CATEGORIES,
@@ -271,12 +269,7 @@ function bishkekTime(daysAgo: number, time: string): Date {
 }
 
 async function main(): Promise<void> {
-  const rootEnv = resolve(__dirname, '../../.env');
-  if (existsSync(rootEnv)) {
-    const values = parseEnv(readFileSync(rootEnv, 'utf8'));
-    delete values.NODE_ENV;
-    Object.assign(process.env, values);
-  }
+  loadDevEnv();
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error('DATABASE_URL is not set');
   const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });

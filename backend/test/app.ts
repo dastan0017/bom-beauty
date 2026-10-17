@@ -2,7 +2,7 @@ import type { INestApplication } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import Redis from 'ioredis';
-import { seed } from '../prisma/seed';
+import { seed } from '../src/seed/seed';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/app.setup';
 import type { Env } from '../src/config/env';

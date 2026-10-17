@@ -1,0 +1,136 @@
+# Production deploy (docs/DEPLOY.md): after CI passes on main, build the images, push them to GHCR, then on the
+# server: sync the infra files, pull, migrate, restart, health check. Manual runs redeploy any commit of main.
+#
+# Repository variables: SITE_URL, API_URL, MEDIA_URL, ADMIN_URL, UPLOAD_ORIGIN, DEPLOY_HOST, DEPLOY_USER.
+# Repository secrets: DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS, GHCR_READ_TOKEN (read:packages, used by the server).
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Commit SHA of main to deploy (empty = latest)
+        required: false
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io/${{ github.repository_owner }}
+
+jobs:
+  images:
+    # Nothing to do until the server exists (DEPLOY_HOST set, docs/DEPLOY.md §2.6).
+    if: vars.DEPLOY_HOST != '' && (github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    outputs:
+      tag: ${{ steps.ref.outputs.sha }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - name: bom-api
+            dockerfile: backend/Dockerfile
+          - name: bom-web
+            dockerfile: frontend/Dockerfile
+          - name: bom-admin
+            dockerfile: admin/Dockerfile
+          - name: bom-backup
+            dockerfile: infra/backup/Dockerfile
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref || github.event.workflow_run.head_sha || github.sha }}
+
+      - id: ref
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ matrix.name }}:${{ steps.ref.outputs.sha }}
+            ${{ env.REGISTRY }}/${{ matrix.name }}:latest
+          # Public URLs are inlined into the site and admin bundles (and their CSPs) at build time.
+          build-args: |
+            NEXT_PUBLIC_SITE_URL=${{ vars.SITE_URL }}
+            NEXT_PUBLIC_API_URL=${{ vars.API_URL }}/v1
+            NEXT_PUBLIC_MEDIA_URL=${{ vars.MEDIA_URL }}
+            VITE_API_URL=${{ vars.API_URL }}/v1
+            VITE_SITE_URL=${{ vars.SITE_URL }}
+            VITE_MEDIA_URL=${{ vars.MEDIA_URL }}
+            VITE_UPLOAD_ORIGIN=${{ vars.UPLOAD_ORIGIN }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+
+  deploy:
+    needs: images
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: production
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.images.outputs.tag }}
+
+      - name: SSH key
+        run: |
+          install -m 700 -d ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          echo "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519
+
+      - name: Sync infra files
+        run: |
+          rsync -az --chmod=D755,F644 \
+            infra/docker-compose.prod.yml infra/Caddyfile \
+            "${{ vars.DEPLOY_USER }}@${{ vars.DEPLOY_HOST }}:/opt/bom/"
+          rsync -az --chmod=D755,F755 infra/postgres/ "${{ vars.DEPLOY_USER }}@${{ vars.DEPLOY_HOST }}:/opt/bom/postgres/"
+
+      - name: Pull, migrate, restart
+        env:
+          TAG: ${{ needs.images.outputs.tag }}
+          GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
+        run: |
+          ssh "${{ vars.DEPLOY_USER }}@${{ vars.DEPLOY_HOST }}" \
+            TAG="$TAG" GHCR_READ_TOKEN="$GHCR_READ_TOKEN" GHCR_USER="${{ github.repository_owner }}" 'bash -s' <<'SCRIPT'
+          set -euo pipefail
+          cd /opt/bom
+          echo "$GHCR_READ_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin >/dev/null
+          export IMAGE_TAG="$TAG"
+          compose() { docker compose -f docker-compose.prod.yml "$@"; }
+          compose pull --quiet
+          compose up -d --wait postgres redis
+          compose run --rm --no-deps api node_modules/.bin/prisma migrate deploy
+          compose up -d --remove-orphans --wait
+          # Keep the previous release's images for a quick rollback; drop older ones.
+          docker image prune -f --filter "until=168h" >/dev/null
+          echo "IMAGE_TAG=$TAG" > .deployed
+          SCRIPT
+
+      - name: Health check
+        run: |
+          for url in "${{ vars.API_URL }}/health/ready" "${{ vars.SITE_URL }}/health" "${{ vars.ADMIN_URL }}/"; do
+            curl -fsS --retry 10 --retry-delay 6 --retry-all-errors -o /dev/null "$url"
+            echo "ok $url"
+          done

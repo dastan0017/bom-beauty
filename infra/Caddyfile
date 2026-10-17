@@ -1,0 +1,97 @@
+# Production edge (docs/ARCHITECTURE.md §3, §8.3). Cloudflare proxies every host (Full strict); Caddy serves the
+# Cloudflare Origin CA certificate from /certs and only trusts Cloudflare's addresses for the visitor's IP.
+# Hosts come from the environment (docker-compose.prod.yml).
+{
+	# No ACME: Cloudflare terminates public TLS, the origin certificate covers the hosts below.
+	auto_https disable_redirects
+	servers {
+		# Cloudflare ranges (https://www.cloudflare.com/ips/, matched on 2026-10-17); refresh when Cloudflare changes them.
+		trusted_proxies static 173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/13 104.24.0.0/14 172.64.0.0/13 131.0.72.0/22 2400:cb00::/32 2606:4700::/32 2803:f800::/32 2405:b500::/32 2405:8100::/32 2a06:98c0::/29 2c0f:f248::/32
+		client_ip_headers CF-Connecting-IP
+		trusted_proxies_strict
+	}
+}
+
+(origin) {
+	tls /certs/origin.pem /certs/origin-key.pem
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		-Server
+		-Via
+	}
+}
+
+# Apps get the visitor's IP as the only X-Forwarded-For entry (the API trusts exactly one hop: this proxy).
+(upstream_ip) {
+	header_up X-Forwarded-For {client_ip}
+	header_up X-Real-IP {client_ip}
+}
+
+http:// {
+	redir https://{host}{uri} 308
+}
+
+{$SITE_HOST} {
+	import origin
+	# Umami's tracker under the site's own origin, so ad blockers leave it alone (script.js, api/send).
+	handle_path /s/* {
+		reverse_proxy umami:3000 {
+			import upstream_ip
+		}
+	}
+	handle {
+		reverse_proxy web:3000 {
+			import upstream_ip
+		}
+	}
+}
+
+www.{$SITE_HOST} {
+	import origin
+	redir https://{$SITE_HOST}{uri} 301
+}
+
+{$ADMIN_HOST} {
+	import origin
+	# The strict CSP is a <meta> tag in index.html; a meta policy cannot forbid framing, so that one is a header.
+	header {
+		Content-Security-Policy "frame-ancestors 'none'"
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		X-Robots-Tag "noindex, nofollow"
+	}
+	reverse_proxy admin:8080
+}
+
+{$API_HOST} {
+	import origin
+	# JSON only: uploads go straight to the bucket, so bodies stay small.
+	request_body {
+		max_size 1MB
+	}
+	reverse_proxy api:4000 {
+		import upstream_ip
+	}
+}
+
+{$MEDIA_HOST} {
+	import origin
+	@write not method GET HEAD OPTIONS
+	respond @write 405
+	# The public bucket; objects carry their own Cache-Control (immutable variants, PDF downloads).
+	reverse_proxy https://{$MEDIA_UPSTREAM} {
+		header_up Host {upstream_hostport}
+		header_down -x-amz-request-id
+		header_down -x-amz-id-2
+	}
+}
+
+{$STATS_HOST} {
+	import origin
+	header X-Robots-Tag "noindex, nofollow"
+	reverse_proxy umami:3000 {
+		import upstream_ip
+	}
+}

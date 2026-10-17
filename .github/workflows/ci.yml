@@ -1,0 +1,57 @@
+# Lint, types, tests (with the dev services), build and OpenAPI drift on every push and pull request.
+# Playwright e2e and Lighthouse stay local gates (docs/TASKS.md): they need the full dev stack and browsers.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .tool-versions
+
+      - name: pnpm via corepack
+        run: corepack enable
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Dev services (Postgres, Redis, S3, Mailpit) and the dev .env
+        run: |
+          cp infra/.env.example .env
+          docker compose -f infra/docker-compose.yml up -d --wait
+
+      - name: Format
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: OpenAPI drift (commit backend/openapi.json and the generated types together)
+        run: |
+          pnpm gen:api
+          git diff --exit-code -- backend/openapi.json packages/shared/src/api/schema.d.ts

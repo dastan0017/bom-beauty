@@ -1,0 +1,155 @@
+# Production stack on one Hetzner VPS (docs/DEPLOY.md). Lives in /opt/bom next to `.env` (from infra/.env.example,
+# production section), `Caddyfile` and `certs/` (Cloudflare Origin CA). The deploy workflow sets IMAGE_TAG.
+name: bom
+
+x-service: &service
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options: { max-size: 10m, max-file: '5' }
+
+services:
+  caddy:
+    <<: *service
+    image: caddy:2.10.2-alpine
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      SITE_HOST: ${SITE_HOST}
+      ADMIN_HOST: ${ADMIN_HOST}
+      API_HOST: ${API_HOST}
+      MEDIA_HOST: ${MEDIA_HOST}
+      MEDIA_UPSTREAM: ${MEDIA_UPSTREAM}
+      STATS_HOST: ${STATS_HOST}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./certs:/certs:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [web, api, admin]
+
+  web:
+    <<: *service
+    image: ghcr.io/${GHCR_OWNER}/bom-web:${IMAGE_TAG:-latest}
+    # Only what the site's server needs; the API keys stay with the API.
+    environment:
+      # Next's standalone server listens on $HOSTNAME; keep it on all interfaces (healthcheck uses 127.0.0.1).
+      HOSTNAME: 0.0.0.0
+      INTERNAL_API_URL: http://api:4000/v1
+      REVALIDATE_SECRET: ${REVALIDATE_SECRET}
+      INDEXNOW_KEY: ${INDEXNOW_KEY:-}
+      NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXT_PUBLIC_MEDIA_URL: ${NEXT_PUBLIC_MEDIA_URL}
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:3000/health']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    depends_on:
+      api: { condition: service_healthy }
+
+  api:
+    <<: *service
+    image: ghcr.io/${GHCR_OWNER}/bom-api:${IMAGE_TAG:-latest}
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      API_PORT: 4000
+      RUN_WORKER_IN_API: 'false'
+      WEB_INTERNAL_URL: http://web:3000
+      # One hop: Caddy, which replaces X-Forwarded-For with the visitor's IP (CF-Connecting-IP from Cloudflare only).
+      TRUST_PROXY: 1
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:4000/health/ready']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  worker:
+    <<: *service
+    image: ghcr.io/${GHCR_OWNER}/bom-api:${IMAGE_TAG:-latest}
+    command: ['node', 'dist/main.js', '--worker']
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      WEB_INTERNAL_URL: http://web:3000
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  admin:
+    <<: *service
+    image: ghcr.io/${GHCR_OWNER}/bom-admin:${IMAGE_TAG:-latest}
+
+  postgres:
+    <<: *service
+    image: postgres:16.10-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      UMAMI_DB_PASSWORD: ${UMAMI_DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    <<: *service
+    image: redis:7.4-alpine
+    # BullMQ needs noeviction; AOF keeps queued jobs across restarts.
+    command: ['redis-server', '--maxmemory-policy', 'noeviction', '--appendonly', 'yes']
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  umami:
+    <<: *service
+    image: ghcr.io/umami-software/umami:postgresql-v2.19.0
+    environment:
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD}@postgres:5432/umami
+      APP_SECRET: ${UMAMI_APP_SECRET}
+      DISABLE_TELEMETRY: 1
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  # Nightly database dumps and weekly bucket copies to the backup bucket (infra/backup).
+  backup:
+    <<: *service
+    image: ghcr.io/${GHCR_OWNER}/bom-backup:${IMAGE_TAG:-latest}
+    env_file: .env
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  # Optional: `docker compose --profile monitoring up -d`. Pair it with an external monitor: one on the same VPS
+  # cannot report the VPS itself down.
+  uptime-kuma:
+    <<: *service
+    image: louislam/uptime-kuma:1.23.16
+    profiles: [monitoring]
+    ports:
+      - '127.0.0.1:3001:3001'
+    volumes:
+      - kumadata:/app/data
+
+volumes:
+  caddy_data:
+  caddy_config:
+  pgdata:
+  redisdata:
+  kumadata:

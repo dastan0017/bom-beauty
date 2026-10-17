@@ -114,10 +114,11 @@ Scaffold
 
 ## M7 Deploy
 
-- [ ] Dockerfiles (multi-stage, non-root): web standalone, api/worker, admin static
-- [ ] `docker-compose.prod.yml`, `Caddyfile` (hosts, Cloudflare trusted proxies, origin cert, headers, `/s/*` Umami, media proxy)
-- [ ] `ci.yml` (lint, typecheck, test with services, build, OpenAPI drift) and `deploy.yml` (GHCR, SSH, migrate, up, health)
-- [ ] Backups: nightly `pg_dump`, weekly bucket sync, 30-day retention, `infra/scripts/restore.md` tested once
-- [ ] Umami, optional Uptime Kuma
-- [ ] `docs/DEPLOY.md`, final `docs/HANDOFF.md`, first production deploy checklist (incl. Hetzner presigned POST + CORS check, Bunny MP4 fallback and webhook URL, Telegram bot)
-- [ ] Gate + `chore(infra): production deploy`
+- [x] Dockerfiles (multi-stage, non-root): web standalone, api/worker, admin static (BuildKit checks pass; full local image builds pending disk space, CI builds them)
+- [x] `docker-compose.prod.yml`, `Caddyfile` (hosts, Cloudflare trusted proxies, origin cert, headers, `/s/*` Umami, media proxy); `caddy validate` passes
+- [x] `ci.yml` (lint, typecheck, test with services, build, OpenAPI drift) and `deploy.yml` (GHCR, SSH, migrate, up, health)
+- [x] Backups: nightly `pg_dump`, weekly bucket sync, 30-day retention, `infra/scripts/restore.md` tested once (dev stack)
+- [x] Umami, optional Uptime Kuma
+- [x] `docs/DEPLOY.md`, final `docs/HANDOFF.md`, first production deploy checklist (incl. Hetzner presigned POST + CORS check, Bunny MP4 fallback and webhook URL, Telegram bot)
+- [ ] First production deploy (needs the owner's domain, Cloudflare, Hetzner, Bunny and GitHub accounts: HANDOFF §4)
+- [x] Gate + `chore(infra): production deploy`

@@ -10,7 +10,7 @@ import {
   PROGRAMS,
   WHOLESALE_CONTENT,
   WHOLESALE_FEATURED,
-} from '../prisma/seed-data';
+} from '../src/seed/seed-data';
 
 describe('seed data', () => {
   it('content blocks match their schemas', () => {
