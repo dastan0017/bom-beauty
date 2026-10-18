@@ -120,5 +120,5 @@ Scaffold
 - [x] Backups: nightly `pg_dump`, weekly bucket sync, 30-day retention, `infra/scripts/restore.md` tested once (dev stack)
 - [x] Umami, optional Uptime Kuma
 - [x] `docs/DEPLOY.md`, final `docs/HANDOFF.md`, first production deploy checklist (incl. Hetzner presigned POST + CORS check, Bunny MP4 fallback and webhook URL, Telegram bot)
-- [ ] First production deploy (needs the owner's domain, Cloudflare, Hetzner, Bunny and GitHub accounts: HANDOFF §4)
+- [x] First production deploy (2026-10-18, https://bom-beauty.com): Hetzner CX23 fsn1, Cloudflare, buckets, Umami, backups and restore drill; presigned POST + CORS accepted by Hetzner. Still open: Bunny Stream, Telegram bot, SMTP (HANDOFF §4)
 - [x] Gate + `chore(infra): production deploy`

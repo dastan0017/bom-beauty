@@ -43,8 +43,9 @@ shell() { compose run --rm --entrypoint sh backup -c "JOB=restore; . /usr/local/
 
 ## Drill log
 
-| Date       | Where                       | What                                                                                                        | Result |
-| ---------- | --------------------------- | ----------------------------------------------------------------------------------------------------------- | ------ |
-| 2026-10-17 | dev stack (SeaweedFS as S3) | `backup-db.sh`, `backup-buckets.sh`; restore `bom.dump` into `bom_restore`; row counts of 8 tables compared | match  |
+| Date       | Where                                | What                                                                                                                                             | Result |
+| ---------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
+| 2026-10-17 | dev stack (SeaweedFS as S3)          | `backup-db.sh`, `backup-buckets.sh`; restore `bom.dump` into `bom_restore`; row counts of 8 tables compared                                      | match  |
+| 2026-10-18 | production (`bom-prod`, fsn1 → hel1) | Ops workflow: `backup-db`, `backup-buckets`, `restore-drill` (`db/2026-10-18/bom.dump` into `bom_restore`); row counts of all 19 tables compared | match  |
 
 Repeat the drill on production after the first deploy and then every few months; add a row each time.
