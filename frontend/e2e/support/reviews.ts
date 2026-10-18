@@ -7,7 +7,7 @@ import sharp from 'sharp';
 const API = process.env.E2E_API_URL ?? 'http://localhost:4000/v1';
 const ADMIN = process.env.E2E_ADMIN_URL ?? 'http://localhost:5173';
 const OWNER = {
-  email: process.env.SEED_OWNER_EMAIL ?? 'owner@bombeauty.kg',
+  email: process.env.SEED_OWNER_EMAIL ?? 'owner@bom-beauty.com',
   password: process.env.SEED_OWNER_PASSWORD ?? 'change-me-please',
 };
 

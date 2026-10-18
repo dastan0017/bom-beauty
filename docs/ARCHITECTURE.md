@@ -23,7 +23,7 @@ No cart, no online payment, no customer accounts.
 ```
                          Cloudflare  (DNS · TLS · cache for /_next/static and media · optional Turnstile)
                                                      │
-   bombeauty.kg      admin.bombeauty.kg      api.bombeauty.kg      media.bombeauty.kg      stats.bombeauty.kg
+   bom-beauty.com      admin.bom-beauty.com      api.bom-beauty.com      media.bom-beauty.com      stats.bom-beauty.com
         │                    │                      │                      │                      │
         └────────────────────┴──────────── Caddy (Hetzner VPS) ────────────┴──────────────────────┘
         │                    │                      │                      │                      │
@@ -46,13 +46,13 @@ No cart, no online payment, no customer accounts.
 
 ## 3. Hosts, ports, origins
 
-| Prod host            | Service       | Notes                                                                                   |
-| -------------------- | ------------- | --------------------------------------------------------------------------------------- |
-| `bombeauty.kg`       | `web:3000`    | Client site; `www.` 301 to apex                                                         |
-| `admin.bombeauty.kg` | `admin:8080`  | Static Vite build (unprivileged nginx), `noindex`, strict CSP                           |
-| `api.bombeauty.kg`   | `api:4000`    | REST `/v1`; Swagger UI only in dev                                                      |
-| `media.bombeauty.kg` | public bucket | Caddy proxies to the bucket endpoint; Cloudflare caches (keys are immutable)            |
-| `stats.bombeauty.kg` | `umami:3000`  | Owner analytics UI; the tracker is proxied as `bombeauty.kg/s/*` to survive ad blockers |
+| Prod host              | Service       | Notes                                                                                     |
+| ---------------------- | ------------- | ----------------------------------------------------------------------------------------- |
+| `bom-beauty.com`       | `web:3000`    | Client site; `www.` 301 to apex                                                           |
+| `admin.bom-beauty.com` | `admin:8080`  | Static Vite build (unprivileged nginx), `noindex`, strict CSP                             |
+| `api.bom-beauty.com`   | `api:4000`    | REST `/v1`; Swagger UI only in dev                                                        |
+| `media.bom-beauty.com` | public bucket | Caddy proxies to the bucket endpoint; Cloudflare caches (keys are immutable)              |
+| `stats.bom-beauty.com` | `umami:3000`  | Owner analytics UI; the tracker is proxied as `bom-beauty.com/s/*` to survive ad blockers |
 
 | Dev URL                          | Service                                                                                                               |
 | -------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
@@ -64,7 +64,7 @@ No cart, no online payment, no customer accounts.
 | http://localhost:8025            | Mailpit (SMTP on :1025)                                                                                               |
 
 **API placement:** `api.` subdomain, same site as admin and apex. The admin calls it with `credentials: 'include'`; CORS
-allows `ADMIN_ORIGIN` with credentials and `WEB_ORIGIN` without. The session cookie is host-only on `api.bombeauty.kg`
+allows `ADMIN_ORIGIN` with credentials and `WEB_ORIGIN` without. The session cookie is host-only on `api.bom-beauty.com`
 (`__Host-bb_sid` in prod), sent on same-site requests under `SameSite=Lax`. CSRF in section 8.2.
 
 ## 4. Repository layout
@@ -294,7 +294,7 @@ keep sharp's memory flat. Presigned uploads never completed within an hour are r
 4. The video is attached to a program, the home greeting or the wholesale page; the site shows it once `ready`.
 
 Bunny library settings (M7 checklist): MP4 fallback on (720p, the `<video>` fallback where HLS is not native), webhook
-URL `https://api.bombeauty.kg/v1/webhooks/bunny`. Without `BUNNY_*` keys the upload answers 503 `video.not_configured`.
+URL `https://api.bom-beauty.com/v1/webhooks/bunny`. Without `BUNNY_*` keys the upload answers 503 `video.not_configured`.
 
 ### 7.7 Slug changes
 
@@ -304,7 +304,7 @@ Changing a product or program slug creates `Redirect(from → to)` and collapses
 ### 7.8 Notifications
 
 New order → `notify.telegram` (bot token in env, chat id in settings): number, item × qty, total, name, phone, address,
-link to `https://admin.bombeauty.kg/orders/{id}`. Leads notify only if enabled. If Telegram fails after retries or is
+link to `https://admin.bom-beauty.com/orders/{id}`. Leads notify only if enabled. If Telegram fails after retries or is
 off, `notify.email` sends the same over SMTP. Customer input is HTML-escaped. Settings has a test button that reports each
 channel (sent, off, not configured, failed).
 

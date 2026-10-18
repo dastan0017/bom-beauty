@@ -5,7 +5,7 @@ Swagger UI at `http://localhost:4000/docs` in dev) is the source of truth; this 
 
 ## 1. Conventions
 
-- Base URL `https://api.bombeauty.kg/v1` (dev `http://localhost:4000/v1`); Next.js server uses `http://api:4000/v1`.
+- Base URL `https://api.bom-beauty.com/v1` (dev `http://localhost:4000/v1`); Next.js server uses `http://api:4000/v1`.
 - JSON, UTF-8, ISO 8601 UTC dates, money as integer сом (`…Kgs`).
 - Bodies validated with zod schemas from `packages/shared`; unknown keys stripped.
 - Admin lists: cursor pagination `?cursor=&limit=50` → `{ items, nextCursor }`.

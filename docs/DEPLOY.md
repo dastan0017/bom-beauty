@@ -8,15 +8,15 @@ in `ARCHITECTURE.md` §3, §8, §12; what the owner has to provide is in `HANDOF
 One Hetzner Cloud VPS runs everything with Docker Compose (`infra/docker-compose.prod.yml`); Cloudflare sits in front of
 every host; files live in Hetzner Object Storage; videos in Bunny Stream.
 
-| Host                 | Through Caddy to                                      | Image / service                  |
-| -------------------- | ----------------------------------------------------- | -------------------------------- |
-| `bombeauty.kg`       | `web:3000` (Next standalone); `/s/*` → Umami          | `ghcr.io/<owner>/bom-web`        |
-| `www.bombeauty.kg`   | 301 to the apex                                       |                                  |
-| `admin.bombeauty.kg` | `admin:8080` (static SPA, nginx unprivileged)         | `ghcr.io/<owner>/bom-admin`      |
-| `api.bombeauty.kg`   | `api:4000`                                            | `ghcr.io/<owner>/bom-api`        |
-| `media.bombeauty.kg` | the public bucket (GET/HEAD only)                     | Hetzner Object Storage           |
-| `stats.bombeauty.kg` | `umami:3000`                                          | `ghcr.io/umami-software/umami`   |
-| (internal)           | `worker` (BullMQ jobs), `postgres`, `redis`, `backup` | `bom-api --worker`, `bom-backup` |
+| Host                   | Through Caddy to                                      | Image / service                  |
+| ---------------------- | ----------------------------------------------------- | -------------------------------- |
+| `bom-beauty.com`       | `web:3000` (Next standalone); `/s/*` → Umami          | `ghcr.io/<owner>/bom-web`        |
+| `www.bom-beauty.com`   | 301 to the apex                                       |                                  |
+| `admin.bom-beauty.com` | `admin:8080` (static SPA, nginx unprivileged)         | `ghcr.io/<owner>/bom-admin`      |
+| `api.bom-beauty.com`   | `api:4000`                                            | `ghcr.io/<owner>/bom-api`        |
+| `media.bom-beauty.com` | the public bucket (GET/HEAD only)                     | Hetzner Object Storage           |
+| `stats.bom-beauty.com` | `umami:3000`                                          | `ghcr.io/umami-software/umami`   |
+| (internal)             | `worker` (BullMQ jobs), `postgres`, `redis`, `backup` | `bom-api --worker`, `bom-backup` |
 
 Caddy terminates TLS with a Cloudflare Origin CA certificate, accepts the visitor's IP only from Cloudflare's ranges
 (`CF-Connecting-IP`) and hands it to the apps as the only `X-Forwarded-For` entry (the API trusts one hop).
@@ -28,15 +28,15 @@ domain means a rebuild (re-run the deploy workflow after changing the repository
 
 ### 2.1 Cloudflare and the domain
 
-1. Add `bombeauty.kg` to Cloudflare (free plan) and switch the registrar's nameservers to Cloudflare's.
+1. Add `bom-beauty.com` to Cloudflare (free plan) and switch the registrar's nameservers to Cloudflare's.
 2. DNS, all **proxied** (orange cloud): `A` records for `@`, `www`, `admin`, `api`, `media`, `stats` → the server's
    IPv4 (and `AAAA` → IPv6 if the server has one).
 3. SSL/TLS → mode **Full (strict)**; Edge certificates → **Always Use HTTPS** on, minimum TLS 1.2.
-4. SSL/TLS → Origin Server → create an Origin CA certificate for `bombeauty.kg, *.bombeauty.kg` (RSA, 15 years). Save
+4. SSL/TLS → Origin Server → create an Origin CA certificate for `bom-beauty.com, *.bom-beauty.com` (RSA, 15 years). Save
    the certificate as `/opt/bom/certs/origin.pem` and the key as `/opt/bom/certs/origin-key.pem` (`chmod 600`).
-5. Caching → Cache Rules: for hostname `media.bombeauty.kg`, "Eligible for cache", respect origin TTL (objects carry
+5. Caching → Cache Rules: for hostname `media.bom-beauty.com`, "Eligible for cache", respect origin TTL (objects carry
    `max-age=31536000, immutable`). Leave the other hosts at the default (HTML and JSON are not cached).
-6. Optional: Turnstile widget for `bombeauty.kg` (managed mode) → site key and secret into `.env`, then switch it on in
+6. Optional: Turnstile widget for `bom-beauty.com` (managed mode) → site key and secret into `.env`, then switch it on in
    the admin (Настройки → Поиск и аналитика).
 
 ### 2.2 Hetzner server
@@ -72,7 +72,7 @@ Three buckets; two locations so a backup survives the loss of one:
   ```json
   [
     {
-      "AllowedOrigins": ["https://admin.bombeauty.kg"],
+      "AllowedOrigins": ["https://admin.bom-beauty.com"],
       "AllowedMethods": ["POST"],
       "AllowedHeaders": ["*"],
       "MaxAgeSeconds": 3600
@@ -88,7 +88,7 @@ Three buckets; two locations so a backup survives the loss of one:
 
 - **Bunny Stream**: create a video library. Into `.env`: Library ID (`BUNNY_LIBRARY_ID`), API key (`BUNNY_API_KEY`),
   CDN hostname (`BUNNY_CDN_HOST`, `vz-….b-cdn.net`). In the library settings: **MP4 fallback** on (720p), webhook URL
-  `https://api.bombeauty.kg/v1/webhooks/bunny`.
+  `https://api.bom-beauty.com/v1/webhooks/bunny`.
 - **Telegram bot**: @BotFather → `/newbot` → token into `TELEGRAM_BOT_TOKEN`. The owner writes to the bot (or adds it
   to a group); the chat id from `https://api.telegram.org/bot<token>/getUpdates` goes into the admin (Настройки →
   Уведомления), then "Проверить уведомления". Put the same chat id into `BACKUP_ALERT_CHAT_ID` for backup alerts.
@@ -99,25 +99,25 @@ Three buckets; two locations so a backup survives the loss of one:
 
 Start from `infra/.env.example`: the whole file, with production values. Generate secrets with `openssl rand -hex 32`.
 
-| Variable                                                               | Production value                                                                    |
-| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `POSTGRES_USER`, `POSTGRES_DB`                                         | `bom`, `bom`                                                                        |
-| `POSTGRES_PASSWORD`, `UMAMI_DB_PASSWORD`                               | generated                                                                           |
-| `DATABASE_URL`                                                         | `postgresql://bom:<POSTGRES_PASSWORD>@postgres:5432/bom`                            |
-| `REDIS_URL`                                                            | `redis://redis:6379`                                                                |
-| `LOG_LEVEL`                                                            | `info`                                                                              |
-| `WEB_ORIGIN`, `ADMIN_ORIGIN`                                           | `https://bombeauty.kg`, `https://admin.bombeauty.kg`                                |
-| `SESSION_SECRET`, `IP_HASH_SALT`, `REVALIDATE_SECRET`                  | generated (changing `SESSION_SECRET` logs everyone out)                             |
-| `S3_ENDPOINT`, `S3_REGION`                                             | `https://fsn1.your-objectstorage.com`, `fsn1`                                       |
-| `S3_ACCESS_KEY`, `S3_SECRET_KEY`                                       | the `fsn1` key pair                                                                 |
-| `S3_FORCE_PATH_STYLE`                                                  | `false`                                                                             |
-| `MEDIA_PUBLIC_URL`                                                     | `https://media.bombeauty.kg`                                                        |
-| `MEDIA_UPSTREAM`                                                       | `bom-public.fsn1.your-objectstorage.com`                                            |
-| `BACKUP_S3_*`                                                          | the `hel1` endpoint, region and its own key pair                                    |
-| `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_MEDIA_URL` | `https://bombeauty.kg`, `https://api.bombeauty.kg/v1`, `https://media.bombeauty.kg` |
-| `GHCR_OWNER`                                                           | the GitHub user or organisation that owns the repository                            |
-| `INDEXNOW_KEY`                                                         | 32 random hex characters                                                            |
-| `SEED_OWNER_*`                                                         | leave empty: the owner account is created with the CLI (§3)                         |
+| Variable                                                               | Production value                                                                          |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `POSTGRES_USER`, `POSTGRES_DB`                                         | `bom`, `bom`                                                                              |
+| `POSTGRES_PASSWORD`, `UMAMI_DB_PASSWORD`                               | generated                                                                                 |
+| `DATABASE_URL`                                                         | `postgresql://bom:<POSTGRES_PASSWORD>@postgres:5432/bom`                                  |
+| `REDIS_URL`                                                            | `redis://redis:6379`                                                                      |
+| `LOG_LEVEL`                                                            | `info`                                                                                    |
+| `WEB_ORIGIN`, `ADMIN_ORIGIN`                                           | `https://bom-beauty.com`, `https://admin.bom-beauty.com`                                  |
+| `SESSION_SECRET`, `IP_HASH_SALT`, `REVALIDATE_SECRET`                  | generated (changing `SESSION_SECRET` logs everyone out)                                   |
+| `S3_ENDPOINT`, `S3_REGION`                                             | `https://fsn1.your-objectstorage.com`, `fsn1`                                             |
+| `S3_ACCESS_KEY`, `S3_SECRET_KEY`                                       | the `fsn1` key pair                                                                       |
+| `S3_FORCE_PATH_STYLE`                                                  | `false`                                                                                   |
+| `MEDIA_PUBLIC_URL`                                                     | `https://media.bom-beauty.com`                                                            |
+| `MEDIA_UPSTREAM`                                                       | `bom-public.fsn1.your-objectstorage.com`                                                  |
+| `BACKUP_S3_*`                                                          | the `hel1` endpoint, region and its own key pair                                          |
+| `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_MEDIA_URL` | `https://bom-beauty.com`, `https://api.bom-beauty.com/v1`, `https://media.bom-beauty.com` |
+| `GHCR_OWNER`                                                           | the GitHub user or organisation that owns the repository                                  |
+| `INDEXNOW_KEY`                                                         | 32 random hex characters                                                                  |
+| `SEED_OWNER_*`                                                         | leave empty: the owner account is created with the CLI (§3)                               |
 
 Compose sets `NODE_ENV`, `API_PORT`, `TRUST_PROXY`, `RUN_WORKER_IN_API`, `WEB_INTERNAL_URL` and `INTERNAL_API_URL`
 itself. `.env` stays on the server only (`chmod 600`); it never goes into the repository or GitHub.
@@ -126,8 +126,8 @@ itself. `.env` stays on the server only (`chmod 600`); it never goes into the re
 
 Repository → Settings:
 
-- **Variables**: `SITE_URL=https://bombeauty.kg`, `API_URL=https://api.bombeauty.kg`, `MEDIA_URL=https://media.bombeauty.kg`,
-  `ADMIN_URL=https://admin.bombeauty.kg`, `UPLOAD_ORIGIN=https://bom-private.fsn1.your-objectstorage.com`,
+- **Variables**: `SITE_URL=https://bom-beauty.com`, `API_URL=https://api.bom-beauty.com`, `MEDIA_URL=https://media.bom-beauty.com`,
+  `ADMIN_URL=https://admin.bom-beauty.com`, `UPLOAD_ORIGIN=https://bom-private.fsn1.your-objectstorage.com`,
   `DEPLOY_HOST=<server IP>`, `DEPLOY_USER=deploy`.
 - **Secrets**: `DEPLOY_SSH_KEY` (private key of a pair made for deploys only), `DEPLOY_KNOWN_HOSTS`
   (`ssh-keyscan <server IP>`), `GHCR_READ_TOKEN` (a token with `read:packages`, used by the server to pull images).
@@ -146,21 +146,21 @@ Repository → Settings:
    ```sh
    docker compose -f docker-compose.prod.yml run --rm api node dist/cli.js create-admin --email <owner email> --name "Нурайым Бекиева"
    ```
-4. Umami: open `https://stats.bombeauty.kg`, log in as `admin` / `umami`, **change the password**, add the website
-   `bombeauty.kg`, and paste its website id into the admin (Настройки → Поиск и аналитика).
+4. Umami: open `https://stats.bom-beauty.com`, log in as `admin` / `umami`, **change the password**, add the website
+   `bom-beauty.com`, and paste its website id into the admin (Настройки → Поиск и аналитика).
 5. Check, in this order:
    - [ ] Site pages at 390 px and 1280 px; an order from a product opens WhatsApp and shows up in the admin.
    - [ ] Admin login; upload a product photo (proves presigned POST and CORS on Hetzner) and a protocol PDF.
    - [ ] Upload a short video (Bunny): it turns "Загружено" within minutes and plays on the program page.
    - [ ] Настройки → Уведомления → "Проверить уведомления" reaches Telegram (and email if set).
    - [ ] Change a price in the admin: the site shows it within seconds (revalidation).
-   - [ ] `curl -I https://bombeauty.kg` shows the CSP and HSTS; `https://admin.bombeauty.kg` refuses framing.
+   - [ ] `curl -I https://bom-beauty.com` shows the CSP and HSTS; `https://admin.bom-beauty.com` refuses framing.
    - [ ] Backups: `docker compose -f docker-compose.prod.yml exec backup su backup -s /bin/sh -c backup-db.sh`, then
          the restore drill in `infra/scripts/restore.md` once.
    - [ ] Search: Google Search Console and Yandex Webmaster verification codes into the admin, submit
-         `https://bombeauty.kg/sitemap.xml`.
-   - [ ] An external uptime monitor (UptimeRobot, Better Stack free tier) on `https://bombeauty.kg/health` and
-         `https://api.bombeauty.kg/health/ready`. Optional on-box Uptime Kuma: `--profile monitoring`, reachable
+         `https://bom-beauty.com/sitemap.xml`.
+   - [ ] An external uptime monitor (UptimeRobot, Better Stack free tier) on `https://bom-beauty.com/health` and
+         `https://api.bom-beauty.com/health/ready`. Optional on-box Uptime Kuma: `--profile monitoring`, reachable
          through an SSH tunnel to `127.0.0.1:3001`.
 
 ## 4. Operations

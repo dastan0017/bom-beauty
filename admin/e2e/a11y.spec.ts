@@ -15,7 +15,7 @@ test.afterAll(async () => {
 });
 
 const OWNER = {
-  email: process.env.SEED_OWNER_EMAIL ?? 'owner@bombeauty.kg',
+  email: process.env.SEED_OWNER_EMAIL ?? 'owner@bom-beauty.com',
   password: process.env.SEED_OWNER_PASSWORD ?? 'change-me-please',
 };
 

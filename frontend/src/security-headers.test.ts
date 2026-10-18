@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { contentSecurityPolicy, securityHeaders } from './security-headers';
 
 const PROD = {
-  api: 'https://api.bombeauty.kg/v1',
-  media: 'https://media.bombeauty.kg',
-  site: 'https://bombeauty.kg',
+  api: 'https://api.bom-beauty.com/v1',
+  media: 'https://media.bom-beauty.com',
+  site: 'https://bom-beauty.com',
   dev: false,
 };
 const LOCAL = {
@@ -23,8 +23,8 @@ const directive = (csp: string, name: string) =>
 describe('site security headers', () => {
   it('limits the production CSP to the hosts the site uses', () => {
     const csp = contentSecurityPolicy(PROD);
-    expect(directive(csp, 'connect-src')).toContain('https://api.bombeauty.kg');
-    expect(directive(csp, 'img-src')).toContain('https://media.bombeauty.kg');
+    expect(directive(csp, 'connect-src')).toContain('https://api.bom-beauty.com');
+    expect(directive(csp, 'img-src')).toContain('https://media.bom-beauty.com');
     expect(directive(csp, 'media-src')).toContain('https://*.b-cdn.net');
     expect(directive(csp, 'frame-src')).toEqual(['https://challenges.cloudflare.com']);
     expect(directive(csp, 'frame-ancestors')).toEqual(["'none'"]);

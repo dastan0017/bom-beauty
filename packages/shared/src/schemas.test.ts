@@ -11,7 +11,7 @@ const valid = {
   phone: '+996 555 12 34 56',
   address: 'Бишкек, ул. Токтогула 1',
   message: 'Здравствуйте!',
-  pageUrl: 'https://bombeauty.kg/programs/acne',
+  pageUrl: 'https://bom-beauty.com/programs/acne',
 };
 
 const codes = (input: unknown): Record<string, string> => {

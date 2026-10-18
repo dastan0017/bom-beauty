@@ -150,7 +150,7 @@ export class NotificationsService {
     if (!this.env.SMTP_URL) return;
     this.transporter ??= createTransport(this.env.SMTP_URL);
     await this.transporter.sendMail({
-      from: this.env.MAIL_FROM ?? 'Bom Beauty <no-reply@bombeauty.kg>',
+      from: this.env.MAIL_FROM ?? 'Bom Beauty <no-reply@bom-beauty.com>',
       to,
       subject,
       text,

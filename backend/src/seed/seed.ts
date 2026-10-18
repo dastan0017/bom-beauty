@@ -150,10 +150,10 @@ export async function seed(
 
 /** Dev-only sample data so the admin has something to show. */
 async function seedDemo(prisma: PrismaClient): Promise<void> {
-  if (!(await prisma.user.findUnique({ where: { email: 'manager@bombeauty.kg' } }))) {
+  if (!(await prisma.user.findUnique({ where: { email: 'manager@bom-beauty.com' } }))) {
     await prisma.user.create({
       data: {
-        email: 'manager@bombeauty.kg',
+        email: 'manager@bom-beauty.com',
         name: 'Менеджер (демо)',
         role: 'manager',
         passwordHash: await hash('manager-dev-password'),

@@ -14,7 +14,7 @@ test.afterAll(async () => {
 
 const API = process.env.E2E_API_URL ?? 'http://localhost:4000/v1';
 const OWNER = {
-  email: process.env.SEED_OWNER_EMAIL ?? 'owner@bombeauty.kg',
+  email: process.env.SEED_OWNER_EMAIL ?? 'owner@bom-beauty.com',
   password: process.env.SEED_OWNER_PASSWORD ?? 'change-me-please',
 };
 

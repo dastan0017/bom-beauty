@@ -44,13 +44,13 @@ describe('notification texts', () => {
         comment: 'Позвонить & заехать',
         fromQuiz: true,
       },
-      'https://admin.bombeauty.kg',
+      'https://admin.bom-beauty.com',
     );
     expect(message.subject).toBe('Новый заказ №1041');
     expect(message.html).toContain('Программа «Акне и проблемная кожа» × 2 · 11 800 сом');
     expect(message.html).toContain('Айгерим &lt;script&gt; · +996 555 12 34 56');
     expect(message.html).toContain('Позвонить &amp; заехать');
-    expect(message.html).toContain('<a href="https://admin.bombeauty.kg/orders/abc">');
+    expect(message.html).toContain('<a href="https://admin.bom-beauty.com/orders/abc">');
     expect(message.text).not.toContain('—');
   });
 
