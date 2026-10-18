@@ -22,6 +22,10 @@ function useScrolledPast(offset: number): boolean {
 /**
  * Bottom bar from the design. `mobileOnly` bars (program and product order) give way to the desktop layout's
  * inline controls; the footer reserves space for whichever bar is present (globals.css, [data-sticky-bar]).
+ *
+ * iOS 26 Safari can place `bottom: 0` about one toolbar height above the screen edge while its toolbar is minimized,
+ * and page content then shows through underneath. The bar is therefore opaque (Safari tints its toolbar from it) and
+ * carries a filler of its own colour below itself, which stays off-screen everywhere else.
  */
 export function StickyBar({
   children,
@@ -38,11 +42,16 @@ export function StickyBar({
     <div
       data-sticky-bar={mobileOnly ? 'mobile' : 'all'}
       className={cn(
-        'fixed inset-x-0 bottom-0 z-20 border-t border-line bg-white/97 backdrop-blur-sm transition-transform duration-300 ease-[cubic-bezier(.2,.8,.2,1)]',
+        'fixed inset-x-0 bottom-0 z-20 border-t border-line bg-white transition-transform duration-300 ease-[cubic-bezier(.2,.8,.2,1)]',
         visible ? 'translate-y-0' : 'pointer-events-none translate-y-[110%]',
         mobileOnly && 'lg:hidden',
       )}
     >
+      <span
+        aria-hidden="true"
+        data-sticky-filler=""
+        className="pointer-events-none absolute inset-x-0 top-full h-[120px] bg-white"
+      />
       <div
         className={cn(
           'mx-auto flex max-w-[640px] px-4 pt-2.5 pb-[calc(10px+env(safe-area-inset-bottom))]',
