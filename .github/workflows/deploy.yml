@@ -102,7 +102,9 @@ jobs:
 
       - name: Sync infra files
         run: |
-          rsync -az --chmod=D755,F644 \
+          # --inplace keeps the files' inodes: Caddy sees the Caddyfile through a single-file bind mount, which would
+          # keep pointing at the old file if rsync replaced it.
+          rsync -az --inplace --chmod=D755,F644 \
             infra/docker-compose.prod.yml infra/Caddyfile \
             "${{ vars.DEPLOY_USER }}@${{ vars.DEPLOY_HOST }}:/opt/bom/"
           rsync -az --chmod=D755,F755 infra/postgres/ "${{ vars.DEPLOY_USER }}@${{ vars.DEPLOY_HOST }}:/opt/bom/postgres/"
