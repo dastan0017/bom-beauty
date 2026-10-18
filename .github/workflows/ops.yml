@@ -1,0 +1,112 @@
+# Server tasks without an SSH session (docs/DEPLOY.md §3, §4): status, seed, owner account, backups, restore drill.
+# A generated password is never printed: it is encrypted to the RSA public key given as input, so the job log only
+# shows ciphertext. Decrypt with
+#   echo '<ciphertext>' | base64 -d | openssl pkeyutl -decrypt -inkey private.pem -pkeyopt rsa_padding_mode:oaep
+name: Ops
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: What to run on the server
+        type: choice
+        options: [status, seed, create-admin, reset-password, backup-db, backup-buckets, restore-drill]
+      email:
+        description: Account email (create-admin, reset-password)
+        required: false
+      name:
+        description: Display name (create-admin)
+        required: false
+      pubkey_b64:
+        description: Base64 of an RSA public key (PEM) that the generated password is encrypted to
+        required: false
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: production
+    steps:
+      - name: SSH key
+        run: |
+          install -m 700 -d ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          echo "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519
+
+      - name: Run ${{ inputs.task }}
+        env:
+          TASK: ${{ inputs.task }}
+          EMAIL: ${{ inputs.email }}
+          NAME: ${{ inputs.name }}
+          PUBKEY_B64: ${{ inputs.pubkey_b64 }}
+        run: |
+          case "$TASK" in create-admin|reset-password)
+            test -n "$EMAIL" && test -n "$PUBKEY_B64" || { echo "email and pubkey_b64 are required"; exit 1; } ;;
+          esac
+          NAME_B64=$(printf '%s' "${NAME:-$EMAIL}" | base64 -w0)
+          ssh "${{ vars.DEPLOY_USER }}@${{ vars.DEPLOY_HOST }}" \
+            TASK="$TASK" EMAIL="$EMAIL" NAME_B64="$NAME_B64" PUBKEY_B64="$PUBKEY_B64" 'bash -s' <<'SCRIPT'
+          set -euo pipefail
+          cd /opt/bom
+          if [ -f .deployed ]; then export $(grep '^IMAGE_TAG=' .deployed); fi
+          compose() { docker compose -f docker-compose.prod.yml "$@"; }
+          encrypt() {
+            echo "$PUBKEY_B64" | base64 -d > /tmp/ops-pub.pem
+            openssl pkeyutl -encrypt -pubin -inkey /tmp/ops-pub.pem -pkeyopt rsa_padding_mode:oaep | base64 -w0
+            rm -f /tmp/ops-pub.pem
+            echo
+          }
+          # Runs the CLI, prints its normal lines and only the ciphertext of the password line.
+          account() {
+            out=$(compose run --rm -T api node dist/cli.js "$@")
+            echo "$out" | grep -v '^Password:' || true
+            echo "encrypted password:"
+            echo "$out" | grep '^Password:' | sed 's/^Password: //' | tr -d '\n' | encrypt
+          }
+          case "$TASK" in
+            status)
+              cat .deployed || true
+              compose ps --format 'table {{.Service}}\t{{.Status}}'
+              df -h / | tail -1
+              free -m | sed -n 2p ;;
+            seed)
+              compose run --rm -T api node dist/seed/seed.js ;;
+            create-admin)
+              account create-admin --email "$EMAIL" --name "$(echo "$NAME_B64" | base64 -d)" ;;
+            reset-password)
+              account reset-password --email "$EMAIL" ;;
+            backup-db)
+              compose exec -T backup su backup -s /bin/sh -c backup-db.sh ;;
+            backup-buckets)
+              compose exec -T backup su backup -s /bin/sh -c backup-buckets.sh ;;
+            restore-drill)
+              # infra/scripts/restore.md (database): newest dump into bom_restore, compare row counts, drop it.
+              compose run --rm -T --entrypoint sh backup -c '
+                JOB=restore-drill; . /usr/local/bin/lib.sh
+                day=$(rclone lsf "dst:$BACKUP_S3_BUCKET/db/" --dirs-only | sort | tail -1 | tr -d /)
+                echo "dump: db/$day/$POSTGRES_DB.dump"
+                rclone copy "dst:$BACKUP_S3_BUCKET/db/$day/$POSTGRES_DB.dump" /tmp/r --s3-no-check-bucket
+                export PGPASSWORD="$POSTGRES_PASSWORD"
+                db() { psql -h postgres -U "$POSTGRES_USER" -tA "$@"; }
+                db -d postgres -qc "drop database if exists bom_restore"
+                createdb -h postgres -U "$POSTGRES_USER" bom_restore
+                pg_restore -h postgres -U "$POSTGRES_USER" -d bom_restore --no-owner --exit-on-error "/tmp/r/$POSTGRES_DB.dump"
+                fail=0
+                for t in $(db -d "$POSTGRES_DB" -c "select tablename from pg_tables where schemaname = '\''public'\'' order by 1"); do
+                  a=$(db -d "$POSTGRES_DB" -c "select count(*) from \"$t\"")
+                  b=$(db -d bom_restore -c "select count(*) from \"$t\"")
+                  if [ "$a" = "$b" ]; then echo "ok  $t $a"; else echo "DIFF $t live=$a restored=$b"; fail=1; fi
+                done
+                db -d postgres -qc "drop database bom_restore"
+                exit $fail
+              ' ;;
+          esac
+          SCRIPT
