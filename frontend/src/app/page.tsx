@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BbImage } from '@/components/bb-image';
+import { HeroBranches } from '@/components/home/hero-branches';
 import { HeroPhoto, QuizLink } from '@/components/home/home-client';
 import { Reviews } from '@/components/home/reviews';
 import {
@@ -38,7 +39,8 @@ export default async function HomePage() {
     <>
       <JsonLd data={organizationLd(settings)} />
 
-      <section className="rounded-b-[var(--hrad)] [background:var(--hbg)]">
+      <section className="relative isolate rounded-b-[var(--hrad)] [background:var(--hbg)]">
+        <HeroBranches />
         <div className="items-[var(--hal)] mx-auto flex max-w-[640px] flex-col px-5 pt-[26px] pb-[30px] [text-align:var(--hta)] lg:pt-12 lg:pb-12">
           <div className="mb-[22px] flex flex-col items-center gap-5">
             <HeroPhoto
