@@ -363,7 +363,14 @@ export function VideoSlot({
     <div className="flex gap-4">
       <div className="relative h-[220px] w-[124px] flex-none overflow-hidden rounded-[14px] bg-[#d9dbe5]">
         {current.thumbnailUrl && (
-          <img src={current.thumbnailUrl} alt="" className="absolute inset-0 size-full object-cover" />
+          // The admin sends no referrer (Caddy: Referrer-Policy no-referrer), and Bunny refuses thumbnail requests
+          // without one, so this image sends just the origin.
+          <img
+            src={current.thumbnailUrl}
+            alt=""
+            referrerPolicy="strict-origin"
+            className="absolute inset-0 size-full object-cover"
+          />
         )}
         {current.status !== 'ready' && (
           <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/70 px-2 text-center text-xs font-semibold text-muted">
