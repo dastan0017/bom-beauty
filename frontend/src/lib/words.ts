@@ -1,9 +1,8 @@
-import { plural, productsWord, stepsWord } from '@bom/shared/web';
+import { plural, productsWord } from '@bom/shared/web';
 
-// Counted phrases from the design ("5 средств", "3 шага").
+// Counted phrases from the design ("5 средств").
 
 export const productsCount = (n: number): string => `${n} ${productsWord(n)}`;
-export const stepsCount = (n: number): string => `${n} ${stepsWord(n)}`;
 
 /** "4 готовые программы ухода" (video end card). */
 export const readyProgramsCount = (n: number): string =>

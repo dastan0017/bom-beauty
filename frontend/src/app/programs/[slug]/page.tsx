@@ -1,5 +1,5 @@
 import type { Route } from 'next';
-import type { ProgramDetail, RoutineStep } from '@bom/shared';
+import type { ProgramDetail } from '@bom/shared';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, permanentRedirect, redirect } from 'next/navigation';
@@ -19,7 +19,7 @@ import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
 import { getContent, getProgram, resolveRedirect } from '@/lib/data';
 import { BASE_OPEN_GRAPH, breadcrumbsLd, excerpt, imageUrl, productLd } from '@/lib/seo';
-import { productsCount, productsGenitive, stepsCount } from '@/lib/words';
+import { productsCount, productsGenitive } from '@/lib/words';
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -151,20 +151,6 @@ export default async function ProgramPage({ params }: Params) {
                 ))}
               </ul>
             </section>
-
-            {(program.steps.am.length > 0 || program.steps.pm.length > 0) && (
-              <section className="flex flex-col gap-3 px-4 pt-14 lg:px-0">
-                <SectionTitle
-                  className="pb-1.5"
-                  title={copy.program.routineTitle}
-                  lead={copy.program.routineLead}
-                />
-                <div className="flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:items-start">
-                  <Routine label={copy.program.morning} steps={program.steps.am} />
-                  <Routine label={copy.program.evening} steps={program.steps.pm} />
-                </div>
-              </section>
-            )}
           </div>
 
           <aside className="flex flex-col gap-4 px-4 pt-10 lg:sticky lg:top-[92px] lg:self-start lg:px-0 lg:pt-[60px]">
@@ -211,33 +197,5 @@ export default async function ProgramPage({ params }: Params) {
 
       <ProgramOrderBar program={forOrder} />
     </>
-  );
-}
-
-function Routine({ label, steps }: { label: string; steps: RoutineStep[] }) {
-  if (steps.length === 0) return null;
-  return (
-    <div className={cn(card, 'flex flex-col')}>
-      <div className="flex items-center justify-between border-b border-line-2 px-[18px] py-4">
-        <h3 className="text-lg font-semibold">{label}</h3>
-        <span className="text-sm text-muted">{copy.program.stepsHead(stepsCount(steps.length))}</span>
-      </div>
-      <ol>
-        {steps.map((step, index) => (
-          <li
-            key={`${step.productSlug}-${index}`}
-            className={cn('flex items-start gap-3.5 px-[18px] py-4', index > 0 && 'border-t border-line-2')}
-          >
-            <span className="flex size-7 flex-none items-center justify-center rounded-full bg-ink text-sm font-semibold text-white">
-              {index + 1}
-            </span>
-            <span className="flex flex-col gap-0.5 pt-[3px]">
-              <span className="text-base leading-[1.3] font-semibold">{step.title}</span>
-              <span className="text-[15px] leading-[1.45] text-muted">{step.text}</span>
-            </span>
-          </li>
-        ))}
-      </ol>
-    </div>
   );
 }
