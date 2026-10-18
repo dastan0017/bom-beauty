@@ -121,7 +121,8 @@ jobs:
           compose() { docker compose -f docker-compose.prod.yml "$@"; }
           compose pull --quiet
           compose up -d --wait postgres redis
-          compose run --rm --no-deps api node_modules/.bin/prisma migrate deploy
+          # </dev/null: `compose run` would otherwise read the rest of this script from stdin and swallow it.
+          compose run --rm --no-deps -T api node_modules/.bin/prisma migrate deploy </dev/null
           compose up -d --remove-orphans --wait
           # Keep the previous release's images for a quick rollback; drop older ones.
           docker image prune -f --filter "until=168h" >/dev/null

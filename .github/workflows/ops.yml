@@ -57,6 +57,7 @@ jobs:
           set -euo pipefail
           cd /opt/bom
           if [ -f .deployed ]; then export $(grep '^IMAGE_TAG=' .deployed); fi
+          # Every compose run/exec below gets </dev/null, or it would read the rest of this script from stdin.
           compose() { docker compose -f docker-compose.prod.yml "$@"; }
           encrypt() {
             echo "$PUBKEY_B64" | base64 -d > /tmp/ops-pub.pem
@@ -66,7 +67,7 @@ jobs:
           }
           # Runs the CLI, prints its normal lines and only the ciphertext of the password line.
           account() {
-            out=$(compose run --rm -T api node dist/cli.js "$@")
+            out=$(compose run --rm -T api node dist/cli.js "$@" </dev/null)
             echo "$out" | grep -v '^Password:' || true
             echo "encrypted password:"
             echo "$out" | grep '^Password:' | sed 's/^Password: //' | tr -d '\n' | encrypt
@@ -78,15 +79,15 @@ jobs:
               df -h / | tail -1
               free -m | sed -n 2p ;;
             seed)
-              compose run --rm -T api node dist/seed/seed.js ;;
+              compose run --rm -T api node dist/seed/seed.js </dev/null ;;
             create-admin)
               account create-admin --email "$EMAIL" --name "$(echo "$NAME_B64" | base64 -d)" ;;
             reset-password)
               account reset-password --email "$EMAIL" ;;
             backup-db)
-              compose exec -T backup su backup -s /bin/sh -c backup-db.sh ;;
+              compose exec -T backup su backup -s /bin/sh -c backup-db.sh </dev/null ;;
             backup-buckets)
-              compose exec -T backup su backup -s /bin/sh -c backup-buckets.sh ;;
+              compose exec -T backup su backup -s /bin/sh -c backup-buckets.sh </dev/null ;;
             restore-drill)
               # infra/scripts/restore.md (database): newest dump into bom_restore, compare row counts, drop it.
               compose run --rm -T --entrypoint sh backup -c '
@@ -107,6 +108,6 @@ jobs:
                 done
                 db -d postgres -qc "drop database bom_restore"
                 exit $fail
-              ' ;;
+              ' </dev/null ;;
           esac
           SCRIPT
