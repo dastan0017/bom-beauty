@@ -465,7 +465,7 @@ dev containers SeaweedFS (S3) and Mailpit. Since 2026-10-17 dependencies are add
 | D17 | Copy taken verbatim from the design stays verbatim (it uses dashes); copy we write never uses em-dashes                                                              | Brief rule 6                                                        |
 | D18 | Contrast beats the design's exact hex where they conflict: admin green `#15805a` → `#137a55` (4.5:1 on its tint), tab counters unfaded on white                      | WCAG 1.4.3; visually the same                                       |
 | D19 | Carousel dots stay small, as in the design, but are pointer-only shortcuts; keyboards and screen readers use the arrows or the focusable gallery, with a live status | WCAG 2.5.8 equivalent-control exception; keeps the design's spacing |
-| D20 | Home hero gets two thin sakura branches beside the photo (not in the design): inline SVG behind the content, clipped above the delivery badge, theme colours         | Requested 2026-10-18; petals follow the logo's flower               |
+| D20 | Home hero gets two sakura branches in full bloom beside the photo (not in the design): an SVG sprite behind the content, clipped above the badge, theme colours      | Requested 2026-10-18, made lush after client feedback               |
 
 ## 16. Risks to verify early
 
