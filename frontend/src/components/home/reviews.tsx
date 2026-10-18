@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReviewCard } from '@bom/shared';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
 import { srcSet, variantUrl, pickWidth } from '@/lib/media';
@@ -175,6 +175,7 @@ function Lightbox({
   const open = index !== null;
   const { mounted, visible } = usePresence(open, 200);
   const panel = useRef<HTMLDivElement>(null);
+  const track = useRef<HTMLDivElement>(null);
   const [shown, setShown] = useState(index ?? 0);
   useModal(panel, open, onClose);
 
@@ -183,10 +184,19 @@ function Lightbox({
     if (index !== null) setShown(index);
   }, [index]);
 
+  // Opening jumps the track to the review; after that its scroll position (swipes, arrows) drives `index`.
+  useLayoutEffect(() => {
+    const node = track.current;
+    if (!node || index === null || Math.round(node.scrollLeft / node.clientWidth) === index) return;
+    node.scrollTo({ left: index * node.clientWidth, behavior: 'instant' });
+  }, [index, mounted]);
+
   if (!mounted) return null;
-  const review = reviews[shown];
-  if (!review) return null;
   const count = reviews.length;
+  const slideTo = (slide: number) => {
+    const node = track.current;
+    node?.scrollTo({ left: slide * node.clientWidth, behavior: 'smooth' });
+  };
 
   return (
     <div
@@ -213,18 +223,38 @@ function Lightbox({
           <CloseIcon size={18} />
         </button>
       </div>
-      <div className="flex min-h-0 flex-1 justify-center overflow-y-auto px-5 pt-1.5 pb-4">
-        <picture onClick={(event) => event.stopPropagation()} className="self-start">
-          <source type="image/avif" srcSet={srcSet(review.image, 'avif')} sizes="380px" />
-          <source type="image/webp" srcSet={srcSet(review.image, 'webp')} sizes="380px" />
-          <img
-            src={variantUrl(review.image.id, pickWidth(review.image, 760), 'webp')}
-            alt={review.image.alt || copy.home.reviewAlt}
-            width={review.image.width}
-            height={review.image.height}
-            className="block h-auto w-full max-w-[380px] cursor-default rounded-[18px]"
-          />
-        </picture>
+      <div
+        ref={track}
+        data-testid="review-track"
+        onScroll={(event) => {
+          if (index === null) return;
+          const node = event.currentTarget;
+          const next = Math.max(0, Math.min(count - 1, Math.round(node.scrollLeft / node.clientWidth)));
+          if (next !== index) onIndex(next);
+        }}
+        className="no-scrollbar flex min-h-0 flex-1 snap-x snap-mandatory overflow-x-auto overscroll-x-contain"
+      >
+        {reviews.map((review, slide) => (
+          <div
+            key={review.id}
+            aria-hidden={slide !== shown}
+            className="flex w-full flex-none snap-center snap-always justify-center overflow-y-auto px-5 pt-1.5 pb-4"
+          >
+            <picture onClick={(event) => event.stopPropagation()} className="self-start">
+              <source type="image/avif" srcSet={srcSet(review.image, 'avif')} sizes="380px" />
+              <source type="image/webp" srcSet={srcSet(review.image, 'webp')} sizes="380px" />
+              <img
+                src={variantUrl(review.image.id, pickWidth(review.image, 760), 'webp')}
+                alt={review.image.alt || copy.home.reviewAlt}
+                width={review.image.width}
+                height={review.image.height}
+                loading={Math.abs(slide - shown) <= 1 ? 'eager' : 'lazy'}
+                decoding="async"
+                className="block h-auto w-full max-w-[380px] cursor-default rounded-[18px]"
+              />
+            </picture>
+          </div>
+        ))}
       </div>
       <div
         className="flex items-center justify-center gap-4 px-4 pt-2.5 pb-[calc(16px+env(safe-area-inset-bottom))]"
@@ -234,7 +264,7 @@ function Lightbox({
           type="button"
           aria-label={copy.home.reviewsPrev}
           disabled={shown === 0}
-          onClick={() => onIndex(shown - 1)}
+          onClick={() => slideTo(shown - 1)}
           className="flex size-[52px] items-center justify-center rounded-full bg-white/15 text-white disabled:opacity-40"
         >
           <ChevronLeftIcon size={22} />
@@ -243,7 +273,7 @@ function Lightbox({
           type="button"
           aria-label={copy.home.reviewsNext}
           disabled={shown >= count - 1}
-          onClick={() => onIndex(shown + 1)}
+          onClick={() => slideTo(shown + 1)}
           className="flex size-[52px] items-center justify-center rounded-full bg-white/15 text-white disabled:opacity-40"
         >
           <ChevronRightIcon size={22} />
