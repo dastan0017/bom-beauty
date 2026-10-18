@@ -183,6 +183,7 @@ function ProgramForm({ program }: { program: AdminProgram | null }) {
       },
     );
 
+  // Stored steps are no longer edited here but may only use the program's products, so they follow removals.
   const removeItem = (id: string) => {
     setForm((f) => ({
       ...f,
@@ -385,94 +386,6 @@ function ProgramForm({ program }: { program: AdminProgram | null }) {
                 <PlusIcon />
                 {copy.program.addItem}
               </button>
-            )}
-          </Panel>
-
-          <Panel title={copy.program.routine} hint={copy.program.routineHint}>
-            {items.length === 0 ? (
-              <span className="text-sm text-muted">{copy.program.noItemsForSteps}</span>
-            ) : (
-              (['am', 'pm'] as const).map((period) => (
-                <div key={period} className="flex flex-col gap-2.5">
-                  <span className="text-[15px] font-semibold">
-                    {period === 'am' ? copy.program.morning : copy.program.evening}
-                  </span>
-                  {form.steps[period].map((step, index) => {
-                    const setStep = (patch: Partial<typeof step>) =>
-                      set('steps', {
-                        ...form.steps,
-                        [period]: form.steps[period].map((s, i) => (i === index ? { ...s, ...patch } : s)),
-                      });
-                    return (
-                      <div key={index} className="flex flex-col gap-1.5">
-                        <div className="flex items-center gap-2">
-                          <span className="flex size-7 flex-none items-center justify-center rounded-full bg-ink text-sm font-semibold text-white">
-                            {index + 1}
-                          </span>
-                          <select
-                            value={step.productId}
-                            onChange={(e) => setStep({ productId: e.target.value })}
-                            aria-label={copy.program.stepProduct}
-                            className={cn(selectClass, 'w-[220px] flex-none')}
-                          >
-                            {items.map((item) => (
-                              <option key={item.id} value={item.id}>
-                                {item.shortName}
-                              </option>
-                            ))}
-                          </select>
-                          <input
-                            value={step.text}
-                            onChange={(e) => setStep({ text: e.target.value })}
-                            placeholder={copy.program.stepPlaceholder}
-                            aria-label={copy.program.stepText}
-                            className={cn(inputClass, 'min-w-0 flex-1')}
-                          />
-                          <ArrowButton
-                            label={copy.editor.up}
-                            dir="up"
-                            onClick={() =>
-                              set('steps', { ...form.steps, [period]: move(form.steps[period], index, -1) })
-                            }
-                          />
-                          <IconButton
-                            label={copy.editor.remove}
-                            onClick={() =>
-                              set('steps', {
-                                ...form.steps,
-                                [period]: form.steps[period].filter((_, i) => i !== index),
-                              })
-                            }
-                          >
-                            <CloseIcon width={16} height={16} />
-                          </IconButton>
-                        </div>
-                        <FieldError
-                          error={
-                            errors[`steps.${period}.${index}.productId`] ??
-                            errors[`steps.${period}.${index}.text`]
-                          }
-                        />
-                      </div>
-                    );
-                  })}
-                  {form.steps[period].length < 10 && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        set('steps', {
-                          ...form.steps,
-                          [period]: [...form.steps[period], { productId: items[0]?.id ?? '', text: '' }],
-                        })
-                      }
-                      className="inline-flex h-9 items-center gap-1.5 self-start text-[15px] font-semibold text-blue"
-                    >
-                      <PlusIcon />
-                      {copy.program.addStep}
-                    </button>
-                  )}
-                </div>
-              ))
             )}
           </Panel>
 
