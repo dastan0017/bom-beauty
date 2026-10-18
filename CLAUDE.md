@@ -57,7 +57,8 @@ Node 24 (see `.tool-versions`), pnpm via corepack (`packageManager` in `package.
 - Never invent real data. Seed data comes from the design (marked demo in `docs/HANDOFF.md`); gaps use `[...]`, and every
   new placeholder gets a HANDOFF line.
 - No media in the repo: photos, videos and PDFs are uploaded by the owner through the admin after deploy. Every screen
-  must look right with no images (placeholders).
+  must look right with no images (placeholders). The one exception: the hero sakura decor in `frontend/public/decor`
+  (ARCHITECTURE §15 D20).
 - Copy taken verbatim from the design stays verbatim. Copy we write never uses em-dashes (—): colons, commas or shorter
   sentences instead.
 - Tone: warm, short sentences, "вы".
