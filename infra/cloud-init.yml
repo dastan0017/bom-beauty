@@ -1,0 +1,48 @@
+#cloud-config
+# Bom Beauty production host (docs/DEPLOY.md §2.2): Ubuntu 24.04, Docker, user `deploy`, /opt/bom. Pass it as
+# user data when creating the server; replace __DEPLOY_PUBKEY__ with ~/.ssh/bom_deploy.pub. No secrets in here.
+package_update: true
+package_upgrade: true
+packages:
+  - ca-certificates
+  - curl
+  - rsync
+  - unattended-upgrades
+  - fail2ban
+
+users:
+  - default
+  - name: deploy
+    gecos: Bom Beauty deploy
+    shell: /bin/bash
+    lock_passwd: true
+    ssh_authorized_keys:
+      - __DEPLOY_PUBKEY__
+
+write_files:
+  - path: /etc/ssh/sshd_config.d/10-bom.conf
+    permissions: '0644'
+    content: |
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      PermitRootLogin prohibit-password
+      MaxAuthTries 3
+  - path: /etc/docker/daemon.json
+    permissions: '0644'
+    content: |
+      { "log-driver": "json-file", "log-opts": { "max-size": "10m", "max-file": "5" } }
+  - path: /etc/apt/apt.conf.d/20auto-upgrades
+    permissions: '0644'
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+
+runcmd:
+  - [sh, -c, 'curl -fsSL https://get.docker.com | sh']
+  - [usermod, -aG, docker, deploy]
+  - [install, -d, -o, deploy, -g, deploy, -m, '0750', /opt/bom]
+  - [install, -d, -o, deploy, -g, deploy, -m, '0700', /opt/bom/certs]
+  - [install, -d, -o, deploy, -g, deploy, -m, '0755', /opt/bom/postgres]
+  - [systemctl, enable, --now, docker]
+  - [systemctl, restart, ssh]
+  - [sh, -c, 'touch /var/lib/cloud/instance/bom-ready']

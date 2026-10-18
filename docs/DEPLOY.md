@@ -28,7 +28,9 @@ domain means a rebuild (re-run the deploy workflow after changing the repository
 
 ### 2.1 Cloudflare and the domain
 
-1. Add `bom-beauty.com` to Cloudflare (free plan) and switch the registrar's nameservers to Cloudflare's.
+1. The domain is registered with Cloudflare Registrar (registrant: the shop owner; renews yearly on 18 October), so the
+   zone is on Cloudflare's nameservers already. With another registrar: add the zone (free plan) and switch the
+   registrar's nameservers to Cloudflare's.
 2. DNS, all **proxied** (orange cloud): `A` records for `@`, `www`, `admin`, `api`, `media`, `stats` → the server's
    IPv4 (and `AAAA` → IPv6 if the server has one).
 3. SSL/TLS → mode **Full (strict)**; Edge certificates → **Always Use HTTPS** on, minimum TLS 1.2.
@@ -38,24 +40,27 @@ domain means a rebuild (re-run the deploy workflow after changing the repository
    `max-age=31536000, immutable`). Leave the other hosts at the default (HTML and JSON are not cached).
 6. Optional: Turnstile widget for `bom-beauty.com` (managed mode) → site key and secret into `.env`, then switch it on in
    the admin (Настройки → Поиск и аналитика).
+7. Keep off everything that injects scripts into the pages (it breaks the CSP and React hydration): Speed → Rocket
+   Loader, Scrape Shield → Email Address Obfuscation, and Web Analytics automatic setup for this hostname.
+
+Everything above except the registration can be done with an API token scoped to the zone (Zone Read, DNS Edit, Zone
+Settings Edit, SSL and Certificates Edit, Cache Rules Edit, Account Turnstile Edit).
 
 ### 2.2 Hetzner server
 
-1. Cloud server: Ubuntu 24.04, `CX22` (2 vCPU, 4 GB) or larger, location `fsn1` (same as the buckets), with your SSH
-   key. Enable backups of the server itself if the budget allows (the app backups below do not depend on it).
-2. Firewall: TCP 80 and 443 only from Cloudflare's ranges (https://www.cloudflare.com/ips/), TCP 22 only from the
-   addresses you deploy and administer from (GitHub Actions runners have no fixed IPs; either allow 22 broadly with
-   key-only auth, or use a self-hosted runner or a jump host).
-3. On the server:
-   ```sh
-   apt-get update && apt-get -y upgrade
-   curl -fsSL https://get.docker.com | sh            # Docker Engine + compose plugin
-   adduser --disabled-password --gecos '' deploy && usermod -aG docker deploy
-   install -d -o deploy -g deploy /opt/bom /opt/bom/certs /opt/bom/postgres
-   # SSH: put the deploy key's public half into /home/deploy/.ssh/authorized_keys; disable password login.
-   ```
-4. As `deploy`, create `/opt/bom/.env` from the production template (2.5) and copy the certificates into
-   `/opt/bom/certs`. The deploy workflow uploads `docker-compose.prod.yml`, `Caddyfile` and `postgres/` on every run.
+1. A Hetzner project of its own ("Bom Beauty"). Cloud server: Ubuntu 24.04, `CX23` (2 vCPU, 4 GB, x86; the CX22 is no
+   longer sold) or larger, location `fsn1` (same as the buckets), with the deploy key `~/.ssh/bom_deploy` and
+   `infra/cloud-init.yml` as user data (replace `__DEPLOY_PUBKEY__`). Cloud-init installs Docker, creates `deploy` (in
+   the `docker` group, key-only), `/opt/bom{,/certs,/postgres}`, turns password login off and enables unattended
+   upgrades and fail2ban; it touches `/var/lib/cloud/instance/bom-ready` when done (about 3 minutes). Keep the primary
+   IPs with auto-delete off, so a rebuilt server keeps its address and the DNS records stay valid. Enable backups of the
+   server itself if the budget allows (the app backups below do not depend on it).
+2. Firewall `bom-web`: TCP 80 and 443 only from Cloudflare's ranges (https://www.cloudflare.com/ips/, the same list as
+   the Caddyfile), TCP 22 open with key-only auth (GitHub Actions runners have no fixed IPs), ICMP.
+3. `DEPLOY_KNOWN_HOSTS` must hold the server's real host key (`ssh-keyscan -t ed25519 <server IP>` from a machine you
+   trust, or pre-seed the host key through cloud-init `ssh_keys` as was done for the first deploy).
+4. Create `/opt/bom/.env` (2.5, `chmod 600`, owned by `deploy`) and the certificates in `/opt/bom/certs` with `scp` as
+   `deploy`. The deploy workflow uploads `docker-compose.prod.yml`, `Caddyfile` and `postgres/` on every run.
 
 ### 2.3 Object Storage (Hetzner)
 
@@ -146,6 +151,10 @@ Repository → Settings:
    ```sh
    docker compose -f docker-compose.prod.yml run --rm api node dist/cli.js create-admin --email <owner email> --name "Нурайым Бекиева"
    ```
+   Without an SSH session, steps 2 and 3 (and backups, the restore drill and a status check) run through the **Ops**
+   workflow: `gh workflow run ops.yml -f task=seed`, or `-f task=create-admin -f email=… -f name=… -f pubkey_b64=…`.
+   The generated password then appears in the job log only encrypted to that RSA public key (decrypt command in the
+   workflow header).
 4. Umami: open `https://stats.bom-beauty.com`, log in as `admin` / `umami`, **change the password**, add the website
    `bom-beauty.com`, and paste its website id into the admin (Настройки → Поиск и аналитика).
 5. Check, in this order:
@@ -168,10 +177,10 @@ Repository → Settings:
 **Deploy**: every push to `main` that passes CI. Images are tagged with the commit SHA; `/opt/bom/.deployed` records the
 running one.
 
-**Image storage**: the repository is private, so its GHCR images count against GitHub Packages storage (500 MB on the
-Free plan; one release is about 330 MB compressed, mostly shared layers). The deploy keeps the three newest versions of
-each image (`prune-images`). If storage still runs over, upgrade the plan or make the packages public (the code in them
-is not secret; secrets live only in the server's `.env`).
+**Image storage**: the four GHCR packages (`bom-api`, `bom-web`, `bom-admin`, `bom-backup`) are public, so they do not
+count against GitHub Packages storage (the code in them is not secret; secrets live only in the server's `.env`). The
+deploy still keeps the three newest versions of each image (`prune-images`). If the repository and packages are ever
+made private again, the 500 MB Free plan limit applies (one release is about 330 MB compressed, mostly shared layers).
 
 **Rollback**: `cd /opt/bom && IMAGE_TAG=<previous sha> docker compose -f docker-compose.prod.yml up -d`. Migrations
 only go forward: keep schema changes additive (new columns nullable, drop in a later release), so the previous image
