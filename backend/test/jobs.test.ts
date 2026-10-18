@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { CreateOrderInput, CreateVideoResponse, NotificationTestResult } from '@bom/shared';
+import type { AdminVideo, CreateOrderInput, CreateVideoResponse, NotificationTestResult } from '@bom/shared';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { MaintenanceService } from '../src/jobs/maintenance.service';
 import { leadMessage, orderMessage } from '../src/notifications/messages';
@@ -187,6 +187,14 @@ describe('jobs: notifications, maintenance, Bunny video', () => {
       hlsUrl: 'https://vz-test.b-cdn.net/guid-1/playlist.m3u8',
       mp4Url: 'https://vz-test.b-cdn.net/guid-1/play_720p.mp4',
       thumbnailUrl: 'https://vz-test.b-cdn.net/guid-1/thumbnail.jpg',
+    });
+
+    // The admin plays the video in place, so its card gets the playback URLs too.
+    const card = await request<AdminVideo>(ctx.url(`/v1/admin/videos/${video.id}`), { headers: owner.read });
+    expect(card.status).toBe(200);
+    expect(card.body).toMatchObject({
+      hlsUrl: 'https://vz-test.b-cdn.net/guid-1/playlist.m3u8',
+      mp4Url: 'https://vz-test.b-cdn.net/guid-1/play_720p.mp4',
     });
   });
 });

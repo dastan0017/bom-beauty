@@ -1627,6 +1627,8 @@ export interface components {
                 title: string;
                 durationSec: number | null;
                 thumbnailUrl: string | null;
+                hlsUrl: string | null;
+                mp4Url: string | null;
                 bytes: number | null;
                 /** Format: date-time */
                 createdAt: string;
@@ -1732,6 +1734,8 @@ export interface components {
                 title: string;
                 durationSec: number | null;
                 thumbnailUrl: string | null;
+                hlsUrl: string | null;
+                mp4Url: string | null;
                 bytes: number | null;
                 /** Format: date-time */
                 createdAt: string;
@@ -1858,6 +1862,8 @@ export interface components {
                 title: string;
                 durationSec: number | null;
                 thumbnailUrl: string | null;
+                hlsUrl: string | null;
+                mp4Url: string | null;
                 bytes: number | null;
                 /** Format: date-time */
                 createdAt: string;
@@ -1880,6 +1886,8 @@ export interface components {
             title: string;
             durationSec: number | null;
             thumbnailUrl: string | null;
+            hlsUrl: string | null;
+            mp4Url: string | null;
             bytes: number | null;
             /** Format: date-time */
             createdAt: string;

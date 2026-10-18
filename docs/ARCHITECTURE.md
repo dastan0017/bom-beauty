@@ -335,7 +335,9 @@ Cloudflare Full (strict) with an Origin CA certificate in Caddy; Hetzner firewal
   API, media, Bunny (`*.b-cdn.net`), Turnstile and Meta hosts; `frame-ancestors 'none'`, `object-src 'none'`,
   `upgrade-insecure-requests` when the site URL is https. Dev adds `'unsafe-eval'` and `ws:` for the dev server.
 - Admin: a strict CSP (`script-src 'self'`, no eval) is written into `index.html` at build time from the `VITE_*` URLs
-  (`admin/csp.ts`); a `<meta>` policy cannot carry `frame-ancestors`, which Caddy adds.
+  (`admin/csp.ts`); a `<meta>` policy cannot carry `frame-ancestors`, which Caddy adds. Caddy also sends
+  `Referrer-Policy: strict-origin`: origin only, never paths with order ids, because Bunny's CDN refuses thumbnail and
+  video requests that carry no referrer (the admin plays videos in place).
 - API: `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Cross-Origin-Resource-Policy: same-site`,
   no `X-Powered-By`.
 - zod runs `jitless` in browsers (`packages/shared/src/zod.ts`): its JIT probe calls `Function('')`, which both CSPs

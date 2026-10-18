@@ -362,15 +362,23 @@ export function VideoSlot({
   return (
     <div className="flex gap-4">
       <div className="relative h-[220px] w-[124px] flex-none overflow-hidden rounded-[14px] bg-[#d9dbe5]">
-        {current.thumbnailUrl && (
-          // The admin sends no referrer (Caddy: Referrer-Policy no-referrer), and Bunny refuses thumbnail requests
-          // without one, so this image sends just the origin.
-          <img
-            src={current.thumbnailUrl}
-            alt=""
-            referrerPolicy="strict-origin"
-            className="absolute inset-0 size-full object-cover"
-          />
+        {current.status === 'ready' && (current.hlsUrl || current.mp4Url) ? (
+          // Bunny refuses requests without a referrer; Caddy sends the admin's origin (Referrer-Policy strict-origin).
+          <video
+            controls
+            playsInline
+            preload="none"
+            poster={current.thumbnailUrl ?? undefined}
+            aria-label={copy.media.playVideo(current.title)}
+            className="absolute inset-0 size-full bg-black object-cover"
+          >
+            {current.hlsUrl && <source src={current.hlsUrl} type="application/vnd.apple.mpegurl" />}
+            {current.mp4Url && <source src={current.mp4Url} type="video/mp4" />}
+          </video>
+        ) : (
+          current.thumbnailUrl && (
+            <img src={current.thumbnailUrl} alt="" className="absolute inset-0 size-full object-cover" />
+          )
         )}
         {current.status !== 'ready' && (
           <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/70 px-2 text-center text-xs font-semibold text-muted">

@@ -7222,6 +7222,18 @@
                       "null"
                     ]
                   },
+                  "hlsUrl": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "mp4Url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
                   "bytes": {
                     "anyOf": [
                       {
@@ -7246,6 +7258,8 @@
                   "title",
                   "durationSec",
                   "thumbnailUrl",
+                  "hlsUrl",
+                  "mp4Url",
                   "bytes",
                   "createdAt"
                 ],
@@ -7816,6 +7830,18 @@
                     "null"
                   ]
                 },
+                "hlsUrl": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "mp4Url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "bytes": {
                   "anyOf": [
                     {
@@ -7840,6 +7866,8 @@
                 "title",
                 "durationSec",
                 "thumbnailUrl",
+                "hlsUrl",
+                "mp4Url",
                 "bytes",
                 "createdAt"
               ],
@@ -8378,6 +8406,18 @@
                   "null"
                 ]
               },
+              "hlsUrl": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "mp4Url": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "bytes": {
                 "anyOf": [
                   {
@@ -8402,6 +8442,8 @@
               "title",
               "durationSec",
               "thumbnailUrl",
+              "hlsUrl",
+              "mp4Url",
               "bytes",
               "createdAt"
             ],
@@ -8494,6 +8536,26 @@
               }
             ]
           },
+          "hlsUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mp4Url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "bytes": {
             "anyOf": [
               {
@@ -8518,6 +8580,8 @@
           "title",
           "durationSec",
           "thumbnailUrl",
+          "hlsUrl",
+          "mp4Url",
           "bytes",
           "createdAt"
         ],

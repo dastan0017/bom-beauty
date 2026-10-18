@@ -204,6 +204,7 @@ export const copy = {
     uploadFailed: 'Не удалось загрузить файл. Попробуйте ещё раз',
     uploaded2: 'Файл загружен',
     videoProcessing: 'Bunny обрабатывает видео, это займёт несколько минут',
+    playVideo: (title: string) => `Видео «${title}»`,
     videoHint: 'Вертикальное 9:16, MP4, до 200 МБ',
     pdfHint: 'До 20 МБ. Пока файла нет, кнопки скачивания на сайте не будет',
     noVideo: 'Нет видео',

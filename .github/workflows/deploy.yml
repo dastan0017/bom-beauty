@@ -124,6 +124,8 @@ jobs:
           # </dev/null: `compose run` would otherwise read the rest of this script from stdin and swallow it.
           compose run --rm --no-deps -T api node_modules/.bin/prisma migrate deploy </dev/null
           compose up -d --remove-orphans --wait
+          # The Caddyfile is a bind mount: apply a changed one without restarting the proxy.
+          compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --force </dev/null
           # Keep the previous release's images for a quick rollback; drop older ones.
           docker image prune -f --filter "until=168h" >/dev/null
           echo "IMAGE_TAG=$TAG" > .deployed

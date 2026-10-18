@@ -95,6 +95,8 @@ export const adminVideoSelect = {
   title: true,
   durationSec: true,
   thumbnailUrl: true,
+  hlsUrl: true,
+  mp4Url: true,
   bytes: true,
   createdAt: true,
 } satisfies Prisma.VideoSelect;

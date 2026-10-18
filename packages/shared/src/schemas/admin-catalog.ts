@@ -34,6 +34,9 @@ export const adminVideoSchema = z.object({
   title: z.string(),
   durationSec: z.number().int().nullable(),
   thumbnailUrl: z.string().nullable(),
+  /** Playback in the admin: HLS for Safari, MP4 fallback for the other browsers (null until encoded). */
+  hlsUrl: z.string().nullable(),
+  mp4Url: z.string().nullable(),
   bytes: z.number().int().nullable(),
   createdAt: z.iso.datetime(),
 });
