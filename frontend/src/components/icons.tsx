@@ -113,6 +113,14 @@ export const TruckIcon = stroke(
   </>,
   1.8,
 );
+export const FlaskIcon = stroke(
+  <>
+    <path d="M9 3h6M10 3v6.2L4.9 18.1A1.9 1.9 0 0 0 6.5 21h11a1.9 1.9 0 0 0 1.6-2.9L14 9.2V3" />
+    <path d="M7.4 15h9.2" />
+  </>,
+  1.9,
+);
+export const TrashIcon = stroke(<path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13" />, 2);
 export const ClipboardIcon = stroke(
   <>
     <rect x="5" y="4" width="14" height="17" rx="2" />

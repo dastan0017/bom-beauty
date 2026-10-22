@@ -4,7 +4,8 @@ import {
   bishkekDateStart,
   bishkekDateTime,
   cityOf,
-  ORDER_ITEM_TYPE_LABELS,
+  orderKindLabel,
+  orderLineLabel,
   ORDER_STATUS_LABELS,
   ORDER_STATUSES,
   utmSchema,
@@ -19,20 +20,27 @@ import {
 import { z } from 'zod';
 import { AuditService } from '../audit/audit.service';
 import { notFound } from '../common/errors';
-import type { Order, Prisma } from '../generated/prisma/client';
+import type { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 const statusSchema = z.enum(ORDER_STATUSES);
 
-export function toOrderRow(order: Order): OrderRow {
+/** Lines of an order, for every query that returns order rows. */
+export const orderLinesInclude = {
+  lines: {
+    orderBy: { position: 'asc' },
+    select: { type: true, title: true, unitPriceKgs: true, qty: true, totalKgs: true },
+  },
+} satisfies Prisma.OrderInclude;
+type OrderWithLines = Prisma.OrderGetPayload<{ include: typeof orderLinesInclude }>;
+
+export function toOrderRow(order: OrderWithLines): OrderRow {
   return {
     id: order.id,
     number: order.number,
     name: order.name,
     phone: order.phone,
-    itemTitle: order.itemTitle,
-    itemType: order.itemType,
-    qty: order.qty,
+    lines: order.lines,
     address: order.address,
     city: cityOf(order.address),
     totalKgs: order.totalKgs,
@@ -57,7 +65,7 @@ export function orderWhere(
   if (q) {
     const or: Prisma.OrderWhereInput[] = [
       { name: { contains: q, mode: 'insensitive' } },
-      { itemTitle: { contains: q, mode: 'insensitive' } },
+      { lines: { some: { title: { contains: q, mode: 'insensitive' } } } },
       { address: { contains: q, mode: 'insensitive' } },
     ];
     const digits = q.replace(/\D/g, '');
@@ -79,6 +87,7 @@ export class AdminOrdersService {
     const rows = await this.prisma.order.findMany({
       where: orderWhere(query),
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      include: orderLinesInclude,
       take: query.limit + 1,
       ...(query.cursor ? { cursor: { id: query.cursor }, skip: 1 } : {}),
     });
@@ -97,7 +106,7 @@ export class AdminOrdersService {
   }
 
   async detail(id: string): Promise<OrderDetail> {
-    const order = await this.prisma.order.findUnique({ where: { id } });
+    const order = await this.prisma.order.findUnique({ where: { id }, include: orderLinesInclude });
     if (!order) throw notFound('Заказ не найден');
     const logs = await this.prisma.auditLog.findMany({
       where: { entity: 'order', entityId: id },
@@ -110,7 +119,6 @@ export class AdminOrdersService {
     const utm = utmSchema.safeParse(order.utm);
     return {
       ...toOrderRow(order),
-      unitPriceKgs: order.unitPriceKgs,
       comment: order.comment,
       message: order.message,
       note: order.note,
@@ -197,6 +205,7 @@ export class AdminOrdersService {
     const orders = await this.prisma.order.findMany({
       where: orderWhere(query),
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      include: orderLinesInclude,
       take: 50_000,
     });
     const header = [
@@ -228,10 +237,11 @@ export class AdminOrdersService {
         order.phone,
         cityOf(order.address),
         order.address,
-        ORDER_ITEM_TYPE_LABELS[order.itemType],
-        order.itemTitle,
-        order.qty,
-        order.unitPriceKgs,
+        orderKindLabel(order.lines),
+        order.lines.map(orderLineLabel).join(', '),
+        order.lines.reduce((sum, line) => sum + line.qty, 0),
+        // A unit price only makes sense for one line.
+        order.lines.length === 1 ? (order.lines[0]?.unitPriceKgs ?? '') : '',
         order.totalKgs,
         order.comment ?? '',
         order.note,

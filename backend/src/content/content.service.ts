@@ -34,7 +34,7 @@ function refIds(key: ContentKey, data: ContentValue<ContentKey>): RefIds {
   const ids: RefIds = { images: [], videos: [], files: [], products: [] };
   if (key === 'home') {
     const home = data as ContentValue<'home'>;
-    ids.images.push(...home.entries.flatMap((entry) => (entry.imageMediaId ? [entry.imageMediaId] : [])));
+    if (home.catalogImageMediaId) ids.images.push(home.catalogImageMediaId);
     if (home.heroPhotoMediaId) ids.images.push(home.heroPhotoMediaId);
     if (home.about.photoMediaId) ids.images.push(home.about.photoMediaId);
     if (home.greetingVideoId) ids.videos.push(home.greetingVideoId);

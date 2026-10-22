@@ -5,8 +5,7 @@ import { createTestApp, request, type TestContext } from './app';
 
 const order = (overrides: Partial<CreateOrderInput> = {}): CreateOrderInput => ({
   clientRef: randomUUID(),
-  item: { type: 'product', slug: 'dr-sgn-cica-serum' },
-  qty: 2,
+  items: [{ type: 'product', slug: 'dr-sgn-cica-serum', qty: 2 }],
   name: 'Айгерим',
   phone: '0555 12 34 56',
   address: 'Бишкек, ул. Токтогула 1',
@@ -29,12 +28,14 @@ describe('POST /v1/orders', () => {
     });
     expect(res.status).toBe(201);
     expect(res.body.number).toBe(1001);
-    const row = await ctx.prisma.order.findUniqueOrThrow({ where: { id: res.body.id } });
+    const row = await ctx.prisma.order.findUniqueOrThrow({
+      where: { id: res.body.id },
+      include: { lines: true },
+    });
+    expect(row.lines).toMatchObject([
+      { type: 'product', title: 'Успокаивающая cica-сыворотка', unitPriceKgs: 1900, qty: 2, totalKgs: 3800 },
+    ]);
     expect(row).toMatchObject({
-      itemType: 'product',
-      itemTitle: 'Успокаивающая cica-сыворотка',
-      unitPriceKgs: 1900,
-      qty: 2,
       totalKgs: 3800,
       phone: '+996555123456',
       status: 'new',
@@ -48,22 +49,60 @@ describe('POST /v1/orders', () => {
     const res = await request<{ id: string }>(ctx.url('/v1/orders'), {
       method: 'POST',
       json: order({
-        item: { type: 'program', slug: 'acne' },
-        qty: 1,
+        items: [{ type: 'program', slug: 'acne', qty: 1 }],
         displayCurrency: 'USD',
         displayRate: 87.4,
         fromQuiz: true,
       }),
     });
     expect(res.status).toBe(201);
-    const row = await ctx.prisma.order.findUniqueOrThrow({ where: { id: res.body.id } });
+    const row = await ctx.prisma.order.findUniqueOrThrow({
+      where: { id: res.body.id },
+      include: { lines: true },
+    });
+    expect(row.lines).toMatchObject([{ type: 'program', title: 'Акне и постакне', qty: 1 }]);
     expect(row).toMatchObject({
-      itemType: 'program',
       totalKgs: 5900,
       displayCurrency: 'USD',
       displayRate: 87.4,
       fromQuiz: true,
     });
+  });
+
+  it('stores a cart with one line per product, merged repeats and the server total', async () => {
+    const res = await request<{ id: string }>(ctx.url('/v1/orders'), {
+      method: 'POST',
+      json: order({
+        items: [
+          { type: 'product', slug: 'dr-sgnbio-sun-fluid-spf50', qty: 1 },
+          { type: 'product', slug: 'merikit-moisture-cream-gel', qty: 3 },
+          { type: 'product', slug: 'dr-sgnbio-sun-fluid-spf50', qty: 2 },
+        ],
+      }),
+    });
+    expect(res.status).toBe(201);
+    const row = await ctx.prisma.order.findUniqueOrThrow({
+      where: { id: res.body.id },
+      include: { lines: { orderBy: { position: 'asc' } } },
+    });
+    expect(
+      row.lines.map(({ title, qty, totalKgs, position }) => ({ title, qty, totalKgs, position })),
+    ).toEqual([
+      { title: 'Солнцезащитный флюид SPF 50+', qty: 3, totalKgs: 3900, position: 0 },
+      { title: 'Увлажняющий крем-гель', qty: 3, totalKgs: 4500, position: 1 },
+    ]);
+    expect(row.totalKgs).toBe(8400);
+  });
+
+  it('still accepts the one-item shape a browser may retry from its outbox', async () => {
+    const { items: _items, ...legacy } = order();
+    const res = await request<{ id: string }>(ctx.url('/v1/orders'), {
+      method: 'POST',
+      json: { ...legacy, item: { type: 'product', slug: 'dr-sgn-cica-serum' }, qty: 3 },
+    });
+    expect(res.status).toBe(201);
+    const lines = await ctx.prisma.orderLine.findMany({ where: { orderId: res.body.id } });
+    expect(lines).toMatchObject([{ qty: 3, totalKgs: 5700 }]);
   });
 
   it('is idempotent per clientRef', async () => {
@@ -85,7 +124,12 @@ describe('POST /v1/orders', () => {
   it('returns the design validation codes', async () => {
     const res = await request<ErrorResponse>(ctx.url('/v1/orders'), {
       method: 'POST',
-      json: order({ name: 'А', phone: '12', address: 'Б', qty: 10 }),
+      json: order({
+        name: 'А',
+        phone: '12',
+        address: 'Б',
+        items: [{ type: 'product', slug: 'dr-sgn-cica-serum', qty: 21 }],
+      }),
     });
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe('validation_failed');
@@ -94,7 +138,7 @@ describe('POST /v1/orders', () => {
       phone: 'order.phone.required',
       address: 'order.address.required',
     });
-    expect(res.body.error.fields?.qty).toBeDefined();
+    expect(res.body.error.fields?.['items.0.qty']).toBeDefined();
   });
 
   it('rejects numbers that cannot exist', async () => {
@@ -111,6 +155,17 @@ describe('POST /v1/orders', () => {
     const res = await request<ErrorResponse>(ctx.url('/v1/orders'), { method: 'POST', json: order() });
     expect(res.status).toBe(404);
     expect(res.body.error.code).toBe('not_found');
+    // One unavailable line refuses the whole cart, so the visitor never gets a partial order.
+    const cart = await request<ErrorResponse>(ctx.url('/v1/orders'), {
+      method: 'POST',
+      json: order({
+        items: [
+          { type: 'product', slug: 'dr-sgnbio-sun-fluid-spf50', qty: 1 },
+          { type: 'product', slug: 'dr-sgn-cica-serum', qty: 1 },
+        ],
+      }),
+    });
+    expect(cart.status).toBe(404);
     await ctx.prisma.product.update({ where: { slug: 'dr-sgn-cica-serum' }, data: { published: true } });
   });
 });

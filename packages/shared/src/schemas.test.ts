@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { splitAccent } from './text';
-import { createOrderSchema } from './schemas/orders';
+import { createOrderSchema, orderLinesOf } from './schemas/orders';
+import { homeContentSchema } from './schemas/content';
 import { SETTING_DEFAULTS, SETTING_KEYS, SETTING_SCHEMAS } from './schemas/settings';
 
 const valid = {
   clientRef: '0f8fad5b-d9cb-469f-a165-70867728950e',
-  item: { type: 'program', slug: 'acne' },
-  qty: 1,
+  items: [{ type: 'program', slug: 'acne', qty: 1 }],
   name: 'Айгерим',
   phone: '+996 555 12 34 56',
   address: 'Бишкек, ул. Токтогула 1',
@@ -39,15 +39,62 @@ describe('createOrderSchema', () => {
     expect(codes({ ...valid, phone: '+996 000 000 000' })).toEqual({ phone: 'phone.invalid' });
   });
 
-  it('limits quantity to the stepper range', () => {
-    expect(Object.keys(codes({ ...valid, qty: 10 }))).toEqual(['qty']);
-    expect(Object.keys(codes({ ...valid, qty: 0 }))).toEqual(['qty']);
+  it('limits a line to 1–20 and needs at least one line', () => {
+    expect(Object.keys(codes({ ...valid, items: [{ type: 'product', slug: 'spf', qty: 21 }] }))).toEqual([
+      'items.0.qty',
+    ]);
+    expect(Object.keys(codes({ ...valid, items: [{ type: 'product', slug: 'spf', qty: 0 }] }))).toEqual([
+      'items.0.qty',
+    ]);
+    expect(codes({ ...valid, items: [] })).toEqual({ items: 'order.items.required' });
+    const { items: _items, ...noItems } = valid;
+    expect(codes(noItems)).toEqual({ items: 'order.items.required' });
+  });
+
+  it('still accepts the one-item shape from before the cart', () => {
+    const { items: _items, ...rest } = valid;
+    const parsed = createOrderSchema.parse({ ...rest, item: { type: 'product', slug: 'spf' }, qty: 3 });
+    expect(orderLinesOf(parsed)).toEqual([{ type: 'product', slug: 'spf', qty: 3 }]);
+  });
+
+  it('merges repeated products and caps the quantity', () => {
+    const parsed = createOrderSchema.parse({
+      ...valid,
+      items: [
+        { type: 'product', slug: 'spf', qty: 15 },
+        { type: 'product', slug: 'gel', qty: 1 },
+        { type: 'product', slug: 'spf', qty: 9 },
+      ],
+    });
+    expect(orderLinesOf(parsed)).toEqual([
+      { type: 'product', slug: 'spf', qty: 20 },
+      { type: 'product', slug: 'gel', qty: 1 },
+    ]);
   });
 });
 
 describe('settings defaults', () => {
   it.each(SETTING_KEYS)('default "%s" passes its schema', (key) => {
     expect(SETTING_SCHEMAS[key].safeParse(SETTING_DEFAULTS[key]).success).toBe(true);
+  });
+});
+
+describe('home content', () => {
+  it('reads comparison points saved as plain strings before the titled points', () => {
+    const side = { eyebrow: 'Обычный', title: 'Масс-маркет', points: ['Временный эффект'] };
+    const parsed = homeContentSchema.parse({
+      heroTitle: 'Время *расцвета*',
+      heroSubtitle: '',
+      greetingVideoId: null,
+      heroBadge: 'removed field',
+      comparison: { title: 'vs', subtitle: '', mass: side, pro: side },
+      about: { caption: '', text: '', stats: [] },
+      reviewsTitle: '',
+      reviewsSubtitle: '',
+    });
+    expect(parsed.comparison.mass.points).toEqual([{ title: 'Временный эффект', text: '' }]);
+    expect(parsed.catalogImageMediaId).toBeNull();
+    expect('heroBadge' in parsed).toBe(false);
   });
 });
 

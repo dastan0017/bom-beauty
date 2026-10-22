@@ -18,9 +18,11 @@ import { PrismaClient } from '../generated/prisma/client';
 import {
   BRANDS,
   CATEGORIES,
+  COMPOSITION,
   DELIVERY_CONTENT,
   DEMO_ORDERS,
   HOME_CONTENT,
+  HOME_RAILS,
   OFFER_CONTENT,
   PRIVACY_CONTENT,
   PRODUCTS,
@@ -70,6 +72,10 @@ export async function seed(
       create: {
         ...fields,
         badge: badge ?? null,
+        inci: COMPOSITION[key] ?? null,
+        bestseller: HOME_RAILS.bestseller.includes(key),
+        seoulChoice: HOME_RAILS.seoulChoice.includes(key),
+        isNew: HOME_RAILS.isNew.includes(key),
         order,
         categoryId: lookup(categoryIds, category),
         brandId: lookup(brandIds, brand),
@@ -83,6 +89,8 @@ export async function seed(
     const exists = await prisma.program.findUnique({ where: { slug: program.slug }, select: { id: true } });
     if (exists) continue;
     const { items, am, pm, ...fields } = program;
+    // A step must use one of the program's products (the admin enforces the same rule).
+    const inProgram = ([key]: [string, string]) => items.includes(key);
     await prisma.program.create({
       data: {
         ...fields,
@@ -91,13 +99,13 @@ export async function seed(
         items: { create: items.map((key, index) => ({ productId: lookup(productIds, key), order: index })) },
         steps: {
           create: [
-            ...am.map(([key, text], index) => ({
+            ...am.filter(inProgram).map(([key, text], index) => ({
               period: 'am' as const,
               order: index,
               productId: lookup(productIds, key),
               text,
             })),
-            ...pm.map(([key, text], index) => ({
+            ...pm.filter(inProgram).map(([key, text], index) => ({
               period: 'pm' as const,
               order: index,
               productId: lookup(productIds, key),
@@ -174,33 +182,38 @@ async function seedDemo(prisma: PrismaClient): Promise<void> {
 
     // Oldest first, so order numbers grow with time.
     for (const demo of [...DEMO_ORDERS].reverse()) {
-      const product = demo.item.type === 'product' ? productBySeedKey.get(demo.item.key) : undefined;
-      const program =
-        demo.item.type === 'program' ? programs.find((p) => p.slug === demo.item.key) : undefined;
-      const item = product
-        ? { type: 'product' as const, id: product.id, title: product.name, price: product.priceKgs }
-        : program
-          ? { type: 'program' as const, id: program.id, title: program.title, price: program.priceKgs }
-          : null;
-      if (!item) continue;
+      const lines = demo.lines.flatMap((line) => {
+        const product = line.type === 'product' ? productBySeedKey.get(line.key) : undefined;
+        const program = line.type === 'program' ? programs.find((p) => p.slug === line.key) : undefined;
+        const item = product
+          ? { type: 'product' as const, productId: product.id, title: product.name, price: product.priceKgs }
+          : program
+            ? {
+                type: 'program' as const,
+                programId: program.id,
+                title: program.title,
+                price: program.priceKgs,
+              }
+            : null;
+        if (!item) return [];
+        const { price, ...ref } = item;
+        return [{ ...ref, unitPriceKgs: price, qty: line.qty, totalKgs: price * line.qty }];
+      });
+      if (!lines.length) continue;
+      const totalKgs = lines.reduce((sum, line) => sum + line.totalKgs, 0);
       const address = `${demo.city}, ул. Демо, 1`;
       const createdAt = bishkekTime(demo.daysAgo, demo.time);
       await prisma.order.create({
         data: {
           status: demo.status,
-          itemType: item.type,
-          ...(item.type === 'product' ? { productId: item.id } : { programId: item.id }),
-          itemTitle: item.title,
-          unitPriceKgs: item.price,
-          qty: demo.qty,
-          totalKgs: item.price * demo.qty,
+          lines: { create: lines.map((line, position) => ({ ...line, position })) },
+          totalKgs,
           name: demo.name,
           phone: normalizePhone(demo.phone) ?? demo.phone,
           address,
           message: buildOrderMessage({
-            item: { type: item.type, title: item.title },
-            qty: demo.qty,
-            total: formatKgs(item.price * demo.qty),
+            lines: lines.map((line) => ({ ...line, total: formatKgs(line.totalKgs) })),
+            total: formatKgs(totalKgs),
             name: demo.name,
             phone: demo.phone,
             address,
@@ -218,9 +231,9 @@ async function seedDemo(prisma: PrismaClient): Promise<void> {
     const published = await prisma.program.findMany({
       where: { published: true },
       orderBy: { order: 'asc' },
-      select: { slug: true, title: true, quizGoal: true, quizSkins: true },
+      select: { slug: true, title: true, priceKgs: true, quizGoal: true, quizSkins: true },
     });
-    const answers = { skin: 'oily', goal: 'acne', exp: 'new', fmt: 'set' } as const;
+    const answers = { goal: 'acne', skin: 'combo', exp: 'some', age: '25' } as const;
     const ranked = rankPrograms(published, answers);
     await prisma.lead.create({
       data: {
@@ -230,8 +243,7 @@ async function seedDemo(prisma: PrismaClient): Promise<void> {
         choose: true,
         message: buildQuizMessage(
           answers,
-          ranked.map((p) => p.title),
-          true,
+          ranked.map((p) => ({ title: p.title, price: formatKgs(p.priceKgs) })),
         ),
         pageUrl: 'http://localhost:3100/',
         clientRef: randomUUID(),

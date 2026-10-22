@@ -91,9 +91,7 @@ export class NotificationsService {
         select: {
           id: true,
           number: true,
-          itemTitle: true,
-          itemType: true,
-          qty: true,
+          lines: { orderBy: { position: 'asc' }, select: { type: true, title: true, qty: true } },
           totalKgs: true,
           name: true,
           phone: true,

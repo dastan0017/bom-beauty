@@ -2,8 +2,10 @@ import { randomUUID } from 'node:crypto';
 import { CONTENT_SCHEMAS, quizScore } from '@bom/shared';
 import { describe, expect, it } from 'vitest';
 import {
+  COMPOSITION,
   DELIVERY_CONTENT,
   HOME_CONTENT,
+  HOME_RAILS,
   OFFER_CONTENT,
   PRIVACY_CONTENT,
   PRODUCTS,
@@ -26,13 +28,32 @@ describe('seed data', () => {
     expect(CONTENT_SCHEMAS.offer.safeParse(OFFER_CONTENT).success).toBe(true);
   });
 
-  it('programs only reference catalog products, and steps only their own items', () => {
+  it('programs and their steps only reference catalog products', () => {
     const keys = new Set(PRODUCTS.map((p) => p.key));
     for (const program of PROGRAMS) {
       expect(program.items.every((key) => keys.has(key))).toBe(true);
       const steps = [...program.am, ...program.pm].map(([key]) => key);
-      expect(steps.every((key) => program.items.includes(key))).toBe(true);
+      expect(steps.every((key) => keys.has(key))).toBe(true);
     }
+  });
+
+  it('has the eight programs of the design in the admin order', () => {
+    expect(PROGRAMS.map((p) => p.slug)).toEqual([
+      'acne',
+      'pores',
+      'pigmentation',
+      'lifting',
+      'glow',
+      'dry-skin',
+      'sensitive-skin',
+      'recovery',
+    ]);
+  });
+
+  it('home rails and compositions name real products', () => {
+    const keys = new Set(PRODUCTS.map((p) => p.key));
+    for (const list of Object.values(HOME_RAILS)) expect(list.every((key) => keys.has(key))).toBe(true);
+    expect(Object.keys(COMPOSITION).sort()).toEqual([...keys].sort());
   });
 
   it('every program can appear in quiz results', () => {

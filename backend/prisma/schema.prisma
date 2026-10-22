@@ -62,17 +62,19 @@ enum RoutinePeriod {
 }
 
 enum QuizGoal {
-  age
-  pigment
   acne
-  barrier
+  pigment
+  age
+  calm
+  glow
 }
 
 enum SkinType {
-  dry
   oily
-  normal
+  combo
+  dry
   sens
+  normal
 }
 
 // ───────────── Users and auth ─────────────
@@ -147,13 +149,17 @@ model Product {
   badge          String?
   inStock        Boolean        @default(true) @map("in_stock")
   published      Boolean        @default(true)
+  // Home page rails ("На главной странице" in the editor). isNew also shows the «Новинка» label everywhere.
+  bestseller     Boolean        @default(false)
+  seoulChoice    Boolean        @default(false) @map("seoul_choice")
+  isNew          Boolean        @default(false) @map("is_new")
   order          Int            @default(0)
   seoTitle       String?        @map("seo_title")
   seoDescription String?        @map("seo_description")
   images         ProductImage[]
   programItems   ProgramItem[]
   routineSteps   ProgramStep[]
-  orders         Order[]
+  orderLines     OrderLine[]
   createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -194,12 +200,15 @@ model Program {
   video           Video?        @relation("ProgramVideo", fields: [videoId], references: [id], onDelete: SetNull)
   protocolMediaId String?       @map("protocol_media_id") @db.Uuid
   protocol        Media?        @relation("ProgramProtocol", fields: [protocolMediaId], references: [id], onDelete: SetNull)
+  // 5:4 photo for the home programs grid, the catalog problem banner and order lines.
+  coverMediaId    String?       @map("cover_media_id") @db.Uuid
+  cover           Media?        @relation("ProgramCover", fields: [coverMediaId], references: [id], onDelete: SetNull)
   order           Int           @default(0)
   seoTitle        String?       @map("seo_title")
   seoDescription  String?       @map("seo_description")
   items           ProgramItem[]
   steps           ProgramStep[]
-  orders          Order[]
+  orderLines      OrderLine[]
   createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -268,6 +277,7 @@ model Media {
   processedAt   DateTime?      @map("processed_at") @db.Timestamptz(3)
   productImages ProductImage[]
   protocolOf    Program[]      @relation("ProgramProtocol")
+  coverOf       Program[]      @relation("ProgramCover")
   review        Review?
 
   @@index([status, expiresAt])
@@ -336,14 +346,7 @@ model Order {
   id              String        @id @default(uuid(7)) @db.Uuid
   number          Int           @unique @default(autoincrement())
   status          OrderStatus   @default(new)
-  itemType        OrderItemType @map("item_type")
-  productId       String?       @map("product_id") @db.Uuid
-  product         Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
-  programId       String?       @map("program_id") @db.Uuid
-  program         Program?      @relation(fields: [programId], references: [id], onDelete: SetNull)
-  itemTitle       String        @map("item_title")
-  unitPriceKgs    Int           @map("unit_price_kgs")
-  qty             Int
+  lines           OrderLine[]
   totalKgs        Int           @map("total_kgs")
   name            String
   phone           String
@@ -367,9 +370,29 @@ model Order {
   @@index([status, createdAt])
   @@index([createdAt])
   @@index([phone])
-  @@index([programId, createdAt])
-  @@index([productId, createdAt])
   @@map("orders")
+}
+
+// One product or program in an order: a cart order has several product lines, a program order has one line.
+model OrderLine {
+  id           String        @id @default(uuid(7)) @db.Uuid
+  orderId      String        @map("order_id") @db.Uuid
+  order        Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  position     Int           @default(0)
+  type         OrderItemType
+  productId    String?       @map("product_id") @db.Uuid
+  product      Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+  programId    String?       @map("program_id") @db.Uuid
+  program      Program?      @relation(fields: [programId], references: [id], onDelete: SetNull)
+  title        String
+  unitPriceKgs Int           @map("unit_price_kgs")
+  qty          Int
+  totalKgs     Int           @map("total_kgs")
+
+  @@index([orderId, position])
+  @@index([programId])
+  @@index([productId])
+  @@map("order_lines")
 }
 
 model Lead {

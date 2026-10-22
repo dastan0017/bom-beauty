@@ -82,13 +82,6 @@ function HomeForm({ content }: { content: AdminContent }) {
       <div className="mt-[26px] flex flex-wrap items-start gap-4">
         <div className="flex min-w-0 flex-[999_1_560px] flex-col gap-4">
           <Panel title={copy.texts.hero}>
-            <Text label={copy.texts.heroBadge} error={errors.heroBadge}>
-              <input
-                value={form.heroBadge}
-                onChange={(e) => update({ heroBadge: e.target.value })}
-                className={inputClass}
-              />
-            </Text>
             <Text label={copy.texts.heroTitle} hint={copy.texts.heroTitleHint} error={errors.heroTitle}>
               <input
                 value={form.heroTitle}
@@ -103,76 +96,6 @@ function HomeForm({ content }: { content: AdminContent }) {
                 className={inputClass}
               />
             </Text>
-            <Text label={copy.texts.quizPrompt} error={errors.quizPrompt}>
-              <input
-                value={form.quizPrompt}
-                onChange={(e) => update({ quizPrompt: e.target.value })}
-                className={inputClass}
-              />
-            </Text>
-          </Panel>
-
-          <Panel title={copy.texts.entries}>
-            {form.entries.map((entry, index) => (
-              <div
-                key={entry.key}
-                className="grid gap-3 border-t border-line-2 pt-4 first:border-t-0 first:pt-0 sm:grid-cols-[96px_minmax(0,1fr)]"
-              >
-                <ImageSlot
-                  media={media(entry.imageMediaId)}
-                  label={copy.media.photo}
-                  purpose="content"
-                  onChange={(uploaded) => {
-                    remember(uploaded);
-                    update({
-                      entries: form.entries.map((e, i) =>
-                        i === index ? { ...e, imageMediaId: uploaded.id } : e,
-                      ),
-                    });
-                  }}
-                  className="w-24 rounded-xl"
-                  {...(entry.imageMediaId
-                    ? {
-                        onRemove: () =>
-                          update({
-                            entries: form.entries.map((e, i) =>
-                              i === index ? { ...e, imageMediaId: null } : e,
-                            ),
-                          }),
-                      }
-                    : {})}
-                />
-                <div className="flex flex-col gap-2.5">
-                  <span className="text-[13px] font-semibold text-muted">
-                    {copy.texts.entryNames[entry.key]}
-                  </span>
-                  <input
-                    value={entry.title}
-                    onChange={(e) =>
-                      update({
-                        entries: form.entries.map((x, i) =>
-                          i === index ? { ...x, title: e.target.value } : x,
-                        ),
-                      })
-                    }
-                    aria-label={`${copy.texts.entryNames[entry.key]}: ${copy.texts.entryTitle}`}
-                    className={cn(inputClass, 'font-semibold')}
-                  />
-                  <input
-                    value={entry.text}
-                    onChange={(e) =>
-                      update({
-                        entries: form.entries.map((x, i) =>
-                          i === index ? { ...x, text: e.target.value } : x,
-                        ),
-                      })
-                    }
-                    aria-label={`${copy.texts.entryNames[entry.key]}: ${copy.texts.entryText}`}
-                    className={inputClass}
-                  />
-                </div>
-              </div>
-            ))}
           </Panel>
 
           <Panel title={copy.texts.comparison}>
@@ -191,35 +114,79 @@ function HomeForm({ content }: { content: AdminContent }) {
               />
             </Text>
             <div className="grid gap-4 sm:grid-cols-2">
-              {(['mass', 'pro'] as const).map((side) => (
-                <div key={side} className="flex flex-col gap-2.5 rounded-xl bg-bg p-3.5">
-                  <span className="text-sm font-semibold">
-                    {side === 'mass' ? copy.texts.mass : copy.texts.pro}
-                  </span>
-                  <input
-                    value={form.comparison[side].eyebrow}
-                    onChange={(e) => setSide(side, { eyebrow: e.target.value })}
-                    aria-label={copy.texts.eyebrow}
-                    placeholder={copy.texts.eyebrow}
-                    className={inputClass}
-                  />
-                  <input
-                    value={form.comparison[side].title}
-                    onChange={(e) => setSide(side, { title: e.target.value })}
-                    aria-label={copy.texts.columnTitle}
-                    placeholder={copy.texts.columnTitle}
-                    className={cn(inputClass, 'font-semibold')}
-                  />
-                  <textarea
-                    value={form.comparison[side].points.join('\n')}
-                    onChange={(e) => setSide(side, { points: e.target.value.split('\n').slice(0, 5) })}
-                    aria-label={copy.texts.points}
-                    placeholder={copy.texts.points}
-                    rows={3}
-                    className={textareaClass}
-                  />
-                </div>
-              ))}
+              {(['mass', 'pro'] as const).map((side) => {
+                const points = form.comparison[side].points;
+                const setPoints = (next: typeof points) => setSide(side, { points: next });
+                return (
+                  <div key={side} className="flex flex-col gap-2.5 rounded-xl bg-bg p-3.5">
+                    <span className="text-sm font-semibold">
+                      {side === 'mass' ? copy.texts.mass : copy.texts.pro}
+                    </span>
+                    <input
+                      value={form.comparison[side].eyebrow}
+                      onChange={(e) => setSide(side, { eyebrow: e.target.value })}
+                      aria-label={copy.texts.eyebrow}
+                      placeholder={copy.texts.eyebrow}
+                      className={inputClass}
+                    />
+                    <input
+                      value={form.comparison[side].title}
+                      onChange={(e) => setSide(side, { title: e.target.value })}
+                      aria-label={copy.texts.columnTitle}
+                      placeholder={copy.texts.columnTitle}
+                      className={cn(inputClass, 'font-semibold')}
+                    />
+                    <span className="mt-1 text-[13px] font-semibold text-muted">{copy.texts.points}</span>
+                    {points.map((point, index) => (
+                      <div key={index} className="flex gap-2">
+                        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                          <input
+                            value={point.title}
+                            onChange={(e) =>
+                              setPoints(
+                                points.map((p, i) => (i === index ? { ...p, title: e.target.value } : p)),
+                              )
+                            }
+                            aria-label={copy.texts.pointTitle(index + 1)}
+                            placeholder={copy.texts.pointTitle(index + 1)}
+                            className={cn(inputClass, 'font-semibold')}
+                          />
+                          <textarea
+                            value={point.text}
+                            onChange={(e) =>
+                              setPoints(
+                                points.map((p, i) => (i === index ? { ...p, text: e.target.value } : p)),
+                              )
+                            }
+                            aria-label={copy.texts.pointText(index + 1)}
+                            placeholder={copy.texts.pointText(index + 1)}
+                            rows={3}
+                            className={cn(textareaClass, 'field-sizing-content')}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setPoints(points.filter((_, i) => i !== index))}
+                          aria-label={`${copy.texts.removePoint} ${index + 1}`}
+                          className="hover:border-line-hover flex size-11 flex-none items-center justify-center rounded-control border border-line text-muted"
+                        >
+                          <CloseIcon width={16} height={16} />
+                        </button>
+                      </div>
+                    ))}
+                    {points.length < 5 && (
+                      <button
+                        type="button"
+                        onClick={() => setPoints([...points, { title: '', text: '' }])}
+                        className="inline-flex h-9 items-center gap-1.5 self-start text-[15px] font-semibold text-blue"
+                      >
+                        <PlusIcon />
+                        {copy.texts.addPoint}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </Panel>
 
@@ -322,6 +289,23 @@ function HomeForm({ content }: { content: AdminContent }) {
                 update({ greetingVideoId: uploaded.id });
               }}
               onRemove={() => update({ greetingVideoId: null })}
+            />
+          </Panel>
+          <Panel
+            title={copy.texts.catalogPhoto}
+            aside={<span className="text-[13px] text-muted">2:1</span>}
+            hint={copy.texts.catalogPhotoHint}
+          >
+            <ImageSlot
+              media={media(form.catalogImageMediaId)}
+              label={copy.media.photo}
+              purpose="content"
+              className="aspect-[2/1]"
+              onChange={(uploaded) => {
+                remember(uploaded);
+                update({ catalogImageMediaId: uploaded.id });
+              }}
+              {...(form.catalogImageMediaId ? { onRemove: () => update({ catalogImageMediaId: null }) } : {})}
             />
           </Panel>
           <Panel title={`${copy.texts.about}: ${copy.media.photo}`}>

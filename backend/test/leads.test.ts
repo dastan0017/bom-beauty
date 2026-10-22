@@ -14,14 +14,14 @@ describe('POST /v1/leads/*', () => {
   it('stores the quiz answers with the server ranking', async () => {
     const res = await request<{ id: string }>(ctx.url('/v1/leads/quiz'), {
       method: 'POST',
-      json: { ...meta(), answers: { skin: 'sens', goal: 'pigment', exp: 'pro', fmt: 'wa' }, choose: true },
+      json: { ...meta(), answers: { goal: 'pigment', skin: 'sens', exp: 'pro', age: '35' } },
     });
     expect(res.status).toBe(201);
     const row = await ctx.prisma.lead.findUniqueOrThrow({ where: { id: res.body.id } });
     expect(row).toMatchObject({
       kind: 'quiz',
       choose: true,
-      recommended: ['pigmentation', 'sensitive-skin'],
+      recommended: ['pigmentation', 'sensitive-skin', 'recovery'],
     });
   });
 
@@ -29,10 +29,10 @@ describe('POST /v1/leads/*', () => {
     await ctx.prisma.program.update({ where: { slug: 'pigmentation' }, data: { published: false } });
     const res = await request<{ id: string }>(ctx.url('/v1/leads/quiz'), {
       method: 'POST',
-      json: { ...meta(), answers: { skin: 'sens', goal: 'pigment', exp: 'pro', fmt: 'set' } },
+      json: { ...meta(), answers: { goal: 'pigment', skin: 'sens', exp: 'some', age: '25' } },
     });
     const row = await ctx.prisma.lead.findUniqueOrThrow({ where: { id: res.body.id } });
-    expect(row.recommended).toEqual(['sensitive-skin']);
+    expect(row.recommended).toEqual(['sensitive-skin', 'recovery']);
     await ctx.prisma.program.update({ where: { slug: 'pigmentation' }, data: { published: true } });
   });
 
@@ -54,7 +54,7 @@ describe('POST /v1/leads/*', () => {
   it('validates answers', async () => {
     const res = await request(ctx.url('/v1/leads/quiz'), {
       method: 'POST',
-      json: { ...meta(), answers: { skin: 'oily', goal: 'nope', exp: 'pro', fmt: 'set' } },
+      json: { ...meta(), answers: { goal: 'barrier', skin: 'oily', exp: 'pro', age: '25' } },
     });
     expect(res.status).toBe(400);
   });

@@ -19,12 +19,19 @@ export function orderItemLabel(item: { type: OrderItemType; title: string }): st
   return item.type === 'program' ? `Программа «${item.title}»` : item.title;
 }
 
-export interface OrderMessageInput {
-  item: { type: OrderItemType; title: string };
+export interface OrderMessageLine {
+  type: OrderItemType;
+  title: string;
   qty: number;
-  /** Total formatted in the visitor's currency. */
+  /** Line total formatted in the visitor's currency. */
   total: string;
-  /** Total in сом, only when the visitor chose another currency. */
+}
+
+export interface OrderMessageInput {
+  lines: OrderMessageLine[];
+  /** Order total formatted in the visitor's currency; shown when there are two or more lines. */
+  total: string;
+  /** Order total in сом, only when the visitor chose another currency. */
   totalKgs?: string;
   name: string;
   phone: string;
@@ -32,10 +39,14 @@ export interface OrderMessageInput {
   comment?: string;
 }
 
+/** One bullet per line ("× qty" only above 1), "Итого" for two or more lines (README §7.5). */
 export function buildOrderMessage(order: OrderMessageInput): string {
   const lines = [
     'Здравствуйте! Хочу заказать:',
-    `• ${orderItemLabel(order.item)}${order.qty > 1 ? ` × ${order.qty}` : ''} — ${order.total}`,
+    ...order.lines.map(
+      (line) => `• ${orderItemLabel(line)}${line.qty > 1 ? ` × ${line.qty}` : ''} — ${line.total}`,
+    ),
+    ...(order.lines.length > 1 ? [`Итого: ${order.total}`] : []),
     '',
     `Имя: ${order.name.trim()}`,
     `Телефон: ${order.phone.trim()}`,
@@ -60,27 +71,22 @@ export function buildWholesaleMessage(choice: {
   return lines.join('\n');
 }
 
-/**
- * Quiz hand-off. `choose` = the visitor asks for help choosing between the suggested programs
- * ("Спросить Нурайым в WhatsApp"); otherwise they ask for a personal review of the top one.
- */
+/** Quiz hand-off from "Спросить Нурайым в WhatsApp" under the result list (README §2). */
 export function buildQuizMessage(
   answers: Partial<QuizAnswers>,
-  programTitles: string[],
-  choose: boolean,
+  offers: { title: string; price: string }[],
 ): string {
-  const header = [
-    'Здравствуйте, Нурайым! Прошла тест «Выбрать программу за 1 минуту» на сайте.',
-    `— Тип кожи: ${quizAnswerLabel('skin', answers.skin)}`,
+  return [
+    'Здравствуйте, Нурайым! Прошла тест «Подобрать программу ухода за 1 минуту» на сайте.',
     `— Задача: ${quizAnswerLabel('goal', answers.goal)}`,
-    `— Профессиональная косметика: ${quizAnswerLabel('exp', answers.exp)}`,
+    `— Кожа через 2–3 часа после умывания: ${quizAnswerLabel('skin', answers.skin)}`,
+    `— Активная косметика: ${quizAnswerLabel('exp', answers.exp)}`,
+    `— Возраст: ${quizAnswerLabel('age', answers.age)}`,
+    `Сайт предложил: ${offers.map((offer) => `«${offer.title}», ${offer.price}`).join('; ')}. Помогите выбрать, пожалуйста.`,
   ].join('\n');
-  const tail = choose
-    ? `Сайт предложил программы: ${programTitles.map((title) => `«${title}»`).join(', ')}. Помогите выбрать, пожалуйста.`
-    : `Сайт рекомендовал программу «${programTitles[0] ?? ''}». Хочу получить личный разбор ухода.`;
-  return `${header}\n${tail}`;
 }
 
-export function buildProtocolRequestMessage(programTitle: string): string {
-  return `Здравствуйте, Нурайым! Пришлите, пожалуйста, протокол ухода по программе «${programTitle}».`;
+/** Fallback when the care scheme PDF fails to open (README §4). */
+export function buildSchemeRequestMessage(programTitle: string): string {
+  return `Здравствуйте, Нурайым! Пришлите, пожалуйста, схему ухода по программе «${programTitle}».`;
 }

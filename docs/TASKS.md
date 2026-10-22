@@ -122,3 +122,28 @@ Scaffold
 - [x] `docs/DEPLOY.md`, final `docs/HANDOFF.md`, first production deploy checklist (incl. Hetzner presigned POST + CORS check, Bunny MP4 fallback and webhook URL, Telegram bot)
 - [x] First production deploy (2026-10-18, https://bom-beauty.com): Hetzner CX23 fsn1, Cloudflare, buckets, Umami, backups and restore drill; presigned POST + CORS accepted by Hetzner. Still open: Bunny Stream, Telegram bot, SMTP (HANDOFF §4)
 - [x] Gate + `chore(infra): production deploy`
+
+## M8 Client revisions (October 2026)
+
+Spec: `design/updates-2026-10/README.md`; design files in `design/` replaced with the revised prototypes.
+
+- [x] Global: «Новинка» label wins over other badges; Состав on products; «протокол» → «схема ухода» everywhere
+- [x] Home: 봄 pill, trust rows with the KR flag, two-line quiz CTA; programs grid with 5:4 covers and the quiz banner;
+      «Каталог» card with chips; comparison points with title + text on aligned rows; rails Бестселлеры / Новинки /
+      Выбор клиник Сеула; entry tiles and hero badge removed
+- [x] Quiz: goal, skin, experience, age; ranking with related goals, combo → oily, sensitive bonus (parity test with the
+      prototype); «Отлично!» result with alternatives; WhatsApp text lists the offered programs
+- [x] Programs: 8 programs in the admin order (3 new, 2 renamed); program page without the AM/PM section; «Схема ухода»
+      card: uploaded PDF or one generated on the fly (pdf-lib, Onest), WhatsApp fallback on failure
+- [x] Catalog: «По проблеме» and «По типу средства» chips (`?problem=`, `?category=`), program banner, empty state, cart
+      bar replacing the quiz bar
+- [x] Product: «С этим средством ещё берут» rail, order bar with the cart's other items, Состав section
+- [x] Cart and order: `localStorage` cart (products only, 1–20), order sheet in cart and direct modes, `order_lines`
+      table, `items[]` API with the old one-item body still accepted, multi-line WhatsApp, Telegram and admin views
+- [x] Header: home cart pill stacked with «К результатам теста»; no header cart icon
+- [x] Admin: product rail switches and Состав; program cover photo; quiz goals and skins; texts editor for the catalog
+      photo and comparison points; orders show lines (list, drawer, CSV, dashboard, customers)
+- [x] Migration with guarded demo updates (only rows still equal to the seed); seed for the 3 new programs
+- [x] Tests: quiz parity, order lines and legacy body, related products, CSV; e2e for cart order, extras, direct program
+      order, problem filter, scheme PDF, new quiz
+- [x] Gate + `feat: client revisions (cart, quiz, home rails, care scheme PDF)`

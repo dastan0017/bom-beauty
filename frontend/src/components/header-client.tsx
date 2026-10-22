@@ -6,8 +6,10 @@ import { useEffect, useRef, useState, type AnchorHTMLAttributes } from 'react';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
 import { track } from '@/lib/submission';
+import { itemsWord } from '@bom/shared/web';
+import { useCart } from './cart/cart';
 import { currencySymbol, useCurrency } from './currency';
-import { ChevronDownIcon, CloseIcon, SparkleIcon } from './icons';
+import { BagIcon, ChevronDownIcon, CloseIcon, SparkleIcon } from './icons';
 import { useOverlays } from './overlays/site-overlays';
 
 const TABS = [
@@ -77,7 +79,8 @@ export function CurrencyPicker() {
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
         className={cn(
-          'flex h-11 items-center gap-[7px] rounded-[14px] pr-2.5 pl-1.5 whitespace-nowrap text-ink transition-colors',
+          // Narrow phones: tighter padding and gap so the logo, currency and WhatsApp fit on one row (README §8).
+          'flex h-11 items-center gap-1 rounded-[14px] pr-1.5 pl-0.5 whitespace-nowrap text-ink transition-colors',
           open ? 'bg-white/55' : 'bg-transparent',
         )}
       >
@@ -118,17 +121,61 @@ export function CurrencyPicker() {
   );
 }
 
+/**
+ * Floating pills just under the header, top right (design: hdrCart, qPill): the home cart pill and
+ * «К результатам теста». The stack lets taps through except on the pills themselves.
+ */
+export function HeaderPills() {
+  return (
+    <div className="pointer-events-none absolute top-[calc(100%+10px)] right-3 flex flex-col items-end gap-2 lg:right-6">
+      <CartPill />
+      <QuizPill />
+    </div>
+  );
+}
+
+/** Cart count and total on the home page while the cart has products; there is no cart icon in the header. */
+function CartPill() {
+  const pathname = usePathname();
+  const { count, totalKgs } = useCart();
+  const { openCart, busy } = useOverlays();
+  const { format } = useCurrency();
+  if (pathname !== '/' || count === 0 || busy) return null;
+  return (
+    <button
+      type="button"
+      onClick={openCart}
+      className="pointer-events-auto flex h-12 items-center gap-3 rounded-button bg-accent pr-4 pl-3.5 text-left text-white shadow-[0_14px_26px_-12px_var(--acsh)] active:scale-[.97]"
+    >
+      <span className="relative flex flex-none">
+        <BagIcon size={19} strokeWidth={1.9} />
+        <span
+          aria-hidden
+          className="absolute -top-1.5 -right-[7px] flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold text-accent-ink"
+        >
+          {count}
+        </span>
+      </span>
+      <span className="flex min-w-0 flex-col gap-px">
+        <span className="text-xs leading-[1.2] whitespace-nowrap">
+          {copy.cart.summary(`${count} ${itemsWord(count)}`)}
+        </span>{' '}
+        <span className="text-[15px] leading-[1.2] font-semibold whitespace-nowrap">{format(totalKgs)}</span>
+      </span>
+    </button>
+  );
+}
+
 /** "К результатам теста" pill under the header once the quiz has results (design: qPill). */
-export function QuizPill() {
+function QuizPill() {
   const { quizDone, quizPillHidden, hideQuizPill, returnToQuiz, busy } = useOverlays();
   if (!quizDone || quizPillHidden || busy) return null;
   return (
-    <div className="absolute top-[calc(100%+10px)] right-3 flex h-12 items-center gap-1.5 rounded-full bg-ink py-0 pr-1.5 pl-3 text-[13px] leading-[1.2] font-semibold text-white shadow-[0_12px_26px_-12px_rgba(14,14,44,.5)] lg:right-6">
+    <div className="pointer-events-auto flex h-12 items-center gap-1.5 rounded-full bg-ink py-0 pr-1.5 pl-3 text-[13px] leading-[1.2] font-semibold text-white shadow-[0_12px_26px_-12px_rgba(14,14,44,.5)]">
       <button type="button" onClick={returnToQuiz} className="flex items-center gap-1.5">
         <SparkleIcon size={14} className="flex-none" />
         <span className="flex flex-col items-center text-center whitespace-nowrap">
-          <span>{copy.quiz.pill[0]}</span>
-          <span>{copy.quiz.pill[1]}</span>
+          <span>{copy.quiz.pill[0]}</span> <span>{copy.quiz.pill[1]}</span>
         </span>
       </button>
       <button

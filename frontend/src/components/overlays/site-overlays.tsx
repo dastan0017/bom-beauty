@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { captureAttribution, flushOutbox } from '@/lib/submission';
+import { CartProvider, type CartProduct } from '../cart/cart';
 import { CurrencyProvider, type CurrencyOption } from '../currency';
 import type { OrderItem, OrderRequest } from './order-sheet';
 import { QuizDialog, type QuizState } from './quiz-dialog';
@@ -19,7 +20,10 @@ const OrderSheet = dynamic(() => import('./order-sheet').then((module) => module
 interface Overlays {
   whatsapp: string;
   programsCount: number;
+  /** Direct order of one program (README §7.4): the cart is neither shown nor changed. */
   openOrder: (item: OrderItem, options?: { qty?: number; fromQuiz?: boolean }) => void;
+  /** The order sheet with the cart's lines. */
+  openCart: () => void;
   openQuiz: () => void;
   /** Back to the results of a finished quiz (header pill, "К результатам теста"). */
   returnToQuiz: () => void;
@@ -52,17 +56,19 @@ interface StoredQuiz {
   pickedSlug: string | null;
 }
 
-/** Client state shared by every page: currency, order sheet, quiz and video player (rendered once in the layout). */
+/** Client state shared by every page: currency, cart, order sheet, quiz and video player (rendered once in the layout). */
 export function SiteOverlays({
   whatsapp,
   currencies,
   programs,
+  products,
   turnstileSiteKey,
   children,
 }: {
   whatsapp: string;
   currencies: CurrencyOption[];
   programs: ProgramCard[];
+  products: CartProduct[];
   turnstileSiteKey: string | null;
   children: ReactNode;
 }) {
@@ -148,7 +154,20 @@ export function SiteOverlays({
 
   const openOrder = useCallback<Overlays['openOrder']>((item, options) => {
     setVideo(null);
-    setOrder({ item, qty: options?.qty ?? 1, fromQuiz: options?.fromQuiz ?? false });
+    setOrder((current) => ({
+      id: (current?.id ?? 0) + 1,
+      mode: 'direct',
+      item,
+      qty: options?.qty ?? 1,
+      fromQuiz: options?.fromQuiz ?? false,
+    }));
+    setOrderOpen(true);
+    setOrderSheetWanted(true);
+  }, []);
+
+  const openCart = useCallback(() => {
+    setVideo(null);
+    setOrder((current) => ({ id: (current?.id ?? 0) + 1, mode: 'cart' }));
     setOrderOpen(true);
     setOrderSheetWanted(true);
   }, []);
@@ -178,6 +197,7 @@ export function SiteOverlays({
       whatsapp,
       programsCount: programs.length,
       openOrder,
+      openCart,
       openQuiz,
       returnToQuiz,
       quizDone,
@@ -195,6 +215,7 @@ export function SiteOverlays({
       whatsapp,
       programs.length,
       openOrder,
+      openCart,
       openQuiz,
       returnToQuiz,
       quizDone,
@@ -209,50 +230,49 @@ export function SiteOverlays({
 
   return (
     <CurrencyProvider options={currencies}>
-      <OverlaysContext value={value}>
-        {children}
-        {orderSheetWanted && (
-          <OrderSheet
-            request={order}
-            open={orderOpen}
-            onClose={() => setOrderOpen(false)}
+      <CartProvider products={products}>
+        <OverlaysContext value={value}>
+          {children}
+          {orderSheetWanted && (
+            <OrderSheet
+              request={order}
+              open={orderOpen}
+              onClose={() => setOrderOpen(false)}
+              whatsapp={whatsapp}
+              turnstileSiteKey={turnstileSiteKey}
+            />
+          )}
+          <QuizDialog
+            state={quiz}
+            programs={programs}
             whatsapp={whatsapp}
-            turnstileSiteKey={turnstileSiteKey}
+            onAnswer={(key: QuizKey, answer) => {
+              window.clearTimeout(advance.current);
+              setQuiz((current) => ({ ...current, answers: { ...current.answers, [key]: answer } }));
+              // Auto-advance after a short pause so the choice is visible (design: 300 ms).
+              advance.current = window.setTimeout(() => {
+                setQuiz((current) => ({ ...current, step: Math.min(QUIZ_TOTAL, current.step + 1) }));
+                setQuizPillHidden(false);
+              }, 300);
+            }}
+            onBack={() => {
+              window.clearTimeout(advance.current);
+              setQuiz((current) => ({ ...current, step: Math.max(0, current.step - 1) }));
+            }}
+            onClose={() => {
+              window.clearTimeout(advance.current);
+              setQuiz((current) => ({ ...current, open: false }));
+            }}
+            onRestart={openQuiz}
+            onPick={(slug) => {
+              setQuizPickedSlug(slug);
+              setQuiz((current) => ({ ...current, open: false }));
+              router.push(`/programs/${slug}`);
+            }}
           />
-        )}
-        <QuizDialog
-          state={quiz}
-          programs={programs}
-          whatsapp={whatsapp}
-          onAnswer={(key: QuizKey, answer) => {
-            window.clearTimeout(advance.current);
-            setQuiz((current) => ({ ...current, answers: { ...current.answers, [key]: answer } }));
-            // Auto-advance after a short pause so the choice is visible (design: 300 ms).
-            advance.current = window.setTimeout(() => {
-              setQuiz((current) => ({ ...current, step: Math.min(QUIZ_TOTAL, current.step + 1) }));
-              setQuizPillHidden(false);
-            }, 300);
-          }}
-          onBack={() => {
-            window.clearTimeout(advance.current);
-            setQuiz((current) => ({ ...current, step: Math.max(0, current.step - 1) }));
-          }}
-          onClose={() => {
-            window.clearTimeout(advance.current);
-            setQuiz((current) => ({ ...current, open: false }));
-          }}
-          onRestart={openQuiz}
-          onSeeList={() =>
-            setQuiz((current) => ({ ...current, answers: { ...current.answers, fmt: 'set' } }))
-          }
-          onPick={(slug) => {
-            setQuizPickedSlug(slug);
-            setQuiz((current) => ({ ...current, open: false }));
-            router.push(`/programs/${slug}`);
-          }}
-        />
-        <VideoPlayer spec={video} onClose={() => setVideo(null)} />
-      </OverlaysContext>
+          <VideoPlayer spec={video} onClose={() => setVideo(null)} />
+        </OverlaysContext>
+      </CartProvider>
     </CurrencyProvider>
   );
 }

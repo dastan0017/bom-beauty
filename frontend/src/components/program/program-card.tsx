@@ -20,7 +20,7 @@ export function ProgramCard({ program }: { program: ProgramCardData }) {
       )}
     >
       <span className="flex items-start gap-3.5">
-        <VideoThumb program={program} className="h-[74px] w-14" />
+        <VideoThumb program={program} className="h-[74px] w-[92px]" />
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           {program.badge && (
             <span className="mb-1 inline-flex h-[26px] items-center gap-[5px] self-start rounded-full bg-accent-soft px-2.5 text-[13px] font-semibold text-accent-ink">

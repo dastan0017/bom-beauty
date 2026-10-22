@@ -1,10 +1,15 @@
-import type { OrderRow } from '@bom/shared';
+import { orderKindLabel, orderSummary, type OrderRow } from '@bom/shared';
 import { copy } from '@/content/copy';
 import { ApiError } from './api';
 
-/** "Cica-сыворотка × 2" (design: order item column). */
-export function itemLabel(order: Pick<OrderRow, 'itemTitle' | 'qty'>): string {
-  return order.qty > 1 ? `${order.itemTitle} × ${order.qty}` : order.itemTitle;
+/** "Cica-сыворотка × 2", or "… и ещё 2" for a cart (design: order item column). */
+export function itemLabel(order: Pick<OrderRow, 'lines'>): string {
+  return orderSummary(order.lines);
+}
+
+/** "Программа", "Товар" or "Корзина · 3 товара" under the item. */
+export function kindLabel(order: Pick<OrderRow, 'lines'>): string {
+  return orderKindLabel(order.lines);
 }
 
 /** Toast text for a failed request. */

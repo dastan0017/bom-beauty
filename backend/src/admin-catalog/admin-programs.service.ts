@@ -56,9 +56,11 @@ const detailSelect = {
   },
   video: { select: adminVideoSelect },
   protocol: { select: adminMediaSelect },
+  cover: { select: adminMediaSelect },
 } satisfies Prisma.ProgramSelect;
 
-// Program changes show on the programs list, the program page, product pages ("Входит в программы") and the quiz.
+// Program changes show on the home grid, the programs list, the program page, product pages ("Входит в программы"),
+// the catalog's problem filter and the quiz.
 const programTags = (...slugs: string[]) => [
   SITE_TAGS.programs,
   SITE_TAGS.products,
@@ -159,6 +161,7 @@ export class AdminProgramsService {
       sumKgs: items.reduce((sum, item) => sum + item.priceKgs, 0),
       video: row.video ? toAdminVideo(row.video) : null,
       protocol: row.protocol ? toAdminMedia(row.protocol, this.env.MEDIA_PUBLIC_URL) : null,
+      cover: row.cover ? toAdminMedia(row.cover, this.env.MEDIA_PUBLIC_URL) : null,
       seoTitle: row.seoTitle,
       seoDescription: row.seoDescription,
       updatedAt: row.updatedAt.toISOString(),
@@ -286,6 +289,7 @@ export class AdminProgramsService {
       inStock: input.inStock,
       videoId: input.videoId,
       protocolMediaId: input.protocolMediaId,
+      coverMediaId: input.coverMediaId,
       seoTitle: input.seoTitle,
       seoDescription: input.seoDescription,
     };
@@ -317,6 +321,10 @@ export class AdminProgramsService {
     if (input.protocolMediaId) {
       const pdf = await this.prisma.media.count({ where: { id: input.protocolMediaId, kind: 'pdf' } });
       if (!pdf) throw invalidField('protocolMediaId', 'media.not_found');
+    }
+    if (input.coverMediaId) {
+      const image = await this.prisma.media.count({ where: { id: input.coverMediaId, kind: 'image' } });
+      if (!image) throw invalidField('coverMediaId', 'media.not_found');
     }
     if (input.videoId) {
       const video = await this.prisma.video.count({ where: { id: input.videoId } });

@@ -41,6 +41,9 @@ const EMPTY: ProductInput = {
   badge: null,
   inStock: true,
   published: true,
+  bestseller: false,
+  seoulChoice: false,
+  isNew: false,
   imageIds: [],
   seoTitle: null,
   seoDescription: null,
@@ -62,6 +65,9 @@ function toInput(product: AdminProduct): ProductInput {
     badge: product.badge,
     inStock: product.inStock,
     published: product.published,
+    bestseller: product.bestseller,
+    seoulChoice: product.seoulChoice,
+    isNew: product.isNew,
     imageIds: product.images.map((image) => image.id),
     seoTitle: product.seoTitle,
     seoDescription: product.seoDescription,
@@ -273,6 +279,15 @@ function ProductForm({ product, initial }: { product: AdminProduct | null; initi
                 className={textareaClass}
               />
             </Text>
+            <Text label={copy.product.inci} error={errors.inci}>
+              <textarea
+                value={form.inci ?? ''}
+                onChange={(e) => set('inci', e.target.value || null)}
+                rows={3}
+                placeholder={copy.product.inciPlaceholder}
+                className={textareaClass}
+              />
+            </Text>
             <Text label={copy.product.howToUse} error={errors.howToUse}>
               <textarea
                 value={form.howToUse}
@@ -286,14 +301,6 @@ function ProductForm({ product, initial }: { product: AdminProduct | null; initi
                 value={form.shortName ?? ''}
                 onChange={(e) => set('shortName', e.target.value || null)}
                 className={inputClass}
-              />
-            </Text>
-            <Text label={copy.product.inci} hint={copy.product.inciHint} error={errors.inci}>
-              <textarea
-                value={form.inci ?? ''}
-                onChange={(e) => set('inci', e.target.value || null)}
-                rows={3}
-                className={textareaClass}
               />
             </Text>
           </Panel>
@@ -350,7 +357,11 @@ function ProductForm({ product, initial }: { product: AdminProduct | null; initi
           <Panel>
             <Text
               label={copy.editor.badge}
-              hint={copy.product.badgeHint(badged, Math.max(allProducts.data?.length ?? 1, 1))}
+              hint={
+                form.isNew
+                  ? copy.product.newBadgeHint
+                  : copy.product.badgeHint(badged, Math.max(allProducts.data?.length ?? 1, 1))
+              }
             >
               <select
                 value={form.badge ?? ''}
@@ -365,6 +376,19 @@ function ProductForm({ product, initial }: { product: AdminProduct | null; initi
                 ))}
               </select>
             </Text>
+          </Panel>
+          <Panel title={copy.product.home} hint={copy.product.homeHint} className="gap-3.5">
+            <ToggleRow
+              label={copy.product.bestseller}
+              checked={form.bestseller}
+              onChange={(v) => set('bestseller', v)}
+            />
+            <ToggleRow label={copy.product.isNew} checked={form.isNew} onChange={(v) => set('isNew', v)} />
+            <ToggleRow
+              label={copy.product.seoulChoice}
+              checked={form.seoulChoice}
+              onChange={(v) => set('seoulChoice', v)}
+            />
           </Panel>
           {product &&
             (product.programs.length > 0 ? (
@@ -425,6 +449,24 @@ export function SwitchRow({
   return (
     <div className="flex items-center justify-between gap-3 rounded-card border border-line bg-surface px-5 py-[18px]">
       <span className="text-[15px] font-semibold">{label}</span>
+      <Toggle checked={checked} onChange={onChange} label={label} />
+    </div>
+  );
+}
+
+/** A label and a switch inside a panel («На главной странице»). */
+function ToggleRow({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-[15px]">{label}</span>
       <Toggle checked={checked} onChange={onChange} label={label} />
     </div>
   );

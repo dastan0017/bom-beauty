@@ -1,5 +1,5 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { normalizePhone, type CreateOrder, type CreateOrderResponse } from '@bom/shared';
+import { normalizePhone, orderLinesOf, type CreateOrder, type CreateOrderResponse } from '@bom/shared';
 import type { Env } from '../config/env';
 import { ENV } from '../config/env.module';
 import { hashIp } from '../common/client-ip';
@@ -37,28 +37,44 @@ export class OrdersService {
     if (!phone) throw invalidField('phone', 'phone.invalid');
 
     // Prices always come from the database, never from the client.
-    const item =
-      input.item.type === 'product'
-        ? await this.prisma.product.findFirst({
-            where: { slug: input.item.slug, published: true },
-            select: { id: true, name: true, priceKgs: true },
-          })
-        : await this.prisma.program.findFirst({
-            where: { slug: input.item.slug, published: true },
-            select: { id: true, title: true, priceKgs: true },
-          });
-    if (!item) throw new ApiException('not_found', HttpStatus.NOT_FOUND, NOT_AVAILABLE);
-    const title = 'name' in item ? item.name : item.title;
+    const requested = orderLinesOf(input);
+    const slugsOf = (type: 'product' | 'program') =>
+      requested.filter((line) => line.type === type).map((line) => line.slug);
+    const [products, programs] = await Promise.all([
+      this.prisma.product.findMany({
+        where: { slug: { in: slugsOf('product') }, published: true },
+        select: { id: true, slug: true, name: true, priceKgs: true },
+      }),
+      this.prisma.program.findMany({
+        where: { slug: { in: slugsOf('program') }, published: true },
+        select: { id: true, slug: true, title: true, priceKgs: true },
+      }),
+    ]);
+    const lines = requested.map((line, position) => {
+      const product = line.type === 'product' ? products.find((p) => p.slug === line.slug) : undefined;
+      const program = line.type === 'program' ? programs.find((p) => p.slug === line.slug) : undefined;
+      const found = product
+        ? { productId: product.id, title: product.name, priceKgs: product.priceKgs }
+        : program
+          ? { programId: program.id, title: program.title, priceKgs: program.priceKgs }
+          : null;
+      if (!found) throw new ApiException('not_found', HttpStatus.NOT_FOUND, NOT_AVAILABLE);
+      const { priceKgs, ...ref } = found;
+      return {
+        ...ref,
+        position,
+        type: line.type,
+        unitPriceKgs: priceKgs,
+        qty: line.qty,
+        totalKgs: priceKgs * line.qty,
+      };
+    });
 
     try {
       const order = await this.prisma.order.create({
         data: {
-          itemType: input.item.type,
-          ...(input.item.type === 'product' ? { productId: item.id } : { programId: item.id }),
-          itemTitle: title,
-          unitPriceKgs: item.priceKgs,
-          qty: input.qty,
-          totalKgs: item.priceKgs * input.qty,
+          lines: { create: lines },
+          totalKgs: lines.reduce((sum, line) => sum + line.totalKgs, 0),
           name: input.name,
           phone,
           address: input.address,

@@ -25,6 +25,14 @@
 <meta name="ext-resource-dependency" content="assets/photos/use-cream.jpg" data-resource-id="ph-use-cream" />
 <meta name="ext-resource-dependency" content="assets/photos/use-spf.jpg" data-resource-id="ph-use-spf" />
 <meta name="ext-resource-dependency" content="assets/nurai-hero.png" data-resource-id="nurai-hero" />
+<meta name="ext-resource-dependency" content="assets/programs/acne.jpg" data-resource-id="pc-acne" />
+<meta name="ext-resource-dependency" content="assets/programs/pores.jpg" data-resource-id="pc-pores" />
+<meta name="ext-resource-dependency" content="assets/programs/pigment.jpg" data-resource-id="pc-pigment" />
+<meta name="ext-resource-dependency" content="assets/programs/lifting.jpg" data-resource-id="pc-lifting" />
+<meta name="ext-resource-dependency" content="assets/programs/glow.jpg" data-resource-id="pc-glow" />
+<meta name="ext-resource-dependency" content="assets/programs/dry.jpg" data-resource-id="pc-dry" />
+<meta name="ext-resource-dependency" content="assets/programs/sensitive.jpg" data-resource-id="pc-sensitive" />
+<meta name="ext-resource-dependency" content="assets/programs/recovery.jpg" data-resource-id="pc-recovery" />
 <meta name="ext-resource-dependency" content="assets/reviews/rv-01.jpg" data-resource-id="rv-01" />
 <meta name="ext-resource-dependency" content="assets/reviews/rv-02.jpg" data-resource-id="rv-02" />
 <meta name="ext-resource-dependency" content="assets/reviews/rv-03.jpg" data-resource-id="rv-03" />
@@ -112,7 +120,7 @@
       <div ref="{{ scrollRef }}" onScroll="{{ onMainScroll }}" style="position:absolute;top:{{ topInset }};left:0;right:0;bottom:0;overflow-x:hidden;overflow-y:auto;scrollbar-width:none;background:var(--bg,#F8F7F5);">
 
         <header style="position:sticky;top:0;z-index:10;background:var(--hdr,#AACDEB);border-bottom:1px solid var(--hdrl,rgba(19,35,63,0));">
-          <sc-if value="{{ qPill }}" hint-placeholder-val="{{ false }}"><div onClick="{{ qPillOpen }}" style="position:absolute;top:calc(100% + 10px);right:12px;display:flex;align-items:center;gap:6px;height:48px;padding:0 6px 0 12px;box-sizing:border-box;border-radius:999px;background:var(--ink,#13233F);box-shadow:0 12px 26px -12px rgba(14,14,44,.5);font-size:13px;font-weight:600;line-height:1.2;color:#FFFFFF;cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="flex:none;"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg><span style="display:flex;flex-direction:column;align-items:center;text-align:center;white-space:nowrap;"><span>К результатам</span><span>теста</span></span><span onClick="{{ qPillHide }}" aria-label="Скрыть" style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;flex:none;border-radius:50%;background:rgba(255,255,255,.16);"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></span></div></sc-if>
+          <div style="position:absolute;top:calc(100% + 10px);right:12px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none;"><sc-if value="{{ hdrCart }}" hint-placeholder-val="{{ false }}"><div onClick="{{ openCart }}" role="button" aria-label="Корзина" style="display:flex;align-items:center;gap:12px;height:48px;padding:0 16px 0 14px;box-sizing:border-box;border-radius:var(--rb,999px);background:var(--ac,#2F6BB0);box-shadow:0 14px 26px -12px var(--acsh,rgba(47,107,176,.45));text-align:left;color:#FFFFFF;cursor:pointer;pointer-events:auto;" style-active="transform:scale(.97)"><span style="position:relative;display:flex;flex:none;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 8h13l-1 12h-11z"></path><path d="M9 8V7a3 3 0 0 1 6 0v1"></path></svg><span style="position:absolute;top:-6px;right:-7px;display:flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;box-sizing:border-box;border-radius:999px;background:#FFFFFF;font-size:10px;font-weight:700;color:var(--aci,#255A99);">{{ cartCount }}</span></span><span style="display:flex;flex-direction:column;gap:1px;min-width:0;"><span style="font-size:12px;line-height:1.2;white-space:nowrap;">{{ cartCountLabel }}</span><span style="font-size:15px;font-weight:600;line-height:1.2;white-space:nowrap;">{{ cartTotal }}</span></span></div></sc-if><sc-if value="{{ qPill }}" hint-placeholder-val="{{ false }}"><div onClick="{{ qPillOpen }}" style="display:flex;pointer-events:auto;align-items:center;gap:6px;height:48px;padding:0 6px 0 12px;box-sizing:border-box;border-radius:999px;background:var(--ink,#13233F);box-shadow:0 12px 26px -12px rgba(14,14,44,.5);font-size:13px;font-weight:600;line-height:1.2;color:#FFFFFF;cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="flex:none;"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg><span style="display:flex;flex-direction:column;align-items:center;text-align:center;white-space:nowrap;"><span>К результатам</span><span>теста</span></span><span onClick="{{ qPillHide }}" aria-label="Скрыть" style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;flex:none;border-radius:50%;background:rgba(255,255,255,.16);"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></span></div></sc-if></div>
           <div style="display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 16px 0 20px;">
             <img onClick="{{ goHome }}" src="assets/bom-lockup-full.png" alt="Bom Beauty" style="display:block;height:24px;width:auto;cursor:pointer;">
             <div style="display:flex;align-items:center;gap:8px;"><sc-if value="{{ curMulti }}" hint-placeholder-val="{{ true }}"><span ref="{{ curRef }}" onClick="{{ toggleCur }}" aria-label="Валюта" style="display:flex;align-items:center;gap:7px;height:44px;padding:0 10px 0 6px;box-sizing:border-box;border-radius:14px;background:{{ curWrapBg }};color:var(--ink,#13233F);white-space:nowrap;cursor:pointer;transition:background .15s;"><span style="display:flex;align-items:center;gap:5px;height:32px;padding:0 12px;box-sizing:border-box;border:1.5px solid var(--ac,#2F6BB0);border-radius:999px;font-size:15px;font-weight:600;line-height:1;"><span>{{ curSym }}</span><span>{{ curCode }}</span></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="flex:none;transform:{{ curChev }};transition:transform .2s;"><path d="M6 9l6 6 6-6"></path></svg></span></sc-if><span onClick="{{ waChat }}" aria-label="WhatsApp" style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;box-sizing:border-box;border:1px solid var(--wab,rgba(19,35,63,0));border-radius:var(--rw,50%);background:#FFFFFF;color:var(--ink,#13233F);cursor:pointer;"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2c0 1.3.9 2.5 1 2.7.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"></path></svg></span></div>
@@ -126,49 +134,57 @@
         </header>
 
         <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
-          <section style="display:flex;flex-direction:column;align-items:var(--hal,flex-start);padding:26px 20px 30px;text-align:var(--hta,left);background:var(--hbg,#AACDEB);border-radius:0 0 var(--hrad,28px) var(--hrad,28px);">
+          <section style="display:flex;flex-direction:column;align-items:var(--hal,flex-start);padding-top:{{ heroPadTop }};padding-right:20px;padding-bottom:30px;padding-left:20px;transition:padding-top .25s ease;text-align:var(--hta,left);background:var(--hbg,#AACDEB);border-radius:0 0 var(--hrad,28px) var(--hrad,28px);">
               <div style="display:flex;flex-direction:column;align-items:center;gap:20px;margin-bottom:22px;">
                 <div onClick="{{ heroTap }}" style="position:relative;width:96px;height:96px;border-radius:28px;overflow:hidden;cursor:pointer;box-shadow:0 24px 40px -18px rgba(20,20,43,.5);">
                   <img src="assets/nurai-face.png" alt="Нурайым Бекиева" style="display:block;width:100%;height:100%;object-fit:cover;">
                   <sc-if value="{{ heroVideo }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;left:50%;top:50%;display:flex;align-items:center;justify-content:center;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;background:#FFFFFF;box-shadow:0 6px 16px rgba(14,14,44,.3);color:var(--ac,#2F6BB0);"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="margin-left:2px;"><path d="M8 5.2v13.6c0 .8.9 1.3 1.5.8l10-6.8c.6-.4.6-1.2 0-1.6l-10-6.8C8.9 3.9 8 4.4 8 5.2z"></path></svg></span></sc-if>
                 </div>
-                <span style="display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 14px;border-radius:999px;background:var(--acs,#E3EEF9);font-size:14px;font-weight:600;color:var(--aci,#255A99);"><span style="width:7px;height:7px;border-radius:50%;background:#22B07D;"></span>Доставка по Бишкеку и СНГ</span>
+                <span style="display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 16px;border-radius:999px;background:var(--acs,#E3EEF9);font-size:15px;font-weight:600;color:var(--aci,#255A99);white-space:nowrap;"><span style="font-family:'Noto Sans KR',sans-serif;font-size:17px;font-weight:500;line-height:1;">봄</span><span>(BOM) — Весна</span></span>
               </div>
             <h1 style="align-self:stretch;margin:0;font-size:calc(var(--h1s,40px) * var(--fhk,1));font-family:var(--fh,inherit);font-weight:var(--fhw,600);line-height:1.06;letter-spacing:var(--fhls,-.04em);color:var(--hink,#13233F);text-wrap:balance;">Время <span style="font-style:var(--fhi,normal);color:var(--hl,#1F5596);">расцвета</span> и сияния вашей кожи</h1>
             <p style="align-self:stretch;margin:10px 0 0;font-size:16px;line-height:1.5;color:var(--hmu,#2A3F5F);text-wrap:pretty;">с профессиональной косметикой</p>
-            <button onClick="{{ goPrograms }}" style="display:flex;align-items:center;justify-content:center;gap:12px;align-self:stretch;height:58px;margin-top:26px;padding:0 22px;box-sizing:border-box;border:2px solid var(--ac,#2F6BB0);border-radius:var(--rb,999px);background:var(--sf,#FFFFFF);font-family:inherit;font-size:17px;font-weight:600;color:var(--ac,#2F6BB0);cursor:pointer;transition:background .15s ease;" style-hover="background:var(--acs,#E3EEF9)" style-active="filter:brightness(.96)">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg>
-              <span style="white-space:nowrap;">Выбрать программу ухода</span>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
-            </button>
-            <p style="align-self:stretch;margin:22px 0 0;font-size:15px;line-height:1.45;color:var(--hmu,#2A3F5F);text-wrap:balance;">Не уверены, какая программа подойдёт? Ответьте на 4 простых вопроса</p>
-            <button onClick="{{ openQuiz }}" style="display:flex;align-items:center;justify-content:center;gap:10px;align-self:stretch;height:56px;margin-top:12px;padding:0 12px 0 10px;box-sizing:border-box;border-radius:var(--rb,999px);font-family:inherit;font-size:16px;font-weight:600;cursor:pointer;transition:transform .12s ease,filter .12s ease;border:0;background:var(--ac,#2F6BB0);box-shadow:0 16px 30px -14px var(--acsh,rgba(47,107,176,.45));color:#FFFFFF;" style-hover="filter:brightness(.95)" style-active="transform:scale(.985)"><span style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;flex:none;border-radius:50%;background:rgba(255,255,255,.22);color:#FFFFFF;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l9.5-9.5"></path><path d="M16 3.5l1.1 3.1 3.1 1.1-3.1 1.1L16 12l-1.1-3.2-3.1-1.1 3.1-1.1z" fill="currentColor"></path><path d="M6.5 4.5v3M5 6h3"></path></svg></span><span style="white-space:nowrap;">Подобрать уход за 1 минуту</span></button>
+            <div style="display:flex;flex-direction:column;align-self:var(--hal,flex-start);gap:12px;margin-top:22px;text-align:left;">
+              <span style="display:flex;align-items:center;gap:12px;font-size:15px;font-weight:600;line-height:1.35;color:var(--hink,#13233F);"><span style="display:flex;align-items:center;justify-content:center;width:24px;flex:none;"><img src="https://flagcdn.com/kr.svg" alt="" style="display:block;width:22px;height:16px;border-radius:3px;object-fit:cover;box-shadow:0 0 0 1px rgba(19,35,63,.14);"></span><span>100% оригинал из Южной Кореи</span></span>
+              <span style="display:flex;align-items:center;gap:12px;font-size:15px;font-weight:600;line-height:1.35;color:var(--hink,#13233F);"><span style="display:flex;align-items:center;justify-content:center;width:24px;flex:none;color:var(--ac,#2F6BB0);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6.2L4.9 18.1A1.9 1.9 0 0 0 6.5 21h11a1.9 1.9 0 0 0 1.6-2.9L14 9.2V3"></path><path d="M7.4 15h9.2"></path></svg></span><span>Профессиональные составы</span></span>
+              <span style="display:flex;align-items:center;gap:12px;font-size:15px;font-weight:600;line-height:1.35;color:var(--hink,#13233F);"><span style="display:flex;align-items:center;justify-content:center;width:24px;flex:none;color:var(--ac,#2F6BB0);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 5.5h11v10h-11z"></path><path d="M13.5 9.5h4l3 3.2v2.8h-7"></path><circle cx="6.5" cy="17.5" r="2"></circle><circle cx="17" cy="17.5" r="2"></circle></svg></span><span>Доставка по Кыргызстану и СНГ</span></span>
+            </div>
+            <button onClick="{{ openQuiz }}" style="display:flex;align-items:center;justify-content:center;gap:14px;align-self:stretch;min-height:64px;margin-top:26px;padding:10px 16px;box-sizing:border-box;border:0;border-radius:var(--rb,999px);background:var(--ac,#2F6BB0);box-shadow:0 16px 30px -14px var(--acsh,rgba(47,107,176,.45));font-family:inherit;text-align:left;color:#FFFFFF;cursor:pointer;transition:transform .12s ease,filter .12s ease;" style-hover="filter:brightness(.95)" style-active="transform:scale(.985)"><span style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;flex:none;border-radius:50%;background:rgba(255,255,255,.22);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l9.5-9.5"></path><path d="M16 3.5l1.1 3.1 3.1 1.1-3.1 1.1L16 12l-1.1-3.2-3.1-1.1 3.1-1.1z" fill="currentColor"></path><path d="M6.5 4.5v3M5 6h3"></path></svg></span><span style="display:flex;flex-direction:column;gap:2px;min-width:0;"><span style="font-size:17px;font-weight:600;line-height:1.2;">Подобрать программу ухода</span><span style="font-size:15px;font-weight:400;line-height:1.25;">за 1 минуту</span></span></button>
           </section>
 
-          <section style="display:flex;flex-direction:column;gap:10px;padding:20px 16px 0;">
-            <div onClick="{{ goPrograms }}" style="display:flex;align-items:stretch;gap:14px;padding:12px 14px 12px 12px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);cursor:pointer;transition:transform .12s ease;" style-hover="border-color:var(--lnh,#CFCAC2)" style-active="transform:scale(.985)">
-              <div style="position:relative;display:flex;align-items:center;justify-content:center;width:96px;min-height:88px;flex:none;align-self:stretch;border-radius:calc(var(--rc,22px) - 8px);overflow:hidden;background:var(--acs,#E3EEF9);color:var(--aci,#255A99);">
-                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M12 3.5c3.2 4.1 6 7.3 6 10.6a6 6 0 0 1-12 0c0-3.3 2.8-6.5 6-10.6z"></path></svg>
-                <image-slot id="bb-entry-programs" data-src="{{ entryPrograms }}" shape="rect" placeholder="Фото" style="position:absolute;inset:0;color:transparent;pointer-events:{{ slotPE }};"></image-slot>
-              </div>
-              <div style="display:flex;flex:1;flex-direction:column;justify-content:center;gap:4px;min-width:0;padding:4px 0;"><span style="font-size:18px;font-weight:600;line-height:1.25;letter-spacing:-.01em;">Готовые программы ухода</span><span style="font-size:15px;line-height:1.4;color:var(--mu,#59647A);text-wrap:pretty;">Полный уход под вашу проблему кожи</span></div>
-              <span style="display:flex;align-items:center;justify-content:center;align-self:center;width:36px;height:36px;flex:none;border-radius:50%;background:var(--sf2,#F1F0EC);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+          <section style="display:flex;flex-direction:column;gap:16px;padding:56px 16px 0;">
+            <div style="display:flex;flex-direction:column;gap:8px;padding:0 4px;text-align:center;">
+              <h2 style="margin:0;font-size:calc(26px * var(--fhk,1));font-family:var(--fh,inherit);font-weight:var(--fhw,600);line-height:1.15;letter-spacing:var(--fhls,-.035em);text-wrap:balance;">Готовые программы ухода</h2>
+              <p style="margin:0;font-size:16px;line-height:1.5;color:var(--mu,#59647A);text-wrap:balance;">Полный уход под вашу проблему кожи — в одном наборе</p>
             </div>
-            <div onClick="{{ goCatalog }}" style="display:flex;align-items:stretch;gap:14px;padding:12px 14px 12px 12px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);cursor:pointer;transition:transform .12s ease;" style-hover="border-color:var(--lnh,#CFCAC2)" style-active="transform:scale(.985)">
-              <div style="position:relative;display:flex;align-items:center;justify-content:center;width:96px;min-height:88px;flex:none;align-self:stretch;border-radius:calc(var(--rc,22px) - 8px);overflow:hidden;background:var(--acs,#E3EEF9);color:var(--aci,#255A99);">
-                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 8h13l-1 12h-11z"></path><path d="M9 8V7a3 3 0 0 1 6 0v1"></path></svg>
-                <image-slot id="bb-entry-catalog" data-src="{{ entryCatalog }}" shape="rect" placeholder="Фото" style="position:absolute;inset:0;color:transparent;pointer-events:{{ slotPE }};"></image-slot>
-              </div>
-              <div style="display:flex;flex:1;flex-direction:column;justify-content:center;gap:4px;min-width:0;padding:4px 0;"><span style="font-size:18px;font-weight:600;line-height:1.25;letter-spacing:-.01em;">Каталог</span><span style="font-size:15px;line-height:1.4;color:var(--mu,#59647A);text-wrap:pretty;">Корейская косметика для ежедневного ухода</span></div>
-              <span style="display:flex;align-items:center;justify-content:center;align-self:center;width:36px;height:36px;flex:none;border-radius:50%;background:var(--sf2,#F1F0EC);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;">
+              <sc-for list="{{ homeProgs }}" as="g" hint-placeholder-count="8">
+                <div onClick="{{ g.onClick }}" style="display:flex;flex-direction:column;min-width:0;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);overflow:hidden;cursor:pointer;transition:transform .12s ease;" style-hover="border-color:var(--lnh,#CFCAC2)" style-active="transform:scale(.98)">
+                  <div style="position:relative;display:flex;align-items:center;justify-content:center;aspect-ratio:5/4;background:var(--sf2,#F1F0EC);"><span style="font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--mu,#59647A);">фото программы</span><image-slot id="{{ g.slot }}" data-src="{{ g.img }}" shape="rect" style="position:absolute;inset:0;color:transparent;pointer-events:{{ g.pe }};"></image-slot><sc-if value="{{ g.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:8px;right:8px;display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:999px;background:var(--sf,#FFFFFF);box-shadow:0 2px 8px rgba(14,14,44,.12);font-size:12px;font-weight:600;color:var(--aci,#255A99);white-space:nowrap;pointer-events:none;"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg>{{ g.badge }}</span></sc-if><span style="position:absolute;left:8px;bottom:8px;display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;border-radius:999px;background:rgba(14,14,44,.62);font-size:12px;font-weight:600;color:#FFFFFF;pointer-events:none;"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"></path></svg>{{ g.vdur }}</span></div>
+                  <div style="display:flex;flex:1;flex-direction:column;gap:4px;padding:12px 12px 14px;">
+                    <span style="font-size:16px;font-weight:600;line-height:1.25;letter-spacing:-.01em;">{{ g.title }}</span>
+                    <span style="font-size:13px;line-height:1.4;color:var(--mu,#59647A);">{{ g.note }}</span>
+                    <span style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:auto;padding-top:8px;"><span style="font-size:15px;font-weight:600;white-space:nowrap;">{{ g.price }}</span><span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;flex:none;border-radius:50%;background:var(--sf2,#F1F0EC);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></span>
+                  </div>
+                </div>
+              </sc-for>
             </div>
-            <div onClick="{{ goWholesale }}" style="display:flex;align-items:stretch;gap:14px;padding:12px 14px 12px 12px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);cursor:pointer;transition:transform .12s ease;" style-hover="border-color:var(--lnh,#CFCAC2)" style-active="transform:scale(.985)">
-              <div style="position:relative;display:flex;align-items:center;justify-content:center;width:96px;min-height:88px;flex:none;align-self:stretch;border-radius:calc(var(--rc,22px) - 8px);overflow:hidden;background:var(--acs,#E3EEF9);color:var(--aci,#255A99);">
-                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5L12 3l8.5 4.5v9L12 21l-8.5-4.5z"></path><path d="M3.5 7.5L12 12l8.5-4.5M12 12v9"></path></svg>
-                <image-slot id="bb-entry-wholesale" data-src="{{ entryWholesale }}" shape="rect" placeholder="Фото" style="position:absolute;inset:0;color:transparent;pointer-events:{{ slotPE }};"></image-slot>
+            <div onClick="{{ openQuiz }}" style="display:flex;align-items:center;gap:12px;padding:14px 14px 14px 16px;border-radius:var(--rc,22px);background:var(--acs,#E3EEF9);cursor:pointer;transition:transform .12s ease;" style-active="transform:scale(.985)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" style="flex:none;color:var(--ac,#2F6BB0);"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg><div style="display:flex;flex:1;flex-direction:column;gap:2px;min-width:0;"><span style="font-size:16px;font-weight:600;line-height:1.3;">Не знаете, что выбрать?</span><span style="font-size:14px;line-height:1.4;color:var(--mu,#59647A);">Пройдите тест — подберём программу за 1 минуту</span></div><span style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;flex:none;border-radius:50%;background:var(--sf,#FFFFFF);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></div>
+          </section>
+
+          <section style="padding:56px 16px 0;">
+            <div style="display:flex;flex-direction:column;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);overflow:hidden;">
+              <div onClick="{{ openCatalogAll }}" style="position:relative;aspect-ratio:2/1;background:var(--sf2,#F1F0EC);cursor:pointer;"><image-slot id="bb-entry-catalog" data-src="{{ catalogImg }}" shape="rect" placeholder="Фото каталога" style="position:absolute;inset:0;pointer-events:{{ slotPE }};"></image-slot></div>
+              <div style="display:flex;flex-direction:column;gap:14px;padding:18px 18px 20px;">
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  <h2 style="margin:0;font-size:calc(26px * var(--fhk,1));font-family:var(--fh,inherit);font-weight:var(--fhw,600);line-height:1.15;letter-spacing:var(--fhls,-.035em);">Каталог</h2>
+                  <p style="margin:0;font-size:15px;line-height:1.5;color:var(--mu,#59647A);text-wrap:pretty;">Средства по отдельности — с ценой, описанием и составом</p>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                  <sc-for list="{{ catLinks }}" as="c" hint-placeholder-count="5"><span onClick="{{ c.onClick }}" style="display:inline-flex;align-items:center;height:40px;padding:0 14px;box-sizing:border-box;border:1px solid var(--ln,#E6E3DE);border-radius:999px;background:var(--sf,#FFFFFF);font-size:14px;font-weight:600;color:var(--ink,#13233F);cursor:pointer;" style-hover="border-color:var(--lnh,#CFCAC2)">{{ c.label }}</span></sc-for>
+                </div>
+                <button onClick="{{ openCatalogAll }}" style="display:flex;align-items:center;justify-content:center;gap:10px;height:52px;padding:0 20px;box-sizing:border-box;border:1.5px solid var(--ink,#13233F);border-radius:var(--rb,999px);background:var(--sf,#FFFFFF);font-family:inherit;font-size:16px;font-weight:600;color:var(--ink,#13233F);cursor:pointer;" style-hover="background:var(--sf2,#F1F0EC)">Открыть каталог<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></button>
               </div>
-              <div style="display:flex;flex:1;flex-direction:column;justify-content:center;gap:4px;min-width:0;padding:4px 0;"><span style="font-size:18px;font-weight:600;line-height:1.25;letter-spacing:-.01em;">Для оптовиков</span><span style="font-size:15px;line-height:1.4;color:var(--mu,#59647A);text-wrap:pretty;">Профессиональная косметика для вашего бизнеса</span></div>
-              <span style="display:flex;align-items:center;justify-content:center;align-self:center;width:36px;height:36px;flex:none;border-radius:50%;background:var(--sf2,#F1F0EC);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
             </div>
           </section>
 
@@ -177,14 +193,20 @@
               <h2 style="margin:0;font-size:calc(26px * var(--fhk,1));font-family:var(--fh,inherit);font-weight:var(--fhw,600);line-height:1.15;letter-spacing:var(--fhls,-.035em);text-wrap:balance;">Профессиональный уход vs масс-маркет</h2>
               <p style="margin:0;font-size:16px;line-height:1.5;color:var(--mu,#59647A);">Корейская косметика бывает разного уровня</p>
             </div>
-            <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;">
-              <div style="display:flex;flex-direction:column;gap:12px;min-width:0;padding:16px 14px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf2,#F1F0EC);">
-                <div style="display:flex;flex-direction:column;gap:2px;"><span style="font-size:12px;font-weight:600;color:var(--mu,#59647A);">Обычный</span><span style="font-size:16px;font-weight:600;line-height:1.25;color:var(--mu,#59647A);">Масс-маркет</span></div>
-                <div style="display:flex;align-items:flex-start;gap:8px;"><span style="display:flex;align-items:center;justify-content:center;width:20px;height:20px;flex:none;margin-top:1px;border-radius:50%;background:var(--ln,#E6E3DE);color:var(--mu,#59647A);"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 12h12"></path></svg></span><span style="font-size:14px;line-height:1.4;color:var(--mu,#59647A);">Низкая концентрация активов</span></div><div style="display:flex;align-items:flex-start;gap:8px;"><span style="display:flex;align-items:center;justify-content:center;width:20px;height:20px;flex:none;margin-top:1px;border-radius:50%;background:var(--ln,#E6E3DE);color:var(--mu,#59647A);"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 12h12"></path></svg></span><span style="font-size:14px;line-height:1.4;color:var(--mu,#59647A);">Поверхностное увлажнение</span></div><div style="display:flex;align-items:flex-start;gap:8px;"><span style="display:flex;align-items:center;justify-content:center;width:20px;height:20px;flex:none;margin-top:1px;border-radius:50%;background:var(--ln,#E6E3DE);color:var(--mu,#59647A);"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 12h12"></path></svg></span><span style="font-size:14px;line-height:1.4;color:var(--mu,#59647A);">Временный эффект</span></div>
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:repeat(5,auto);column-gap:8px;">
+              <div style="display:grid;grid-row:span 5;grid-template-rows:subgrid;row-gap:16px;min-width:0;padding:16px 12px 18px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf2,#F1F0EC);">
+                <div style="display:flex;flex-direction:column;gap:2px;"><span style="font-size:12px;font-weight:600;color:var(--mu,#59647A);">Обычная косметика</span><span style="font-size:16px;font-weight:600;line-height:1.25;">Масс-маркет</span></div>
+                <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;"><span style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;flex:none;margin-top:1px;border-radius:50%;background:var(--ln,#E6E3DE);color:var(--mu,#59647A);"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></span><div style="display:flex;flex-direction:column;gap:3px;min-width:0;"><span style="font-size:14px;font-weight:600;line-height:1.3;">Низкая концентрация (3–5%)</span><span style="font-size:13px;line-height:1.45;color:var(--mu,#59647A);">В составе преобладают вода, базы и отдушки.</span></div></div>
+                <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;"><span style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;flex:none;margin-top:1px;border-radius:50%;background:var(--ln,#E6E3DE);color:var(--mu,#59647A);"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></span><div style="display:flex;flex-direction:column;gap:3px;min-width:0;"><span style="font-size:14px;font-weight:600;line-height:1.3;">Поверхностный эффект</span><span style="font-size:13px;line-height:1.45;color:var(--mu,#59647A);">Крупные молекулы не проникают в глубокие слои кожи.</span></div></div>
+                <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;"><span style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;flex:none;margin-top:1px;border-radius:50%;background:var(--ln,#E6E3DE);color:var(--mu,#59647A);"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></span><div style="display:flex;flex-direction:column;gap:3px;min-width:0;"><span style="font-size:14px;font-weight:600;line-height:1.3;">Формулы «для всех»</span><span style="font-size:13px;line-height:1.45;color:var(--mu,#59647A);">Не способны решить конкретные проблемы (акне, пигмент, морщины).</span></div></div>
+                <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;"><span style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;flex:none;margin-top:1px;border-radius:50%;background:var(--ln,#E6E3DE);color:var(--mu,#59647A);"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></span><div style="display:flex;flex-direction:column;gap:3px;min-width:0;"><span style="font-size:14px;font-weight:600;line-height:1.3;">Временный результат</span><span style="font-size:13px;line-height:1.45;color:var(--mu,#59647A);">Работает, только пока нанесён на кожу.</span></div></div>
               </div>
-              <div style="display:flex;flex-direction:column;gap:12px;min-width:0;padding:16px 14px;border:1.5px solid var(--ac,#2F6BB0);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);">
-                <div style="display:flex;flex-direction:column;gap:2px;"><span style="font-size:12px;font-weight:600;color:var(--aci,#255A99);">Bom Beauty</span><span style="font-size:16px;font-weight:600;line-height:1.25;">Проф. космецевтика</span></div>
-                <div style="display:flex;align-items:flex-start;gap:8px;"><span style="display:flex;align-items:center;justify-content:center;width:20px;height:20px;flex:none;margin-top:1px;border-radius:50%;background:var(--ac,#2F6BB0);color:#FFFFFF;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><span style="font-size:14px;line-height:1.4;color:var(--ink,#13233F);">Высокая концентрация активов</span></div><div style="display:flex;align-items:flex-start;gap:8px;"><span style="display:flex;align-items:center;justify-content:center;width:20px;height:20px;flex:none;margin-top:1px;border-radius:50%;background:var(--ac,#2F6BB0);color:#FFFFFF;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><span style="font-size:14px;line-height:1.4;color:var(--ink,#13233F);">Работает в глубоких слоях кожи</span></div><div style="display:flex;align-items:flex-start;gap:8px;"><span style="display:flex;align-items:center;justify-content:center;width:20px;height:20px;flex:none;margin-top:1px;border-radius:50%;background:var(--ac,#2F6BB0);color:#FFFFFF;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><span style="font-size:14px;line-height:1.4;color:var(--ink,#13233F);">Накопительный, видимый результат</span></div>
+              <div style="display:grid;grid-row:span 5;grid-template-rows:subgrid;row-gap:16px;min-width:0;padding:16px 12px 18px;border:1.5px solid var(--ac,#2F6BB0);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);box-shadow:0 24px 44px -32px var(--acsh,rgba(47,107,176,.45));">
+                <div style="display:flex;flex-direction:column;gap:2px;"><span style="font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--aci,#255A99);">BOM BEAUTY</span><span style="font-size:16px;font-weight:600;line-height:1.25;">Профессиональная косметика</span></div>
+                <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;"><span style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;flex:none;margin-top:1px;border-radius:50%;background:var(--ac,#2F6BB0);color:#FFFFFF;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><div style="display:flex;flex-direction:column;gap:3px;min-width:0;"><span style="font-size:14px;font-weight:600;line-height:1.3;">Высокая концентрация (до 30–50%)</span><span style="font-size:13px;line-height:1.45;color:var(--mu,#59647A);">Терапевтические дозы PDRN, пептидов, экзосом и др.</span></div></div>
+                <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;"><span style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;flex:none;margin-top:1px;border-radius:50%;background:var(--ac,#2F6BB0);color:#FFFFFF;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><div style="display:flex;flex-direction:column;gap:3px;min-width:0;"><span style="font-size:14px;font-weight:600;line-height:1.3;">Глубокое действие</span><span style="font-size:13px;line-height:1.45;color:var(--mu,#59647A);">Часто используют запатентованные комплексы доставки веществ вглубь кожи.</span></div></div>
+                <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;"><span style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;flex:none;margin-top:1px;border-radius:50%;background:var(--ac,#2F6BB0);color:#FFFFFF;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><div style="display:flex;flex-direction:column;gap:3px;min-width:0;"><span style="font-size:14px;font-weight:600;line-height:1.3;">Работа с проблемой</span><span style="font-size:13px;line-height:1.45;color:var(--mu,#59647A);">Направленный уход против высыпаний, пигментации, старения и др.</span></div></div>
+                <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;"><span style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;flex:none;margin-top:1px;border-radius:50%;background:var(--ac,#2F6BB0);color:#FFFFFF;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><div style="display:flex;flex-direction:column;gap:3px;min-width:0;"><span style="font-size:14px;font-weight:600;line-height:1.3;">Накопительный результат</span><span style="font-size:13px;line-height:1.45;color:var(--mu,#59647A);">Восстанавливает и обновляет кожу на клеточном уровне.</span></div></div>
               </div>
             </div>
           </section>
@@ -231,6 +253,77 @@
             </div>
           </section>
           </sc-if>
+          <sc-if value="{{ hasBest }}" hint-placeholder-val="{{ true }}">
+          <section style="display:flex;flex-direction:column;gap:14px;padding:56px 0 0;">
+            <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:0 20px;">
+              <h2 style="margin:0;min-width:0;font-size:calc(26px * var(--fhk,1));font-family:var(--fh,inherit);font-weight:var(--fhw,600);line-height:1.15;letter-spacing:var(--fhls,-.035em);text-wrap:balance;">Бестселлеры BOM BEAUTY</h2>
+              <span onClick="{{ goCatalog }}" style="display:inline-flex;align-items:center;gap:4px;height:44px;flex:none;font-size:15px;font-weight:600;color:var(--aci,#255A99);white-space:nowrap;cursor:pointer;">Каталог<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+            </div>
+            <div style="display:flex;gap:10px;padding:0 16px 4px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 16px;scrollbar-width:none;">
+              <sc-for list="{{ bestRail }}" as="p" hint-placeholder-count="3">
+                <div style="display:flex;flex:none;flex-direction:column;width:164px;padding:8px 8px 10px;box-sizing:border-box;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);scroll-snap-align:start;">
+                  <div onClick="{{ p.onOpen }}" style="display:flex;flex:1;flex-direction:column;cursor:pointer;">
+                    <div style="position:relative;display:flex;align-items:center;justify-content:center;width:100%;aspect-ratio:1;border-radius:calc(var(--rc,22px) - 8px);overflow:hidden;background:var(--sf2,#F1F0EC);"><span style="font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--mu,#59647A);">фото товара</span><image-slot id="{{ p.slot }}" data-src="{{ p.img }}" shape="rect" style="position:absolute;inset:0;color:transparent;pointer-events:{{ p.pe }};"></image-slot><sc-if value="{{ p.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:8px;left:8px;z-index:1;display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:999px;background:var(--sf,#FFFFFF);box-shadow:0 2px 8px rgba(14,14,44,.12);font-size:12px;font-weight:600;color:var(--aci,#255A99);white-space:nowrap;pointer-events:none;"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg>{{ p.badge }}</span></sc-if></div>
+                    <div style="display:flex;flex:1;flex-direction:column;padding:10px 4px 0;">
+                      <span style="font-size:13px;color:var(--mu,#59647A);">{{ p.brand }}</span>
+                      <span style="margin-top:2px;font-size:15px;font-weight:600;line-height:1.3;">{{ p.name }}</span>
+                      <span style="margin-top:auto;padding-top:10px;font-size:16px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;">{{ p.priceLabel }}</span>
+                    </div>
+                  </div>
+                  <sc-if value="{{ p.out }}" hint-placeholder-val="{{ true }}"><button onClick="{{ p.onOrder }}" style="height:40px;margin-top:10px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rb,999px);background:var(--sf,#FFFFFF);font-family:inherit;font-size:14px;font-weight:600;color:var(--ink,#13233F);cursor:pointer;" style-hover="border-color:var(--lnh,#CFCAC2)" style-active="background:var(--sf2,#F1F0EC)">В корзину</button></sc-if><sc-if value="{{ p.inCart }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;justify-content:space-between;height:40px;margin-top:10px;padding:0 3px;box-sizing:border-box;border-radius:var(--rb,999px);background:var(--acs,#E3EEF9);"><button onClick="{{ p.onDec }}" aria-label="Меньше" style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;border:0;border-radius:50%;background:var(--sf,#FFFFFF);color:var(--ink,#13233F);cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"></path></svg></button><span style="font-size:15px;font-weight:600;color:var(--aci,#255A99);white-space:nowrap;">{{ p.qty }} шт.</span><button onClick="{{ p.onInc }}" aria-label="Больше" style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;border:0;border-radius:50%;background:var(--sf,#FFFFFF);color:var(--ink,#13233F);cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button></div></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+          </sc-if>
+
+          <sc-if value="{{ hasFresh }}" hint-placeholder-val="{{ true }}">
+          <section style="display:flex;flex-direction:column;gap:14px;padding:56px 0 0;">
+            <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:0 20px;">
+              <h2 style="margin:0;min-width:0;font-size:calc(26px * var(--fhk,1));font-family:var(--fh,inherit);font-weight:var(--fhw,600);line-height:1.15;letter-spacing:var(--fhls,-.035em);text-wrap:balance;">Новинки</h2>
+              <span onClick="{{ goCatalog }}" style="display:inline-flex;align-items:center;gap:4px;height:44px;flex:none;font-size:15px;font-weight:600;color:var(--aci,#255A99);white-space:nowrap;cursor:pointer;">Каталог<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+            </div>
+            <div style="display:flex;gap:10px;padding:0 16px 4px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 16px;scrollbar-width:none;">
+              <sc-for list="{{ freshRail }}" as="p" hint-placeholder-count="3">
+                <div style="display:flex;flex:none;flex-direction:column;width:164px;padding:8px 8px 10px;box-sizing:border-box;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);scroll-snap-align:start;">
+                  <div onClick="{{ p.onOpen }}" style="display:flex;flex:1;flex-direction:column;cursor:pointer;">
+                    <div style="position:relative;display:flex;align-items:center;justify-content:center;width:100%;aspect-ratio:1;border-radius:calc(var(--rc,22px) - 8px);overflow:hidden;background:var(--sf2,#F1F0EC);"><span style="font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--mu,#59647A);">фото товара</span><image-slot id="{{ p.slot }}" data-src="{{ p.img }}" shape="rect" style="position:absolute;inset:0;color:transparent;pointer-events:{{ p.pe }};"></image-slot><sc-if value="{{ p.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:8px;left:8px;z-index:1;display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:999px;background:var(--sf,#FFFFFF);box-shadow:0 2px 8px rgba(14,14,44,.12);font-size:12px;font-weight:600;color:var(--aci,#255A99);white-space:nowrap;pointer-events:none;"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg>{{ p.badge }}</span></sc-if></div>
+                    <div style="display:flex;flex:1;flex-direction:column;padding:10px 4px 0;">
+                      <span style="font-size:13px;color:var(--mu,#59647A);">{{ p.brand }}</span>
+                      <span style="margin-top:2px;font-size:15px;font-weight:600;line-height:1.3;">{{ p.name }}</span>
+                      <span style="margin-top:auto;padding-top:10px;font-size:16px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;">{{ p.priceLabel }}</span>
+                    </div>
+                  </div>
+                  <sc-if value="{{ p.out }}" hint-placeholder-val="{{ true }}"><button onClick="{{ p.onOrder }}" style="height:40px;margin-top:10px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rb,999px);background:var(--sf,#FFFFFF);font-family:inherit;font-size:14px;font-weight:600;color:var(--ink,#13233F);cursor:pointer;" style-hover="border-color:var(--lnh,#CFCAC2)" style-active="background:var(--sf2,#F1F0EC)">В корзину</button></sc-if><sc-if value="{{ p.inCart }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;justify-content:space-between;height:40px;margin-top:10px;padding:0 3px;box-sizing:border-box;border-radius:var(--rb,999px);background:var(--acs,#E3EEF9);"><button onClick="{{ p.onDec }}" aria-label="Меньше" style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;border:0;border-radius:50%;background:var(--sf,#FFFFFF);color:var(--ink,#13233F);cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"></path></svg></button><span style="font-size:15px;font-weight:600;color:var(--aci,#255A99);white-space:nowrap;">{{ p.qty }} шт.</span><button onClick="{{ p.onInc }}" aria-label="Больше" style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;border:0;border-radius:50%;background:var(--sf,#FFFFFF);color:var(--ink,#13233F);cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button></div></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+          </sc-if>
+
+          <sc-if value="{{ hasSeoul }}" hint-placeholder-val="{{ true }}">
+          <section style="display:flex;flex-direction:column;gap:14px;padding:56px 0 0;">
+            <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:0 20px;">
+              <h2 style="margin:0;min-width:0;font-size:calc(26px * var(--fhk,1));font-family:var(--fh,inherit);font-weight:var(--fhw,600);line-height:1.15;letter-spacing:var(--fhls,-.035em);text-wrap:balance;">Выбор клиник Сеула</h2>
+              <span onClick="{{ goCatalog }}" style="display:inline-flex;align-items:center;gap:4px;height:44px;flex:none;font-size:15px;font-weight:600;color:var(--aci,#255A99);white-space:nowrap;cursor:pointer;">Каталог<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+            </div>
+            <div style="display:flex;gap:10px;padding:0 16px 4px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 16px;scrollbar-width:none;">
+              <sc-for list="{{ seoulRail }}" as="p" hint-placeholder-count="3">
+                <div style="display:flex;flex:none;flex-direction:column;width:164px;padding:8px 8px 10px;box-sizing:border-box;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);scroll-snap-align:start;">
+                  <div onClick="{{ p.onOpen }}" style="display:flex;flex:1;flex-direction:column;cursor:pointer;">
+                    <div style="position:relative;display:flex;align-items:center;justify-content:center;width:100%;aspect-ratio:1;border-radius:calc(var(--rc,22px) - 8px);overflow:hidden;background:var(--sf2,#F1F0EC);"><span style="font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--mu,#59647A);">фото товара</span><image-slot id="{{ p.slot }}" data-src="{{ p.img }}" shape="rect" style="position:absolute;inset:0;color:transparent;pointer-events:{{ p.pe }};"></image-slot><sc-if value="{{ p.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:8px;left:8px;z-index:1;display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:999px;background:var(--sf,#FFFFFF);box-shadow:0 2px 8px rgba(14,14,44,.12);font-size:12px;font-weight:600;color:var(--aci,#255A99);white-space:nowrap;pointer-events:none;"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg>{{ p.badge }}</span></sc-if></div>
+                    <div style="display:flex;flex:1;flex-direction:column;padding:10px 4px 0;">
+                      <span style="font-size:13px;color:var(--mu,#59647A);">{{ p.brand }}</span>
+                      <span style="margin-top:2px;font-size:15px;font-weight:600;line-height:1.3;">{{ p.name }}</span>
+                      <span style="margin-top:auto;padding-top:10px;font-size:16px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;">{{ p.priceLabel }}</span>
+                    </div>
+                  </div>
+                  <sc-if value="{{ p.out }}" hint-placeholder-val="{{ true }}"><button onClick="{{ p.onOrder }}" style="height:40px;margin-top:10px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rb,999px);background:var(--sf,#FFFFFF);font-family:inherit;font-size:14px;font-weight:600;color:var(--ink,#13233F);cursor:pointer;" style-hover="border-color:var(--lnh,#CFCAC2)" style-active="background:var(--sf2,#F1F0EC)">В корзину</button></sc-if><sc-if value="{{ p.inCart }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;justify-content:space-between;height:40px;margin-top:10px;padding:0 3px;box-sizing:border-box;border-radius:var(--rb,999px);background:var(--acs,#E3EEF9);"><button onClick="{{ p.onDec }}" aria-label="Меньше" style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;border:0;border-radius:50%;background:var(--sf,#FFFFFF);color:var(--ink,#13233F);cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"></path></svg></button><span style="font-size:15px;font-weight:600;color:var(--aci,#255A99);white-space:nowrap;">{{ p.qty }} шт.</span><button onClick="{{ p.onInc }}" aria-label="Больше" style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;border:0;border-radius:50%;background:var(--sf,#FFFFFF);color:var(--ink,#13233F);cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button></div></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+          </sc-if>
         </sc-if>
 
         <sc-if value="{{ isPrograms }}" hint-placeholder-val="{{ false }}">
@@ -245,7 +338,7 @@
             <sc-for list="{{ programs }}" as="p" hint-placeholder-count="4">
               <div onClick="{{ p.onClick }}" style="display:flex;flex-direction:column;gap:12px;padding:14px 16px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);cursor:pointer;transition:transform .12s ease;" style-hover="border-color:var(--lnh,#CFCAC2)" style-active="transform:scale(.985)">
                 <div style="display:flex;align-items:flex-start;gap:14px;">
-                  <div style="position:relative;width:56px;height:74px;flex:none;border-radius:12px;overflow:hidden;background:#D9DBE5;"><image-slot id="{{ p.vslot }}" data-src="{{ p.vimg }}" shape="rect" style="position:absolute;inset:0;color:transparent;pointer-events:{{ p.pe }};"></image-slot><span style="position:absolute;inset:0;background:linear-gradient(rgba(14,14,44,0) 50%,rgba(14,14,44,.6));pointer-events:none;"></span><span style="position:absolute;left:50%;top:50%;display:flex;align-items:center;justify-content:center;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:rgba(255,255,255,.94);color:var(--ac,#2F6BB0);pointer-events:none;"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="margin-left:1px;"><path d="M8 5.2v13.6c0 .8.9 1.3 1.5.8l10-6.8c.6-.4.6-1.2 0-1.6l-10-6.8C8.9 3.9 8 4.4 8 5.2z"></path></svg></span><span style="position:absolute;left:0;right:0;bottom:4px;font-size:11px;font-weight:600;text-align:center;color:#FFFFFF;pointer-events:none;">{{ p.vdur }}</span></div>
+                  <div style="position:relative;width:92px;height:74px;flex:none;border-radius:12px;overflow:hidden;background:#D9DBE5;"><image-slot id="{{ p.vslot }}" data-src="{{ p.vimg }}" shape="rect" style="position:absolute;inset:0;color:transparent;pointer-events:{{ p.pe }};"></image-slot><span style="position:absolute;inset:0;background:linear-gradient(rgba(14,14,44,0) 50%,rgba(14,14,44,.6));pointer-events:none;"></span><span style="position:absolute;left:50%;top:50%;display:flex;align-items:center;justify-content:center;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:rgba(255,255,255,.94);color:var(--ac,#2F6BB0);pointer-events:none;"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="margin-left:1px;"><path d="M8 5.2v13.6c0 .8.9 1.3 1.5.8l10-6.8c.6-.4.6-1.2 0-1.6l-10-6.8C8.9 3.9 8 4.4 8 5.2z"></path></svg></span><span style="position:absolute;left:0;right:0;bottom:4px;font-size:11px;font-weight:600;text-align:center;color:#FFFFFF;pointer-events:none;">{{ p.vdur }}</span></div>
                   <div style="display:flex;flex:1;flex-direction:column;gap:4px;min-width:0;"><sc-if value="{{ p.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;gap:5px;align-self:flex-start;height:26px;margin-bottom:4px;padding:0 10px;border-radius:999px;background:var(--acs,#E3EEF9);font-size:13px;font-weight:600;color:var(--aci,#255A99);"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg>{{ p.badge }}</span></sc-if><span style="font-size:19px;font-weight:600;line-height:1.25;letter-spacing:-.015em;">{{ p.title }}</span><span style="font-size:16px;line-height:1.45;color:var(--mu,#59647A);">{{ p.symptom }}</span></div>
                 </div>
                 <div style="display:flex;align-items:center;gap:5px;">
@@ -280,7 +373,7 @@
             <p style="align-self:stretch;margin:14px 0 0;font-size:17px;font-weight:600;line-height:1.4;">{{ set.subBold }}</p>
             <p style="align-self:stretch;margin:4px 0 0;font-size:16px;line-height:1.5;color:var(--mu,#59647A);">{{ set.course }}</p>
             <div onClick="{{ openSetVideo }}" style="position:relative;align-self:stretch;aspect-ratio:16/9;margin-top:22px;border-radius:20px;overflow:hidden;background:#D9DBE5;box-shadow:0 30px 50px -28px rgba(20,20,43,.45);cursor:pointer;">
-              <image-slot id="{{ set.videoSlot }}" data-src="{{ heroImg }}" shape="rect" placeholder="Кадр из видео" style="position:absolute;inset:0;pointer-events:{{ slotPE }};"></image-slot>
+              <image-slot id="{{ set.videoSlot }}" data-src="{{ set.poster }}" shape="rect" placeholder="Кадр из видео" style="position:absolute;inset:0;pointer-events:{{ slotPE }};"></image-slot>
               <span style="position:absolute;top:12px;left:12px;padding:6px 10px;border-radius:999px;background:rgba(14,14,44,.6);font-size:13px;font-weight:600;color:#FFFFFF;pointer-events:none;">{{ set.videoMin }}</span>
               <span style="position:absolute;left:50%;top:50%;display:flex;align-items:center;justify-content:center;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;background:#FFFFFF;box-shadow:0 12px 30px rgba(14,14,44,.28);color:var(--ac,#2F6BB0);pointer-events:none;"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="margin-left:3px;"><path d="M8 5.2v13.6c0 .8.9 1.3 1.5.8l10-6.8c.6-.4.6-1.2 0-1.6l-10-6.8C8.9 3.9 8 4.4 8 5.2z"></path></svg></span>
             </div>
@@ -309,36 +402,6 @@
             </div>
           </section>
 
-          <sc-if value="{{ set.hasRoutine }}" hint-placeholder-val="{{ true }}">
-          <section style="display:flex;flex-direction:column;gap:12px;padding:56px 16px 0;">
-            <div style="display:flex;flex-direction:column;gap:6px;padding:0 4px 6px;">
-              <h2 style="margin:0;font-size:calc(26px * var(--fhk,1));font-family:var(--fh,inherit);font-weight:var(--fhw,600);line-height:1.15;letter-spacing:var(--fhls,-.035em);">Программа ухода</h2>
-              <p style="margin:0;font-size:16px;line-height:1.5;color:var(--mu,#59647A);">Наносите средства по порядку, шаг за шагом</p>
-            </div>
-            <sc-if value="{{ set.hasAm }}" hint-placeholder-val="{{ true }}">
-            <div style="display:flex;flex-direction:column;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);">
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--ln2,#EFEDE9);"><span style="font-size:18px;font-weight:600;">Утро</span><span style="font-size:14px;color:var(--mu,#59647A);">{{ set.amHead }}</span></div>
-              <sc-for list="{{ set.am }}" as="r" hint-placeholder-count="3">
-                <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 18px;border-top:{{ r.bt }};">
-                  <span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;flex:none;border-radius:50%;background:var(--ink,#13233F);font-size:14px;font-weight:600;color:#FFFFFF;">{{ r.n }}</span>
-                  <div style="display:flex;flex-direction:column;gap:2px;padding-top:3px;"><span style="font-size:16px;font-weight:600;line-height:1.3;">{{ r.type }}</span><span style="font-size:15px;line-height:1.45;color:var(--mu,#59647A);">{{ r.desc }}</span></div>
-                </div>
-              </sc-for>
-            </div>
-            </sc-if>
-            <sc-if value="{{ set.hasPm }}" hint-placeholder-val="{{ true }}">
-            <div style="display:flex;flex-direction:column;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);">
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--ln2,#EFEDE9);"><span style="font-size:18px;font-weight:600;">Вечер</span><span style="font-size:14px;color:var(--mu,#59647A);">{{ set.pmHead }}</span></div>
-              <sc-for list="{{ set.pm }}" as="r" hint-placeholder-count="3">
-                <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 18px;border-top:{{ r.bt }};">
-                  <span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;flex:none;border-radius:50%;background:var(--ink,#13233F);font-size:14px;font-weight:600;color:#FFFFFF;">{{ r.n }}</span>
-                  <div style="display:flex;flex-direction:column;gap:2px;padding-top:3px;"><span style="font-size:16px;font-weight:600;line-height:1.3;">{{ r.type }}</span><span style="font-size:15px;line-height:1.45;color:var(--mu,#59647A);">{{ r.desc }}</span></div>
-                </div>
-              </sc-for>
-            </div>
-          </sc-if>
-          </section>
-          </sc-if>
 
           <section style="padding:40px 16px 0;">
             <div style="display:flex;flex-direction:column;padding:22px 20px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);">
@@ -361,15 +424,15 @@
               <div style="display:flex;align-items:center;gap:14px;">
                 <span style="display:flex;align-items:center;justify-content:center;width:46px;height:56px;flex:none;border-radius:10px;background:var(--acs,#E3EEF9);font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--aci,#255A99);">PDF</span>
                 <div style="display:flex;flex-direction:column;gap:3px;min-width:0;">
-                  <span style="font-size:17px;font-weight:600;line-height:1.3;">Протокол ухода</span>
+                  <span style="font-size:17px;font-weight:600;line-height:1.3;">Схема ухода</span>
                   <span style="font-size:14px;line-height:1.4;color:var(--mu,#59647A);">{{ proto.meta }}</span>
                 </div>
               </div>
-              <a href="{{ proto.href }}" download="{{ proto.file }}" onClick="{{ proto.onClick }}" style="display:flex;align-items:center;justify-content:center;gap:10px;min-height:54px;padding:10px 18px;box-sizing:border-box;border:1.5px solid var(--ink,#13233F);border-radius:var(--rb,14px);background:var(--sf,#FFFFFF);font-size:16px;font-weight:600;line-height:1.25;color:var(--ink,#13233F);text-align:center;cursor:pointer;" style-hover="background:var(--sf2,#F1F0EC);color:var(--ink,#13233F)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><path d="M12 4v12M7 11l5 5 5-5M5 20h14"></path></svg>Скачать протокол ухода</a>
+              <a href="{{ proto.href }}" download="{{ proto.file }}" onClick="{{ proto.onClick }}" style="display:flex;align-items:center;justify-content:center;gap:10px;min-height:54px;padding:10px 18px;box-sizing:border-box;border:1.5px solid var(--ink,#13233F);border-radius:var(--rb,14px);background:var(--sf,#FFFFFF);font-size:16px;font-weight:600;line-height:1.25;color:var(--ink,#13233F);text-align:center;cursor:pointer;" style-hover="background:var(--sf2,#F1F0EC);color:var(--ink,#13233F)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><path d="M12 4v12M7 11l5 5 5-5M5 20h14"></path></svg>Скачать схему ухода</a>
               <sc-if value="{{ proto.hint }}" hint-placeholder-val="{{ false }}"><a href="{{ proto.href }}" target="_blank" rel="noopener" style="align-self:center;display:flex;align-items:center;min-height:32px;margin-top:-6px;font-size:14px;font-weight:600;color:var(--aci,#255A99);">Не скачалось? Открыть PDF</a></sc-if>
               <sc-if value="{{ proto.err }}" hint-placeholder-val="{{ false }}">
                 <div style="display:flex;flex-direction:column;gap:8px;margin-top:-4px;">
-                  <span style="font-size:14px;line-height:1.45;color:var(--mu,#59647A);">Не получилось открыть файл. Напишите Нурайым — она пришлёт протокол в WhatsApp.</span>
+                  <span style="font-size:14px;line-height:1.45;color:var(--mu,#59647A);">Не получилось открыть файл. Напишите Нурайым — она пришлёт схему в WhatsApp.</span>
                   <span onClick="{{ proto.waAsk }}" style="display:inline-flex;align-items:center;align-self:flex-start;min-height:36px;font-size:15px;font-weight:600;color:var(--aci,#255A99);cursor:pointer;">Попросить в WhatsApp</span>
                 </div>
               </sc-if>
@@ -382,15 +445,29 @@
           <section style="display:flex;flex-direction:column;align-items:flex-start;padding:10px 20px 0;background:radial-gradient(120% 300px at 50% 0%, var(--glow,#EAF2FA) 0%, rgba(255,255,255,0) 100%);">
             <span onClick="{{ goHome }}" style="display:inline-flex;align-items:center;gap:6px;height:44px;font-size:15px;font-weight:600;color:var(--mu,#59647A);cursor:pointer;" style-hover="color:var(--ink,#13233F)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>На главную</span>
             <h1 style="align-self:stretch;margin:10px 0 0;font-size:calc(33px * var(--fhk,1));font-family:var(--fh,inherit);font-weight:var(--fhw,600);line-height:1.1;letter-spacing:var(--fhls,-.04em);">Каталог <span style="font-style:var(--fhi,normal);color:var(--hl2,#2F6BB0);">средств</span></h1>
-            <p style="align-self:stretch;margin:14px 0 0;font-size:17px;font-weight:600;line-height:1.4;">Корейская косметика для ежедневного ухода</p>
+            <p style="align-self:stretch;margin:14px 0 0;font-size:17px;font-weight:600;line-height:1.4;">Корейская профессиональная косметика</p>
             <p style="align-self:stretch;margin:4px 0 0;font-size:16px;line-height:1.5;color:var(--mu,#59647A);">Заказ придёт Нурайым в WhatsApp, отправка после 100% оплаты</p>
           </section>
-          <div style="display:flex;gap:8px;margin-top:22px;padding:0 16px;overflow-x:auto;scrollbar-width:none;">
+          <span style="display:block;margin:22px 20px 0;font-size:13px;font-weight:600;color:var(--mu,#59647A);">По проблеме</span>
+          <div style="display:flex;gap:8px;margin-top:8px;padding:0 16px;overflow-x:auto;scrollbar-width:none;">
+            <sc-for list="{{ probChips }}" as="c" hint-placeholder-count="5">
+              <sc-if value="{{ c.active }}"><button onClick="{{ c.onClick }}" style="flex:none;height:44px;padding:0 18px;border:1px solid var(--chip,#13233F);border-radius:999px;background:var(--chip,#13233F);font-family:inherit;font-size:15px;font-weight:600;color:#FFFFFF;white-space:nowrap;cursor:pointer;">{{ c.label }}</button></sc-if>
+              <sc-if value="{{ c.idle }}"><button onClick="{{ c.onClick }}" style="flex:none;height:44px;padding:0 18px;border:1px solid var(--ln,#E6E3DE);border-radius:999px;background:var(--sf,#FFFFFF);font-family:inherit;font-size:15px;font-weight:400;color:var(--ink,#13233F);white-space:nowrap;cursor:pointer;" style-hover="border-color:var(--lnh,#CFCAC2)">{{ c.label }}</button></sc-if>
+            </sc-for>
+          </div>
+          <span style="display:block;margin:16px 20px 0;font-size:13px;font-weight:600;color:var(--mu,#59647A);">По типу средства</span>
+          <div style="display:flex;gap:8px;margin-top:8px;padding:0 16px;overflow-x:auto;scrollbar-width:none;">
             <sc-for list="{{ chips }}" as="c" hint-placeholder-count="6">
               <sc-if value="{{ c.active }}"><button onClick="{{ c.onClick }}" style="flex:none;height:44px;padding:0 18px;border:1px solid var(--chip,#13233F);border-radius:999px;background:var(--chip,#13233F);font-family:inherit;font-size:15px;font-weight:600;color:#FFFFFF;cursor:pointer;">{{ c.label }}</button></sc-if>
               <sc-if value="{{ c.idle }}"><button onClick="{{ c.onClick }}" style="flex:none;height:44px;padding:0 18px;border:1px solid var(--ln,#E6E3DE);border-radius:999px;background:var(--sf,#FFFFFF);font-family:inherit;font-size:15px;font-weight:400;color:var(--ink,#13233F);cursor:pointer;" style-hover="border-color:var(--lnh,#CFCAC2)">{{ c.label }}</button></sc-if>
             </sc-for>
           </div>
+          <sc-if value="{{ probOn }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:16px 16px 0;"><div onClick="{{ probProg.onClick }}" style="display:flex;align-items:center;gap:12px;padding:12px 14px 12px 12px;border-radius:var(--rc,22px);background:var(--acs,#E3EEF9);cursor:pointer;transition:transform .12s ease;" style-active="transform:scale(.985)"><div style="position:relative;width:64px;height:51px;flex:none;border-radius:10px;overflow:hidden;background:#D9DBE5;"><image-slot id="{{ probProg.slot }}" data-src="{{ probProg.img }}" shape="rect" style="position:absolute;inset:0;color:transparent;pointer-events:none;"></image-slot></div><div style="display:flex;flex:1;flex-direction:column;gap:2px;min-width:0;"><span style="font-size:15px;font-weight:600;line-height:1.3;">Весь уход — в одной программе</span><span style="font-size:14px;line-height:1.4;color:var(--mu,#59647A);">«{{ probProg.title }}» · {{ probProg.price }}</span></div><span style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;flex:none;border-radius:50%;background:var(--sf,#FFFFFF);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></div></div>
+          </sc-if>
+          <sc-if value="{{ noItems }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:40px 24px 8px;text-align:center;"><span style="font-size:16px;line-height:1.5;color:var(--mu,#59647A);text-wrap:balance;">Для этой проблемы нет средств в разделе «{{ catName }}»</span><button onClick="{{ resetCat }}" style="height:44px;padding:0 18px;border:1px solid var(--ln,#E6E3DE);border-radius:999px;background:var(--sf,#FFFFFF);font-family:inherit;font-size:15px;font-weight:600;color:var(--ink,#13233F);cursor:pointer;">Показать все типы средств</button></div>
+          </sc-if>
           <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;padding:16px 16px 0;">
             <sc-for list="{{ items }}" as="p" hint-placeholder-count="6">
               <div style="display:flex;flex-direction:column;padding:8px 8px 10px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);">
@@ -403,7 +480,7 @@
                     <span style="margin-top:auto;padding-top:12px;font-size:17px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;">{{ p.priceLabel }}</span>
                   </div>
                 </div>
-                <button onClick="{{ p.onOrder }}" style="height:44px;margin-top:10px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rb,999px);background:var(--sf,#FFFFFF);font-family:inherit;font-size:15px;font-weight:600;color:var(--ink,#13233F);cursor:pointer;" style-hover="border-color:var(--lnh,#CFCAC2)" style-active="background:var(--sf2,#F1F0EC)">Заказать</button>
+                <sc-if value="{{ p.out }}" hint-placeholder-val="{{ true }}"><button onClick="{{ p.onOrder }}" style="height:44px;margin-top:10px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rb,999px);background:var(--sf,#FFFFFF);font-family:inherit;font-size:15px;font-weight:600;color:var(--ink,#13233F);cursor:pointer;" style-hover="border-color:var(--lnh,#CFCAC2)" style-active="background:var(--sf2,#F1F0EC)">В корзину</button></sc-if><sc-if value="{{ p.inCart }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;justify-content:space-between;height:44px;margin-top:10px;padding:0 3px;box-sizing:border-box;border-radius:var(--rb,999px);background:var(--acs,#E3EEF9);"><button onClick="{{ p.onDec }}" aria-label="Меньше" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;padding:0;border:0;border-radius:50%;background:var(--sf,#FFFFFF);color:var(--ink,#13233F);cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"></path></svg></button><span style="font-size:15px;font-weight:600;color:var(--aci,#255A99);white-space:nowrap;">{{ p.qty }} шт.</span><button onClick="{{ p.onInc }}" aria-label="Больше" style="display:flex;align-items:center;justify-content:center;width:38px;height:38px;padding:0;border:0;border-radius:50%;background:var(--sf,#FFFFFF);color:var(--ink,#13233F);cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button></div></sc-if>
               </div>
             </sc-for>
           </div>
@@ -430,9 +507,27 @@
               <span style="margin-top:14px;font-size:28px;font-weight:600;letter-spacing:-.03em;">{{ prod.priceLabel }}</span>
             </div>
           </section>
+          <sc-if value="{{ hasRel }}" hint-placeholder-val="{{ true }}">
+          <section style="display:flex;flex-direction:column;gap:12px;padding:28px 0 0;">
+            <h2 style="margin:0;padding:0 20px;font-size:calc(22px * var(--fhk,1));font-family:var(--fh,inherit);font-weight:var(--fhw,600);line-height:1.2;letter-spacing:var(--fhls,-.03em);text-wrap:balance;">С этим средством ещё берут</h2>
+            <div style="display:flex;gap:10px;padding:0 16px 4px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 16px;scrollbar-width:none;">
+              <sc-for list="{{ relRail }}" as="p" hint-placeholder-count="3">
+                <div style="display:flex;flex:none;flex-direction:column;width:164px;padding:8px 8px 10px;box-sizing:border-box;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);scroll-snap-align:start;">
+                  <div onClick="{{ p.onOpen }}" style="display:flex;flex:1;flex-direction:column;cursor:pointer;">
+                    <div style="position:relative;display:flex;align-items:center;justify-content:center;width:100%;aspect-ratio:1;border-radius:calc(var(--rc,22px) - 8px);overflow:hidden;background:var(--sf2,#F1F0EC);"><span style="font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--mu,#59647A);">фото товара</span><image-slot id="{{ p.slot }}" data-src="{{ p.img }}" shape="rect" style="position:absolute;inset:0;color:transparent;pointer-events:{{ p.pe }};"></image-slot><sc-if value="{{ p.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:8px;left:8px;z-index:1;display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border-radius:999px;background:var(--sf,#FFFFFF);box-shadow:0 2px 8px rgba(14,14,44,.12);font-size:12px;font-weight:600;color:var(--aci,#255A99);white-space:nowrap;pointer-events:none;"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg>{{ p.badge }}</span></sc-if></div>
+                    <div style="display:flex;flex:1;flex-direction:column;padding:10px 4px 0;">
+                      <span style="font-size:13px;color:var(--mu,#59647A);">{{ p.brand }}</span>
+                      <span style="margin-top:2px;font-size:15px;font-weight:600;line-height:1.3;">{{ p.name }}</span>
+                      <span style="margin-top:auto;padding-top:10px;font-size:16px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;">{{ p.priceLabel }}</span>
+                    </div>
+                  </div>
+                  <sc-if value="{{ p.out }}" hint-placeholder-val="{{ true }}"><button onClick="{{ p.onOrder }}" style="height:40px;margin-top:10px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rb,999px);background:var(--sf,#FFFFFF);font-family:inherit;font-size:14px;font-weight:600;color:var(--ink,#13233F);cursor:pointer;" style-hover="border-color:var(--lnh,#CFCAC2)" style-active="background:var(--sf2,#F1F0EC)">Добавить</button></sc-if><sc-if value="{{ p.inCart }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;justify-content:space-between;height:40px;margin-top:10px;padding:0 3px;box-sizing:border-box;border-radius:var(--rb,999px);background:var(--acs,#E3EEF9);"><button onClick="{{ p.onDec }}" aria-label="Меньше" style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;border:0;border-radius:50%;background:var(--sf,#FFFFFF);color:var(--ink,#13233F);cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"></path></svg></button><span style="font-size:15px;font-weight:600;color:var(--aci,#255A99);white-space:nowrap;">{{ p.qty }} шт.</span><button onClick="{{ p.onInc }}" aria-label="Больше" style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;border:0;border-radius:50%;background:var(--sf,#FFFFFF);color:var(--ink,#13233F);cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button></div></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+          </sc-if>
           <section style="display:flex;flex-direction:column;gap:10px;padding:26px 16px 0;">
-            <div style="display:flex;flex-direction:column;gap:8px;padding:18px 18px 20px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);"><span style="font-size:17px;font-weight:600;">Описание</span><p style="margin:0;font-size:16px;line-height:1.55;color:var(--mu,#59647A);text-wrap:pretty;">{{ prod.desc }}</p></div>
-            <div style="display:flex;flex-direction:column;gap:8px;padding:18px 18px 20px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);"><span style="font-size:17px;font-weight:600;">Как использовать</span><p style="margin:0;font-size:16px;line-height:1.55;color:var(--mu,#59647A);text-wrap:pretty;">{{ prod.use }}</p></div>
             <sc-if value="{{ hasPrograms }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;flex-direction:column;gap:12px;padding:18px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);">
                 <div style="display:flex;flex-direction:column;gap:2px;"><span style="font-size:17px;font-weight:600;">Входит в программы</span><span style="font-size:15px;color:var(--mu,#59647A);">Вместе с другими средствами — выгоднее</span></div>
@@ -441,6 +536,10 @@
                 </div>
               </div>
             </sc-if>
+            <div style="display:flex;flex-direction:column;gap:8px;padding:18px 18px 20px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);"><span style="font-size:17px;font-weight:600;">Описание</span><p style="margin:0;font-size:16px;line-height:1.55;color:var(--mu,#59647A);text-wrap:pretty;">{{ prod.desc }}</p></div>
+            <sc-if value="{{ prod.hasComp }}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-direction:column;gap:8px;padding:18px 18px 20px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);"><span style="font-size:17px;font-weight:600;">Состав</span><p style="margin:0;font-size:16px;line-height:1.55;color:var(--mu,#59647A);text-wrap:pretty;">{{ prod.comp }}</p></div></sc-if>
+            <div style="display:flex;flex-direction:column;gap:8px;padding:18px 18px 20px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);"><span style="font-size:17px;font-weight:600;">Как использовать</span><p style="margin:0;font-size:16px;line-height:1.55;color:var(--mu,#59647A);text-wrap:pretty;">{{ prod.use }}</p></div>
+            
           </section>
         </sc-if>
 
@@ -592,6 +691,7 @@
         <sc-if value="{{ stickySpace }}" hint-placeholder-val="{{ false }}"><div style="height:{{ barSpace }};background:var(--ft,#AACDEB);"></div></sc-if>
       </div>
 
+      <sc-if value="{{ cartBar }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;left:0;right:0;bottom:0;z-index:20;display:flex;padding:10px 16px {{ barPadBottom }};background:rgba(255,255,255,.97);border-top:1px solid var(--ln,#E6E3DE);"><button onClick="{{ openCart }}" style="display:flex;align-items:center;gap:12px;flex:1;min-width:0;height:56px;padding:0 8px 0 16px;border:0;border-radius:var(--rb,999px);background:var(--ac,#2F6BB0);box-shadow:0 14px 26px -14px var(--acsh,rgba(47,107,176,.45));font-family:inherit;text-align:left;color:#FFFFFF;cursor:pointer;" style-hover="filter:brightness(.94)"><span style="position:relative;display:flex;flex:none;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 8h13l-1 12h-11z"></path><path d="M9 8V7a3 3 0 0 1 6 0v1"></path></svg><span style="position:absolute;top:-6px;right:-8px;display:flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;box-sizing:border-box;border-radius:999px;background:#FFFFFF;font-size:11px;font-weight:700;color:var(--aci,#255A99);">{{ cartCount }}</span></span><span style="display:flex;flex:1;flex-direction:column;gap:1px;min-width:0;"><span style="font-size:13px;line-height:1.2;">{{ cartCountLabel }}</span><span style="font-size:17px;font-weight:600;line-height:1.2;white-space:nowrap;">{{ cartTotal }}</span></span><span style="display:flex;align-items:center;gap:6px;flex:none;height:40px;padding:0 14px;border-radius:var(--rb,999px);background:rgba(255,255,255,.2);font-size:15px;font-weight:600;white-space:nowrap;">Оформить<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></button></div></sc-if>
       <sc-if value="{{ stickyRetail }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;left:0;right:0;bottom:0;z-index:20;display:flex;padding:10px 16px {{ barPadBottom }};background:rgba(255,255,255,.97);border-top:1px solid var(--ln,#E6E3DE);transform:translateY({{ stickyY }});transition:transform .3s cubic-bezier(.2,.8,.2,1);pointer-events:{{ stickyPE }};"><button onClick="{{ openQuiz }}" style="display:flex;align-items:center;justify-content:center;gap:10px;flex:1;height:52px;padding:0 18px;border:0;border-radius:var(--rb,999px);background:var(--ac,#2F6BB0);box-shadow:0 14px 26px -14px var(--acsh,rgba(47,107,176,.45));font-family:inherit;font-size:16px;font-weight:600;color:#FFFFFF;cursor:pointer;" style-hover="filter:brightness(.94)"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg>Подобрать уход за 1 минуту</button></div></sc-if>
         <sc-if value="{{ stickyWs }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;left:0;right:0;bottom:0;z-index:20;display:flex;padding:10px 16px {{ barPadBottom }};background:rgba(255,255,255,.97);border-top:1px solid var(--ln,#E6E3DE);transform:translateY({{ stickyY }});transition:transform .3s cubic-bezier(.2,.8,.2,1);pointer-events:{{ stickyPE }};"><button onClick="{{ openWsLead }}" style="display:flex;align-items:center;justify-content:center;gap:10px;flex:1;height:52px;padding:0 18px;border:0;border-radius:var(--rb,999px);background:var(--ac,#2F6BB0);box-shadow:0 14px 26px -14px var(--acsh,rgba(47,107,176,.45));font-family:inherit;font-size:16px;font-weight:600;color:#FFFFFF;cursor:pointer;" style-hover="filter:brightness(.94)"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2z"></path></svg>Получить прайс в WhatsApp</button></div></sc-if>
         <sc-if value="{{ isSet }}" hint-placeholder-val="{{ false }}">
@@ -602,13 +702,13 @@
       </sc-if>
 
       <sc-if value="{{ isProduct }}" hint-placeholder-val="{{ false }}">
-        <div style="position:absolute;left:0;right:0;bottom:0;z-index:20;display:flex;align-items:center;gap:12px;padding:12px 16px {{ barPadBottom }};background:rgba(255,255,255,.97);border-top:1px solid var(--ln,#E6E3DE);">
+        <div style="position:absolute;left:0;right:0;bottom:0;z-index:20;display:flex;flex-direction:column;gap:10px;padding:12px 16px {{ barPadBottom }};background:rgba(255,255,255,.97);border-top:1px solid var(--ln,#E6E3DE);"><sc-if value="{{ pHasExtras }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:2px;"><span style="font-size:13px;font-weight:600;color:var(--mu,#59647A);">Добавлено к заказу</span><div style="display:flex;flex-direction:column;max-height:156px;overflow-y:auto;scrollbar-width:none;"><sc-for list="{{ pExtras }}" as="x" hint-placeholder-count="1"><div style="display:flex;align-items:center;gap:10px;min-height:52px;flex:none;border-top:{{ x.bt }};"><div style="position:relative;width:40px;height:40px;flex:none;border-radius:10px;overflow:hidden;background:var(--sf2,#F1F0EC);"><image-slot id="{{ x.slot }}" data-src="{{ x.img }}" shape="rect" style="position:absolute;inset:0;color:transparent;pointer-events:none;"></image-slot></div><div style="display:flex;flex:1;flex-direction:column;gap:1px;min-width:0;"><span style="font-size:14px;font-weight:600;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ x.label }}</span><span style="font-size:13px;color:var(--mu,#59647A);white-space:nowrap;">{{ x.price }}</span></div><div style="display:flex;align-items:center;gap:2px;flex:none;"><sc-if value="{{ x.one }}"><button onClick="{{ x.onDec }}" aria-label="Убрать" style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border:1px solid var(--ln,#E6E3DE);border-radius:50%;background:#FFFFFF;color:var(--mu,#59647A);cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13"></path></svg></button></sc-if><sc-if value="{{ x.many }}"><button onClick="{{ x.onDec }}" aria-label="Меньше" style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border:1px solid var(--ln,#E6E3DE);border-radius:50%;background:#FFFFFF;color:var(--ink,#13233F);cursor:pointer;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"></path></svg></button></sc-if><span style="min-width:24px;font-size:15px;font-weight:600;text-align:center;">{{ x.qty }}</span><button onClick="{{ x.onInc }}" aria-label="Больше" style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border:1px solid var(--ln,#E6E3DE);border-radius:50%;background:#FFFFFF;color:var(--ink,#13233F);cursor:pointer;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button></div></div></sc-for></div></div></sc-if><div style="display:flex;align-items:center;gap:12px;">
           <div style="display:flex;align-items:center;flex:none;height:56px;padding:0 4px;box-sizing:border-box;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rb,999px);background:#FFFFFF;">
             <button onClick="{{ pdec }}" aria-label="Меньше" style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--ink,#13233F);cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
             <span style="min-width:22px;font-size:17px;font-weight:600;text-align:center;">{{ pqty }}</span>
             <button onClick="{{ pinc }}" aria-label="Больше" style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:transparent;color:var(--ink,#13233F);cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
           </div>
-          <button onClick="{{ orderProduct }}" style="display:flex;flex:1;align-items:center;justify-content:center;height:56px;padding:0 14px;border:0;border-radius:var(--rb,999px);background:var(--ac,#2F6BB0);box-shadow:0 0 0 6px var(--halo,rgba(47,107,176,.12)),0 14px 26px -14px var(--acsh,rgba(47,107,176,.45));font-family:inherit;font-size:16px;font-weight:600;color:#FFFFFF;cursor:pointer;" style-hover="filter:brightness(.94)" style-active="filter:brightness(.88)"><span style="white-space:nowrap;">{{ pOrderLabel }}</span></button>
+          <button onClick="{{ orderProduct }}" style="display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:0;height:56px;padding:0 14px;border:0;border-radius:var(--rb,999px);background:var(--ac,#2F6BB0);box-shadow:0 0 0 6px var(--halo,rgba(47,107,176,.12)),0 14px 26px -14px var(--acsh,rgba(47,107,176,.45));font-family:inherit;font-size:16px;font-weight:600;color:#FFFFFF;cursor:pointer;" style-hover="filter:brightness(.94)" style-active="filter:brightness(.88)"><span style="font-size:13px;font-weight:500;line-height:1.2;white-space:nowrap;">{{ pOrderTop }}</span><span style="font-size:17px;font-weight:600;line-height:1.2;white-space:nowrap;">{{ pOrderSum }}</span></button></div>
         </div>
       </sc-if>
 
@@ -654,21 +754,30 @@
                   <span style="font-size:21px;font-weight:600;letter-spacing:-.02em;">Оформление заказа</span>
                   <span onClick="{{ closeSheet }}" aria-label="Закрыть" style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;background:var(--sf2,#F1F0EC);cursor:pointer;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></span>
                 </div>
-                <div style="display:flex;flex-direction:column;gap:12px;margin-top:14px;padding:12px;border-radius:16px;background:var(--bg,#F8F7F5);">
-                  <div style="display:flex;align-items:center;gap:12px;">
-                    <div style="position:relative;display:flex;align-items:center;justify-content:center;width:52px;height:52px;flex:none;border-radius:12px;overflow:hidden;background:var(--sf2,#F1F0EC);"><span style="font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--mu,#59647A);">фото</span><image-slot id="{{ item.slot }}" data-src="{{ item.img }}" shape="rect" style="position:absolute;inset:0;color:transparent;pointer-events:{{ slotPE }};"></image-slot></div>
-                    <div style="display:flex;flex:1;flex-direction:column;gap:2px;min-width:0;"><span style="font-size:16px;font-weight:600;line-height:1.3;">{{ item.label }}</span><span style="font-size:14px;color:var(--mu,#59647A);">{{ item.meta }}</span></div>
-                    <span style="flex:none;font-size:16px;font-weight:600;white-space:nowrap;">{{ item.priceLabel }}</span>
-                  </div>
-                  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:10px;border-top:1px solid var(--ln,#E6E3DE);">
-                    <span style="font-size:15px;color:var(--mu,#59647A);">Количество</span>
-                    <div style="display:flex;align-items:center;gap:6px;">
-                      <button onClick="{{ dec }}" aria-label="Меньше" style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;border:1px solid var(--ln,#E6E3DE);border-radius:50%;background:#FFFFFF;color:var(--ink,#13233F);cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"></path></svg></button>
-                      <span style="min-width:28px;font-size:17px;font-weight:600;text-align:center;">{{ qty }}</span>
-                      <button onClick="{{ inc }}" aria-label="Больше" style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;border:1px solid var(--ln,#E6E3DE);border-radius:50%;background:#FFFFFF;color:var(--ink,#13233F);cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+                <sc-if value="{{ cartEmpty }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:28px 8px 8px;text-align:center;"><span style="display:flex;align-items:center;justify-content:center;width:60px;height:60px;border-radius:50%;background:var(--sf2,#F1F0EC);color:var(--mu,#59647A);"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 8h13l-1 12h-11z"></path><path d="M9 8V7a3 3 0 0 1 6 0v1"></path></svg></span><span style="margin-top:6px;font-size:18px;font-weight:600;">Корзина пока пуста</span><span style="font-size:15px;line-height:1.5;color:var(--mu,#59647A);text-wrap:balance;">Выберите готовую программу или отдельные средства</span><div style="display:flex;flex-direction:column;gap:8px;align-self:stretch;margin-top:14px;"><button onClick="{{ emptyGoProgs }}" style="height:52px;border:0;border-radius:var(--rb,999px);background:var(--ac,#2F6BB0);font-family:inherit;font-size:16px;font-weight:600;color:#FFFFFF;cursor:pointer;">Готовые программы</button><button onClick="{{ emptyGoCat }}" style="height:52px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rb,999px);background:#FFFFFF;font-family:inherit;font-size:16px;font-weight:600;color:var(--ink,#13233F);cursor:pointer;">Каталог</button></div></div>
+                </sc-if>
+                <sc-if value="{{ cartHas }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;flex-direction:column;margin-top:14px;padding:2px 12px;border-radius:16px;background:var(--bg,#F8F7F5);">
+                  <sc-for list="{{ cartLines }}" as="l" hint-placeholder-count="2">
+                    <div style="display:flex;flex-direction:column;gap:10px;padding:12px 0;border-top:{{ l.bt }};">
+                      <div style="display:flex;align-items:center;gap:12px;">
+                        <div style="position:relative;display:flex;align-items:center;justify-content:center;width:52px;height:52px;flex:none;border-radius:12px;overflow:hidden;background:var(--sf2,#F1F0EC);"><span style="font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--mu,#59647A);">фото</span><image-slot id="{{ l.slot }}" data-src="{{ l.img }}" shape="rect" style="position:absolute;inset:0;color:transparent;pointer-events:none;"></image-slot></div>
+                        <div style="display:flex;flex:1;flex-direction:column;gap:2px;min-width:0;"><span style="font-size:15px;font-weight:600;line-height:1.3;">{{ l.label }}</span><span style="font-size:13px;line-height:1.35;color:var(--mu,#59647A);">{{ l.meta }}</span></div>
+                      </div>
+                      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-left:64px;">
+                        <div style="display:flex;align-items:center;gap:4px;">
+                          <sc-if value="{{ l.one }}"><button onClick="{{ l.onDec }}" aria-label="Убрать" style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border:1px solid var(--ln,#E6E3DE);border-radius:50%;background:#FFFFFF;color:var(--mu,#59647A);cursor:pointer;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13"></path></svg></button></sc-if>
+                          <sc-if value="{{ l.many }}"><button onClick="{{ l.onDec }}" aria-label="Меньше" style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border:1px solid var(--ln,#E6E3DE);border-radius:50%;background:#FFFFFF;color:var(--ink,#13233F);cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"></path></svg></button></sc-if>
+                          <span style="min-width:28px;font-size:16px;font-weight:600;text-align:center;">{{ l.qty }}</span>
+                          <button onClick="{{ l.onInc }}" aria-label="Больше" style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;border:1px solid var(--ln,#E6E3DE);border-radius:50%;background:#FFFFFF;color:var(--ink,#13233F);cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+                        </div>
+                        <span style="flex:none;font-size:16px;font-weight:600;white-space:nowrap;">{{ l.price }}</span>
+                      </div>
                     </div>
-                  </div>
+                  </sc-for>
                 </div>
+                <sc-if value="{{ keepOn }}" hint-placeholder-val="{{ true }}"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:4px;"><span onClick="{{ keepShopping }}" style="display:inline-flex;align-items:center;gap:6px;height:44px;font-size:15px;font-weight:600;color:var(--aci,#255A99);cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>Добавить ещё средства</span><span onClick="{{ clearCart }}" role="button" style="display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 16px;box-sizing:border-box;border:1.5px solid var(--lnh,#CFCAC2);border-radius:999px;background:#FFFFFF;font-size:15px;font-weight:600;color:var(--ink,#13233F);white-space:nowrap;cursor:pointer;" style-hover="border-color:var(--ink,#13233F)" style-active="background:var(--sf2,#F1F0EC)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13"></path></svg>Очистить</span></div></sc-if>
                 <div style="display:flex;flex-direction:column;gap:14px;margin-top:20px;">
                   <div style="display:flex;flex-direction:column;gap:6px;">
                     <span style="font-size:14px;font-weight:600;">Имя</span>
@@ -700,6 +809,7 @@
                   <span style="white-space:nowrap;">{{ submitLabel }}</span>
                 </button>
                 <p style="margin:14px 0 0;font-size:14px;line-height:1.5;text-align:center;color:var(--mu,#59647A);text-wrap:balance;">Откроется WhatsApp с готовым сообщением — останется нажать «Отправить»</p>
+                </sc-if>
               </div>
             </sc-if>
             <sc-if value="{{ sheetDone }}" hint-placeholder-val="{{ false }}">
@@ -716,7 +826,7 @@
                   </div>
                 </div>
                 <span onClick="{{ resend }}" style="margin-top:18px;font-size:14px;color:var(--mu,#59647A);cursor:pointer;">WhatsApp не открылся? <span style="font-weight:600;color:var(--ink,#13233F);text-decoration:underline;text-underline-offset:3px;">Открыть ещё раз</span></span>
-                <button onClick="{{ closeSheet }}" style="width:100%;height:54px;margin-top:20px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rb,999px);background:#FFFFFF;font-family:inherit;font-size:16px;font-weight:600;color:var(--ink,#13233F);cursor:pointer;" style-hover="border-color:var(--lnh,#CFCAC2)">{{ item.back }}</button>
+                <button onClick="{{ closeSheet }}" style="width:100%;height:54px;margin-top:20px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rb,999px);background:#FFFFFF;font-family:inherit;font-size:16px;font-weight:600;color:var(--ink,#13233F);cursor:pointer;" style-hover="border-color:var(--lnh,#CFCAC2)">Продолжить покупки</button>
               </div>
             </sc-if>
             <sc-if value="{{ sheetWs }}" hint-placeholder-val="{{ false }}">
@@ -775,7 +885,7 @@
       </sc-if>
 
       <sc-if value="{{ ready }}" hint-placeholder-val="{{ false }}">
-        <div role="dialog" aria-label="Выбрать программу за 1 минуту" style="position:absolute;top:{{ topInset }};left:0;right:0;bottom:0;z-index:35;display:flex;flex-direction:column;background:var(--bg,#F8F7F5);transform:translateY({{ qY }});transition:transform .36s cubic-bezier(.2,.8,.2,1);pointer-events:{{ qPE }};">
+        <div role="dialog" aria-label="Подобрать программу ухода за 1 минуту" style="position:absolute;top:{{ topInset }};left:0;right:0;bottom:0;z-index:35;display:flex;flex-direction:column;background:var(--bg,#F8F7F5);transform:translateY({{ qY }});transition:transform .36s cubic-bezier(.2,.8,.2,1);pointer-events:{{ qPE }};">
           <div style="display:flex;flex-direction:column;gap:10px;padding:8px 12px 12px;background:var(--sf,#FFFFFF);border-bottom:1px solid var(--ln2,#EFEDE9);">
             <div style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;">
               <div style="display:flex;min-width:0;">
@@ -790,7 +900,7 @@
             <sc-if value="{{ qIsQ }}" hint-placeholder-val="{{ true }}">
               <sc-if value="{{ qFirst }}" hint-placeholder-val="{{ true }}">
                 <div style="display:flex;flex-direction:column;align-items:flex-start;gap:10px;margin-bottom:28px;">
-                  <span style="font-family:var(--fh,inherit);font-size:calc(30px * var(--fhk,1));font-weight:var(--fhw,600);line-height:1.1;letter-spacing:var(--fhls,-.04em);text-wrap:balance;">Выбрать программу за 1 минуту</span>
+                  <span style="font-family:var(--fh,inherit);font-size:calc(30px * var(--fhk,1));font-weight:var(--fhw,600);line-height:1.1;letter-spacing:var(--fhls,-.04em);text-wrap:balance;">Подобрать программу ухода за 1 минуту</span>
                   <span style="font-size:16px;line-height:1.5;color:var(--mu,#59647A);text-wrap:pretty;">Ответьте на 4 простых вопроса, чтобы получить готовую программу для вашей кожи</span>
                 </div>
               </sc-if>
@@ -799,56 +909,35 @@
                 <sc-for list="{{ qOpts }}" as="o" hint-placeholder-count="4">
                   <button onClick="{{ o.onClick }}" aria-pressed="{{ o.aria }}" style="display:flex;align-items:center;gap:14px;width:100%;min-height:64px;padding:14px 16px;box-sizing:border-box;border:1.5px solid {{ o.bd }};border-radius:var(--rc,20px);background:{{ o.bg }};font-family:inherit;text-align:left;color:var(--ink,#13233F);cursor:pointer;transition:border-color .15s ease,background .15s ease;">
                     <span style="display:flex;align-items:center;justify-content:center;width:22px;height:22px;flex:none;box-sizing:border-box;border:2px solid {{ o.rb }};border-radius:50%;"><span style="width:10px;height:10px;border-radius:50%;background:{{ o.dot }};"></span></span>
-                    <span style="display:flex;flex-direction:column;gap:3px;min-width:0;"><span style="font-size:16px;font-weight:600;line-height:1.3;">{{ o.label }}</span><sc-if value="{{ o.hasSub }}"><span style="font-size:14px;line-height:1.4;color:var(--mu,#59647A);">{{ o.sub }}</span></sc-if></span>
+                    <span style="display:flex;flex-direction:column;gap:3px;min-width:0;"><span style="font-size:16px;font-weight:400;line-height:1.4;text-wrap:pretty;">{{ o.label }}</span><sc-if value="{{ o.hasSub }}"><span style="font-size:14px;line-height:1.4;color:var(--mu,#59647A);">{{ o.sub }}</span></sc-if></span>
                   </button>
                 </sc-for>
               </div>
             </sc-if>
             <sc-if value="{{ qResSet }}" hint-placeholder-val="{{ false }}">
-              <h2 style="margin:0;font-size:calc(28px * var(--fhk,1));font-family:var(--fh,inherit);font-weight:var(--fhw,600);line-height:1.12;letter-spacing:var(--fhls,-.035em);">Подобрали для вас</h2>
-              <p style="margin:8px 0 0;font-size:15px;line-height:1.45;color:var(--mu,#59647A);">{{ qFor }}</p>
-              <div style="display:flex;flex-direction:column;gap:10px;margin-top:22px;">
-                <div onClick="{{ q1.onClick }}" style="display:flex;align-items:center;gap:14px;padding:12px;border:1.5px solid var(--ac,#2F6BB0);border-radius:var(--rc,20px);background:var(--sf,#FFFFFF);cursor:pointer;">
-                  <div onClick="{{ q1.onVideo }}" style="position:relative;width:68px;height:90px;flex:none;border-radius:12px;overflow:hidden;background:#D9DBE5;cursor:pointer;"><image-slot id="{{ q1.vslot }}" data-src="{{ q1.vimg }}" shape="rect" style="position:absolute;inset:0;color:transparent;pointer-events:{{ q1.pe }};"></image-slot><span style="position:absolute;inset:0;background:linear-gradient(rgba(14,14,44,0) 50%,rgba(14,14,44,.6));pointer-events:none;"></span><span style="position:absolute;left:50%;top:50%;display:flex;align-items:center;justify-content:center;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;background:rgba(255,255,255,.94);color:var(--ac,#2F6BB0);pointer-events:none;"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="margin-left:1px;"><path d="M8 5.2v13.6c0 .8.9 1.3 1.5.8l10-6.8c.6-.4.6-1.2 0-1.6l-10-6.8C8.9 3.9 8 4.4 8 5.2z"></path></svg></span><span style="position:absolute;left:0;right:0;bottom:5px;font-size:11px;font-weight:600;text-align:center;color:#FFFFFF;pointer-events:none;">{{ q1.vdur }}</span></div>
-                  <div style="display:flex;flex:1;flex-direction:column;gap:4px;min-width:0;">
-                    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;"><span style="display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:999px;background:var(--acs,#E3EEF9);font-size:12px;font-weight:600;color:var(--aci,#255A99);"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg>Рекомендуем</span><sc-if value="{{ q1.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;font-weight:600;color:var(--mu,#59647A);">{{ q1.badge }}</span></sc-if></div>
-                    <span style="font-size:17px;font-weight:600;line-height:1.3;">{{ q1.title }}</span>
-                    <span style="font-size:15px;font-weight:600;line-height:1.35;">{{ q1.price }}</span>
-                    <div style="display:flex;align-items:center;gap:8px;margin-top:2px;"><div style="display:flex;padding-left:7px;"><sc-for list="{{ q1.thumbs }}" as="t" hint-placeholder-count="5"><div style="position:relative;width:24px;height:24px;flex:none;margin-left:-7px;border-radius:7px;overflow:hidden;background:var(--sf2,#F1F0EC);box-shadow:0 0 0 2px var(--sf,#FFFFFF);"><image-slot id="{{ t.slot }}" data-src="{{ t.img }}" shape="rect" style="position:absolute;inset:0;color:transparent;pointer-events:{{ t.pe }};"></image-slot></div></sc-for></div><span style="font-size:13px;color:var(--mu,#59647A);white-space:nowrap;">{{ q1.count }}</span></div>
-                  </div>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:var(--mu,#59647A);"><path d="M9 6l6 6-6 6"></path></svg>
-                </div>
-                <sc-if value="{{ qHasAlt }}" hint-placeholder-val="{{ true }}">
-                  <span style="display:block;margin-top:14px;font-size:15px;font-weight:600;color:var(--mu,#59647A);">Также могут подойти</span>
-                  <sc-for list="{{ qAlt }}" as="a" hint-placeholder-count="2">
-                    <div onClick="{{ a.onClick }}" style="display:flex;align-items:center;gap:14px;padding:12px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,20px);background:var(--sf,#FFFFFF);cursor:pointer;transition:border-color .15s ease;" style-hover="border-color:var(--lnh,#CFCAC2)">
-                      <div onClick="{{ a.onVideo }}" style="position:relative;width:60px;height:80px;flex:none;border-radius:12px;overflow:hidden;background:#D9DBE5;cursor:pointer;"><image-slot id="{{ a.vslot }}" data-src="{{ a.vimg }}" shape="rect" style="position:absolute;inset:0;color:transparent;pointer-events:{{ a.pe }};"></image-slot><span style="position:absolute;inset:0;background:linear-gradient(rgba(14,14,44,0) 50%,rgba(14,14,44,.6));pointer-events:none;"></span><span style="position:absolute;left:50%;top:50%;display:flex;align-items:center;justify-content:center;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;background:rgba(255,255,255,.94);color:var(--ac,#2F6BB0);pointer-events:none;"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="margin-left:1px;"><path d="M8 5.2v13.6c0 .8.9 1.3 1.5.8l10-6.8c.6-.4.6-1.2 0-1.6l-10-6.8C8.9 3.9 8 4.4 8 5.2z"></path></svg></span><span style="position:absolute;left:0;right:0;bottom:5px;font-size:11px;font-weight:600;text-align:center;color:#FFFFFF;pointer-events:none;">{{ a.vdur }}</span></div>
-                      <div style="display:flex;flex:1;flex-direction:column;gap:4px;min-width:0;">
-                        <sc-if value="{{ a.hasBadge }}"><span style="font-size:12px;font-weight:600;color:var(--mu,#59647A);">{{ a.badge }}</span></sc-if>
-                        <span style="font-size:16px;font-weight:600;line-height:1.3;">{{ a.title }}</span>
-                        <span style="font-size:15px;font-weight:600;line-height:1.35;">{{ a.price }}</span>
-                    <div style="display:flex;align-items:center;gap:8px;margin-top:2px;"><div style="display:flex;padding-left:7px;"><sc-for list="{{ a.thumbs }}" as="t" hint-placeholder-count="5"><div style="position:relative;width:24px;height:24px;flex:none;margin-left:-7px;border-radius:7px;overflow:hidden;background:var(--sf2,#F1F0EC);box-shadow:0 0 0 2px var(--sf,#FFFFFF);"><image-slot id="{{ t.slot }}" data-src="{{ t.img }}" shape="rect" style="position:absolute;inset:0;color:transparent;pointer-events:{{ t.pe }};"></image-slot></div></sc-for></div><span style="font-size:13px;color:var(--mu,#59647A);white-space:nowrap;">{{ a.count }}</span></div>
-                      </div>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;color:var(--mu,#59647A);"><path d="M9 6l6 6-6 6"></path></svg>
+              <div style="display:flex;flex-direction:column;align-items:center;text-align:center;">
+                <span style="display:flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:50%;background:var(--acs,#E3EEF9);color:var(--ac,#2F6BB0);"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg></span>
+                <h2 style="margin:18px 0 0;font-size:calc(30px * var(--fhk,1));font-family:var(--fh,inherit);font-weight:var(--fhw,600);line-height:1.1;letter-spacing:var(--fhls,-.035em);">Отлично!</h2>
+                <p style="margin:10px 0 0;font-size:16px;line-height:1.5;color:var(--mu,#59647A);text-wrap:balance;">Мы проанализировали ваши ответы и подобрали идеальную схему ухода под вашу проблему</p>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:10px;margin-top:24px;">
+                <sc-for list="{{ qOffers }}" as="t" hint-placeholder-count="3">
+                  <sc-if value="{{ t.altHead }}" hint-placeholder-val="{{ false }}"><span style="display:block;margin-top:14px;font-size:15px;font-weight:600;color:var(--mu,#59647A);">Также могут подойти</span></sc-if>
+                  <div onClick="{{ t.onClick }}" style="display:flex;flex-direction:column;gap:12px;padding:16px;border:{{ t.bd }};border-radius:var(--rc,20px);background:var(--sf,#FFFFFF);box-shadow:{{ t.sh }};cursor:pointer;">
+                    <sc-if value="{{ t.rec }}" hint-placeholder-val="{{ false }}"><span style="display:inline-flex;align-items:center;gap:5px;align-self:flex-start;height:26px;padding:0 10px;border-radius:999px;background:var(--acs,#E3EEF9);font-size:13px;font-weight:600;color:var(--aci,#255A99);"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"></path></svg>Рекомендуем для вас</span></sc-if>
+                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+                      <div style="display:flex;flex-direction:column;gap:3px;min-width:0;"><span style="font-size:18px;font-weight:600;line-height:1.25;">{{ t.label }}</span><span style="font-size:14px;line-height:1.4;color:var(--mu,#59647A);text-wrap:pretty;">{{ t.note }}</span></div>
+                      <span style="flex:none;font-size:18px;font-weight:600;line-height:1.25;letter-spacing:-.01em;white-space:nowrap;">{{ t.price }}</span>
                     </div>
-                  </sc-for>
-                </sc-if>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:12px;border-top:1px solid var(--ln2,#EFEDE9);">
+                      <div style="display:flex;align-items:center;gap:8px;min-width:0;"><div style="display:flex;padding-left:7px;"><sc-for list="{{ t.thumbs }}" as="m" hint-placeholder-count="4"><div style="position:relative;width:26px;height:26px;flex:none;margin-left:-7px;border-radius:8px;overflow:hidden;background:var(--sf2,#F1F0EC);box-shadow:0 0 0 2px var(--sf,#FFFFFF);"><image-slot id="{{ m.slot }}" data-src="{{ m.img }}" shape="rect" style="position:absolute;inset:0;color:transparent;pointer-events:{{ m.pe }};"></image-slot></div></sc-for></div><span style="font-size:14px;color:var(--mu,#59647A);white-space:nowrap;">{{ t.count }}</span></div>
+                      <span style="display:flex;align-items:center;gap:2px;flex:none;font-size:14px;font-weight:600;color:var(--aci,#255A99);">Подробнее<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></span>
+                    </div>
+                  </div>
+                </sc-for>
               </div>
               <p style="margin:28px 0 0;font-size:15px;text-align:center;color:var(--mu,#59647A);">Сомневаетесь, какую выбрать?</p>
               <button onClick="{{ qWaChoose }}" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:54px;margin-top:10px;padding:0 20px;box-sizing:border-box;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rb,999px);background:var(--sf,#FFFFFF);font-family:inherit;font-size:16px;font-weight:600;color:var(--ink,#13233F);cursor:pointer;" style-hover="border-color:var(--lnh,#CFCAC2)"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="flex:none;color:#1FA855;"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2c0 1.3.9 2.5 1 2.7.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"></path></svg>Спросить Нурайым в WhatsApp</button>
-              <button onClick="{{ qRestart }}" style="display:block;width:100%;height:48px;margin-top:6px;padding:0;border:0;background:none;font-family:inherit;font-size:15px;font-weight:600;color:var(--mu,#59647A);cursor:pointer;">Пройти заново</button>
-            </sc-if>
-            <sc-if value="{{ qResWa }}" hint-placeholder-val="{{ false }}">
-              <div style="display:flex;flex-direction:column;align-items:center;text-align:center;">
-                <span style="display:flex;align-items:center;justify-content:center;width:68px;height:68px;margin-top:8px;border-radius:50%;background:#E3F5EC;color:#15805A;"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
-                <h2 style="margin:20px 0 0;font-size:calc(28px * var(--fhk,1));font-family:var(--fh,inherit);font-weight:var(--fhw,600);line-height:1.12;letter-spacing:var(--fhls,-.035em);">Готово!</h2>
-                <p style="margin:10px 0 0;font-size:16px;line-height:1.5;color:var(--mu,#59647A);text-wrap:balance;">Отправьте ответы Нурайым — она лично разберёт ваш уход и ответит в WhatsApp</p>
-              </div>
-              <div style="display:flex;flex-direction:column;margin-top:24px;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rc,22px);background:var(--sf,#FFFFFF);">
-                <sc-for list="{{ qSummary }}" as="r" hint-placeholder-count="4"><div style="display:flex;flex-direction:column;gap:3px;padding:14px 18px;border-top:{{ r.bt }};"><span style="font-size:13px;color:var(--mu,#59647A);">{{ r.k }}</span><span style="font-size:15px;font-weight:600;line-height:1.35;">{{ r.v }}</span></div></sc-for>
-              </div>
-              <button onClick="{{ qWa }}" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:58px;margin-top:24px;padding:0 22px;box-sizing:border-box;border:0;border-radius:var(--rb,999px);background:var(--ac,#2F6BB0);box-shadow:0 18px 32px -14px var(--acsh,rgba(47,107,176,.45));font-family:inherit;font-size:17px;font-weight:600;color:#FFFFFF;cursor:pointer;" style-hover="filter:brightness(.94)"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="flex:none;"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2c0 1.3.9 2.5 1 2.7.1.2 1.8 2.8 4.4 3.9 1.6.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3z"></path></svg>Получить разбор в WhatsApp</button>
-              <button onClick="{{ qSeeList }}" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:54px;margin-top:10px;padding:0 20px;box-sizing:border-box;border:1px solid var(--ln,#E6E3DE);border-radius:var(--rb,999px);background:var(--sf,#FFFFFF);font-family:inherit;font-size:16px;font-weight:600;color:var(--ink,#13233F);cursor:pointer;" style-hover="border-color:var(--lnh,#CFCAC2)">Посмотреть подходящие программы</button>
               <button onClick="{{ qRestart }}" style="display:block;width:100%;height:48px;margin-top:6px;padding:0;border:0;background:none;font-family:inherit;font-size:15px;font-weight:600;color:var(--mu,#59647A);cursor:pointer;">Пройти заново</button>
             </sc-if>
           </div>
@@ -857,7 +946,7 @@
 
       <sc-if value="{{ vOpen }}" hint-placeholder-val="{{ false }}">
         <div style="position:absolute;inset:0;z-index:40;overflow:hidden;background:#000000;">
-          <img src="assets/nurai-hero.png" alt="" style="{{ vImgStyle }}">
+          <img data-src="{{ vPoster }}" alt="" style="{{ vImgStyle }}">
           <div onClick="{{ vToggle }}" style="position:absolute;inset:0;cursor:pointer;"></div>
           <div style="position:absolute;top:{{ vTop }};left:14px;right:14px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;pointer-events:none;">
             <div style="display:flex;flex-direction:column;gap:2px;padding:10px 14px;border-radius:14px;background:rgba(14,14,44,.62);"><span style="font-size:15px;font-weight:600;color:#FFFFFF;">{{ vTitle }}</span><span style="font-size:12px;color:#C9CBDA;">Демо-плеер: здесь будет видео Нурайым</span></div>
@@ -904,46 +993,99 @@ const P = {
   cream: { slot: 'bb-cream', cat: 'Кремы', brand: 'Dr. SGNBIO', name: 'Питательный крем с керамидами', short: 'Крем с керамидами', vol: '50 мл', price: 1800, purpose: 'Питает и смягчает сухую кожу', desc: 'Питательный крем для сухой и обезвоженной кожи. Помогает удерживать влагу и смягчает шелушения.', use: 'Нанесите на завершающем этапе ухода. Вечером можно нанести слой потолще.' },
   spf: { slot: 'bb-spf', cat: 'SPF', brand: 'Dr. SGNBIO', name: 'Солнцезащитный флюид SPF 50+', short: 'Флюид SPF 50+', vol: '50 мл', price: 1300, purpose: 'Лёгкая защита на каждый день', desc: 'Лёгкий флюид с высокой защитой от UVA и UVB. Не оставляет белых следов и подходит под макияж.', use: 'Утром последним шагом ухода, за 15 минут до выхода. На солнце обновляйте каждые 2–3 часа.' }
 };
+const COMP = {
+  foam: 'Экстракт центеллы азиатской, мягкие ПАВ на основе аминокислот, пантенол, аллантоин, глицерин',
+  oil: 'Масло семян подсолнечника, масло жожоба, масло виноградной косточки, эмульгатор, токоферол',
+  bha: 'Салициловая кислота (BHA), экстракт чайного дерева, ниацинамид, пантенол, бетаин',
+  aquatoner: 'Гиалуроновая кислота, бета-глюкан, пантенол, экстракт алоэ вера, аллантоин',
+  wtoner: 'Ниацинамид, арбутин, экстракт солодки, аденозин, гиалуроновая кислота',
+  cica: 'Экстракт центеллы азиатской, мадекассосид, пантенол, аллантоин, бета-глюкан',
+  wserum: 'Ниацинамид, транексамовая кислота, арбутин, глутатион, аденозин',
+  pdrn: 'PDRN (полидезоксирибонуклеотид), пептиды, аденозин, гиалуроновая кислота, пантенол',
+  ronas: 'Экстракт стволовых клеток растений, пептиды, EGF, ниацинамид, аденозин',
+  barrier: 'Керамиды, холестерин, жирные кислоты, пантенол, сквалан',
+  gel: 'Гиалуроновая кислота, экстракт зелёного чая, ниацинамид, бетаин, аллантоин',
+  cream: 'Керамиды, масло ши, сквалан, пантенол, гиалуроновая кислота',
+  spf: 'UV-фильтры нового поколения, ниацинамид, экстракт центеллы, гиалуроновая кислота. SPF 50+ PA++++'
+};
+Object.keys(COMP).forEach(k => { if (P[k]) P[k].comp = COMP[k]; });
 const RES = (id, p) => (window.__resources && window.__resources[id]) || p;
 const ph = n => RES('ph-' + n, 'assets/photos/' + n + '.jpg');
 const IMG = { foam: ['foam', 'texture-foam', 'use-cleansing'], oil: ['oil', 'texture-oil', 'use-cleansing'], bha: ['texture-toner', 'use-toner', 'texture-serum'], aquatoner: ['aquatoner', 'texture-toner', 'use-toner'], wtoner: ['wtoner', 'texture-toner', 'use-toner'], cica: ['texture-serum', 'use-serum', 'texture-toner'], wserum: ['wserum', 'texture-serum', 'use-serum'], pdrn: ['pdrn', 'texture-serum', 'use-serum'], ronas: ['ronas', 'texture-serum', 'use-serum'], barrier: ['use-serum', 'texture-serum', 'texture-cream'], gel: ['texture-cream', 'use-cream', 'texture-spf'], cream: ['use-cream', 'texture-cream', 'texture-spf'], spf: ['use-spf', 'texture-spf', 'use-cream'] };
 Object.keys(P).forEach(k => Object.defineProperties(P[k], { img: { get: () => ph(IMG[k][0]), enumerable: true }, gal: { get: () => IMG[k].map(ph), enumerable: true } }));
 const CATS = ['Очищение', 'Тонеры', 'Сыворотки', 'Кремы', 'SPF'];
 const PROGRAMS = [
-  { id: 'acne', goal: 'acne', skins: ['oily', 'normal'], title: 'Акне и проблемная кожа', symptom: 'Воспаления, чёрные точки, жирный блеск', h1b: 'акне и проблемной коже', price: 5900, dur: 120, course: 'Утро и вечер, курс на 6–8 недель', items: ['foam', 'bha', 'cica', 'gel', 'spf'],
+  { id: 'acne', goal: 'acne', skins: ['combo', 'normal', 'dry'], title: 'Акне и постакне', symptom: 'Воспаления, высыпания и следы постакне', h1b: 'акне и постакне', price: 5900, dur: 120, course: 'Утро и вечер, курс на 6–8 недель', items: ['foam', 'bha', 'cica', 'gel', 'spf'],
     fit: ['Регулярно появляются воспаления и покраснения', 'Кожа жирная или комбинированная', 'Нужен мягкий уход без пересушивания'],
-    am: [['foam', 'Мягко очищает и не стягивает кожу'], ['cica', 'Помогает уменьшить покраснения'], ['spf', 'Защищает от новых пятен постакне']],
-    pm: [['foam', 'Смывает SPF и себум за день'], ['bha', 'Помогает очистить поры'], ['gel', 'Увлажняет без жирной плёнки']] },
-  { id: 'dry', goal: 'barrier', skins: ['dry', 'normal'], title: 'Сухость и обезвоженность', symptom: 'Стянутость, шелушения, тусклый цвет лица', h1b: 'сухости и обезвоженности', price: 6700, dur: 120, course: 'Утро и вечер, курс на 6–8 недель', items: ['foam', 'aquatoner', 'barrier', 'cream', 'spf'],
+    am: [['foam', 'Мягко очищает и не стягивает кожу'], ['cica', 'Помогает уменьшить покраснения'], ['gel', 'Лёгкое увлажнение без жирной плёнки'], ['spf', 'Защищает от новых пятен постакне']],
+    pm: [['oil', 'Первый этап очищения: растворяет SPF и себум'], ['foam', 'Смывает SPF и себум за день'], ['bha', 'Помогает очистить поры'], ['pdrn', 'Помогает коже быстрее восстанавливаться после воспалений'], ['gel', 'Увлажняет без жирной плёнки']] },
+  { id: 'dry', goal: 'glow', skins: ['dry', 'normal'], title: 'Сухость и обезвоженность', symptom: 'Стянутость, шелушения, тусклый цвет лица', h1b: 'сухости и обезвоженности', price: 6700, dur: 120, course: 'Утро и вечер, курс на 6–8 недель', items: ['foam', 'aquatoner', 'barrier', 'cream', 'spf'],
     fit: ['Кожа стягивает после умывания', 'Есть шелушения и тусклый цвет лица', 'Крем впитывается, а кожа снова сухая'],
     am: [['aquatoner', 'Утром достаточно умыться водой и нанести тонер'], ['cream', 'Питает и смягчает кожу на весь день'], ['spf', 'Защищает сухую кожу от солнца и ветра']],
-    pm: [['foam', 'Бережно очищает, не пересушивая'], ['barrier', 'Помогает восстановить защитный барьер'], ['cream', 'Питает кожу за ночь']] },
-  { id: 'pigment', goal: 'pigment', skins: ['dry', 'oily', 'normal'], title: 'Пигментация', symptom: 'Пятна после солнца и следы постакне', h1b: 'пигментации', price: 6900, dur: 180, course: 'Утро и вечер, курс на 8 недель', items: ['foam', 'wtoner', 'wserum', 'gel', 'spf'],
+    pm: [['oil', 'Мягко растворяет SPF, не пересушивая'], ['foam', 'Бережно очищает, не пересушивая'], ['barrier', 'Помогает восстановить защитный барьер'], ['pdrn', 'Возвращает коже плотность и сияние'], ['cream', 'Питает кожу за ночь']] },
+  { id: 'pigment', goal: 'pigment', skins: ['dry', 'oily', 'combo', 'normal'], title: 'Пигментация', symptom: 'Пятна после солнца и следы постакне', h1b: 'пигментации', price: 6900, dur: 180, course: 'Утро и вечер, курс на 8 недель', items: ['foam', 'wtoner', 'wserum', 'gel', 'spf'],
     fit: ['Остались следы после высыпаний', 'Появились пятна после солнца', 'Хочется ровный тон без плотного тонального'],
     am: [['foam', 'Бережно очищает, не раздражая кожу'], ['wtoner', 'Выравнивает тон и готовит кожу к уходу'], ['spf', 'Главный шаг: без SPF пятна возвращаются']],
-    pm: [['foam', 'Смывает SPF и загрязнения за день'], ['wserum', 'Помогает сделать пятна светлее'], ['gel', 'Увлажняет и смягчает кожу']] },
-  { id: 'sensitive', goal: 'barrier', skins: ['sens'], title: 'Чувствительная кожа', symptom: 'Покраснения и реакция на новые средства', h1b: 'чувствительной коже', price: 7200, dur: 120, course: 'Утро и вечер, курс на 6–8 недель', items: ['foam', 'cica', 'barrier', 'cream', 'spf'],
+    pm: [['oil', 'Первый этап очищения: растворяет SPF'], ['foam', 'Смывает SPF и загрязнения за день'], ['wserum', 'Помогает сделать пятна светлее'], ['pdrn', 'Помогает коже восстанавливаться и выглядеть ровнее'], ['gel', 'Увлажняет и смягчает кожу']] },
+  { id: 'sensitive', goal: 'calm', skins: ['sens'], title: 'Чувствительная кожа', symptom: 'Покраснения и реакция на новые средства', h1b: 'чувствительной коже', price: 7200, dur: 120, course: 'Утро и вечер, курс на 6–8 недель', items: ['foam', 'cica', 'barrier', 'cream', 'spf'],
     fit: ['Кожа легко краснеет и раздражается', 'Реагирует на новые средства и смену погоды', 'Нужен простой и бережный уход'],
     am: [['cica', 'Успокаивает кожу с утра'], ['cream', 'Смягчает и защищает от сухости'], ['spf', 'Защищает чувствительную кожу от солнца']],
-    pm: [['foam', 'Бережно очищает без стянутости'], ['barrier', 'Помогает укрепить защитный барьер'], ['cream', 'Возвращает коже комфорт за ночь']] },
-  { id: 'lifting', goal: 'age', skins: ['dry', 'normal'], title: 'Лифтинг и сияние с PDRN', symptom: 'Морщинки, потеря упругости, «овал плывёт»', h1b: 'возрастных изменениях', price: 7900, dur: 120, course: 'Утро и вечер, курс на 8 недель', items: ['foam', 'aquatoner', 'pdrn', 'cream', 'spf'],
+    pm: [['foam', 'Бережно очищает без стянутости'], ['aquatoner', 'Возвращает комфорт после умывания'], ['barrier', 'Помогает укрепить защитный барьер'], ['pdrn', 'Помогает коже восстанавливаться'], ['cream', 'Возвращает коже комфорт за ночь']] },
+  { id: 'lifting', goal: 'age', skins: ['dry', 'normal', 'combo'], title: 'Анти-эйдж и лифтинг', symptom: 'Морщинки, потеря упругости, «овал плывёт»', h1b: 'возрастных изменениях', price: 7900, dur: 120, course: 'Утро и вечер, курс на 8 недель', items: ['foam', 'aquatoner', 'pdrn', 'cream', 'spf'],
     fit: ['Появились морщинки и потеря упругости', 'Хочется подтянутый овал и сияние', 'Кожа выглядит уставшей и тусклой'],
-    am: [['aquatoner', 'Увлажняет и готовит кожу к уходу'], ['cream', 'Питает и смягчает кожу на весь день'], ['spf', 'Защищает от фотостарения']],
-    pm: [['foam', 'Бережно очищает, не пересушивая'], ['pdrn', 'Помогает коже выглядеть плотнее и упругее'], ['cream', 'Восстанавливает кожу за ночь']] }
+    am: [['aquatoner', 'Увлажняет и готовит кожу к уходу'], ['ronas', 'Упругость и сияние на весь день'], ['cream', 'Питает и смягчает кожу на весь день'], ['spf', 'Защищает от фотостарения']],
+    pm: [['oil', 'Растворяет SPF и макияж'], ['foam', 'Бережно очищает, не пересушивая'], ['pdrn', 'Помогает коже выглядеть плотнее и упругее'], ['cream', 'Восстанавливает кожу за ночь']] }
+,
+  { id: 'pores', goal: 'acne', skins: ['oily', 'combo'], title: 'Чёрные точки и поры', symptom: 'Забитые поры, закрытые комедоны, жирный блеск', h1b: 'чёрных точках и расширенных порах', price: 5400, dur: 120, course: 'Утро и вечер, курс на 6–8 недель', items: ['oil', 'foam', 'bha', 'gel', 'spf'],
+    fit: ['Есть чёрные точки и закрытые комедоны', 'Поры заметные, кожа быстро блестит', 'Хочется гладкую кожу без пересушивания'],
+    am: [['foam', 'Убирает себум, не пересушивая'], ['aquatoner', 'Увлажняет и успокаивает после умывания'], ['gel', 'Лёгкое увлажнение без жирной плёнки'], ['spf', 'Обязательно при уходе с кислотами']],
+    pm: [['oil', 'Растворяет себум и пробки в порах'], ['foam', 'Второй этап очищения'], ['bha', 'Очищает поры изнутри'], ['cica', 'Снимает покраснения после очищения'], ['gel', 'Увлажняет без жирной плёнки']] },
+  { id: 'glow', goal: 'glow', skins: ['oily', 'combo', 'normal'], title: 'Тусклая кожа и сияние', symptom: 'Уставший вид, серый тон, нет сияния', h1b: 'тусклой и уставшей коже', price: 7900, dur: 120, course: 'Утро и вечер, курс на 6–8 недель', items: ['foam', 'wtoner', 'ronas', 'gel', 'spf'],
+    fit: ['Кожа выглядит уставшей и серой', 'Хочется ровный тон и сияние без тонального', 'Нужен уход с заметным эффектом'],
+    am: [['foam', 'Мягко очищает и освежает кожу'], ['wtoner', 'Выравнивает тон и придаёт сияние'], ['ronas', 'Упругость и сияние на весь день'], ['spf', 'Защищает от тусклости и пигмента']],
+    pm: [['oil', 'Растворяет SPF и загрязнения'], ['foam', 'Смывает загрязнения за день'], ['wtoner', 'Второй слой для ровного тона'], ['pdrn', 'Восстанавливает кожу за ночь'], ['gel', 'Увлажняет без жирной плёнки']] },
+  { id: 'recovery', goal: 'calm', skins: ['dry', 'normal', 'sens'], title: 'Восстановление барьера', symptom: 'Шелушения, зуд, жжение после кислот и процедур', h1b: 'повреждённом барьере кожи', price: 8200, dur: 120, course: 'Утро и вечер, курс на 4–6 недель', items: ['foam', 'barrier', 'pdrn', 'cream', 'spf'],
+    fit: ['Кожа шелушится, зудит или жжёт', 'Раздражение после кислот, ретинола или процедур', 'Любой крем щиплет, кожа стала тонкой'],
+    am: [['aquatoner', 'Мягко увлажняет без умывания пенкой'], ['barrier', 'Укрепляет защитный барьер с утра'], ['cream', 'Защищает от сухости и ветра'], ['spf', 'Обязательная защита после процедур']],
+    pm: [['foam', 'Бережно очищает без стянутости'], ['cica', 'Снимает раздражение и зуд'], ['pdrn', 'Ускоряет восстановление кожи'], ['cream', 'Восстанавливает кожу за ночь']] }
 ];
+const P_ORDER = ['acne', 'pores', 'pigment', 'lifting', 'glow', 'dry', 'sensitive', 'recovery'];
+PROGRAMS.sort((a, b) => P_ORDER.indexOf(a.id) - P_ORDER.indexOf(b.id));
+const COVER_IDS = ['acne', 'pores', 'pigment', 'lifting', 'glow', 'dry', 'sensitive', 'recovery'];
+const coverOf = id => COVER_IDS.indexOf(id) >= 0 ? RES('pc-' + id, 'assets/programs/' + id + '.jpg') : ph('entry-programs');
+const posterOf = id => COVER_IDS.indexOf(id) >= 0 ? RES('pc-' + id, 'assets/programs/' + id + '.jpg') : RES('nurai-hero', 'assets/nurai-hero.png');
+const PROG_NEW = ['pores', 'glow', 'recovery'];
+const progAddNew = v => v.some(x => PROG_NEW.indexOf(x.id) >= 0) ? v : v.concat(PROGRAMS.filter(p => PROG_NEW.indexOf(p.id) >= 0).map(p => ({ id: p.id, title: p.title, symptom: p.symptom, fit: p.fit, items: p.items, price: p.price, badge: '', goal: p.goal, skins: p.skins, published: true, stock: true, protocol: null })));
+
+const TIER_META = { base: ['Базовая', 'Самое необходимое, чтобы начать', 'самое необходимое'], opt: ['Оптимальная', 'Полная программа на весь курс', 'полный курс'], max: ['Максимальная', 'Полная программа и усилители для быстрого результата', 'с усилителями'] };
+const TIERS = {
+  acne: { base: [['foam', 'cica', 'gel'], 3900], max: [['oil', 'foam', 'bha', 'cica', 'pdrn', 'gel', 'spf'], 10500] },
+  dry: { base: [['foam', 'aquatoner', 'cream'], 3900], max: [['oil', 'foam', 'aquatoner', 'barrier', 'pdrn', 'cream', 'spf'], 11400] },
+  pigment: { base: [['foam', 'wserum', 'spf'], 4700], max: [['oil', 'foam', 'wtoner', 'wserum', 'pdrn', 'gel', 'spf'], 11900] },
+  sensitive: { base: [['foam', 'cica', 'cream'], 4200], max: [['foam', 'aquatoner', 'cica', 'barrier', 'pdrn', 'cream', 'spf'], 11900] },
+  lifting: { base: [['aquatoner', 'pdrn', 'cream'], 5900], max: [['oil', 'foam', 'aquatoner', 'pdrn', 'ronas', 'cream', 'spf'], 12900] },
+  pores: { base: [['foam', 'bha', 'gel'], 3600], max: [['oil', 'foam', 'bha', 'aquatoner', 'cica', 'gel', 'spf'], 8900] },
+  glow: { base: [['foam', 'wtoner', 'gel'], 3800], max: [['oil', 'foam', 'wtoner', 'ronas', 'pdrn', 'gel', 'spf'], 12900] },
+  recovery: { base: [['foam', 'barrier', 'cream'], 4800], max: [['foam', 'aquatoner', 'cica', 'barrier', 'pdrn', 'cream', 'spf'], 11700] }
+};
+const mkTier = (key, items, price) => ({ key, label: TIER_META[key][0], note: TIER_META[key][1], short: TIER_META[key][2], items: (items || []).filter(k => P[k]), price });
+const tiersOf = p => [mkTier('opt', p.items, p.price)];
+const tierPick = (p, k) => p.tiers.find(t => t.key === k) || p.tiers.find(t => t.key === 'opt') || p.tiers[0];
+const goalFix = (g, sk) => g === 'barrier' ? ((sk || []).indexOf('sens') >= 0 ? 'calm' : 'glow') : (g || '');
+const withTiers = p => ({ ...p, goal: goalFix(p.goal, p.skins), tiers: tiersOf(p) });
 const PROG_KEY = 'bb-programs';
 const PROTO_KB = { acne: 280, dry: 281, pigment: 268, sensitive: 267, lifting: 277 };
-const PROTO0 = Object.fromEntries(PROGRAMS.map(p => [p.id, { builtin: true, sample: true, rid: 'proto-' + p.id, src: 'assets/protocols/' + p.id + '.pdf', name: 'Протокол ухода — ' + p.title + '.pdf', size: PROTO_KB[p.id] + ' КБ' }]));
-const loadProgs = () => { try { const v = JSON.parse(localStorage.getItem(PROG_KEY) || 'null'); return Array.isArray(v) && v.length && v.every(x => x && x.id) ? v : null; } catch (e) { return null; } };
-const liveProgs = st => !st ? PROGRAMS.map(p => ({ ...p, published: true, stock: true, protocol: PROTO0[p.id] || null })) : st.map(x => {
-  const b = PROGRAMS.find(p => p.id === x.id) || {}, items = (Array.isArray(x.items) ? x.items : b.items || []).filter(k => P[k]), keep = a => (a || []).filter(r => items.indexOf(r[0]) >= 0), f = x.protocol;
-  return { ...b, id: x.id, title: String(x.title || b.title || 'Программа'), symptom: String(x.symptom != null ? x.symptom : b.symptom || ''), fit: (Array.isArray(x.fit) ? x.fit : b.fit || []).map(String).filter(t => t.trim()), items, price: Math.max(0, Number(x.price) || 0), badge: x.badge || '', goal: x.goal != null ? x.goal : b.goal || '', skins: Array.isArray(x.skins) ? x.skins : b.skins || [], published: x.published !== false, stock: x.stock !== false, protocol: f && (f.builtin ? f.src : f.id) ? f : null, h1b: b.h1b || '', course: b.course || 'Утро и вечер', dur: b.dur || 120, am: keep(b.am), pm: keep(b.pm) };
-});
+const PROTO0 = Object.fromEntries(PROGRAMS.filter(p => PROTO_KB[p.id]).map(p => [p.id, { builtin: true, sample: true, rid: 'proto-' + p.id, src: 'assets/protocols/' + p.id + '.pdf', name: 'Протокол ухода — ' + p.title + '.pdf', size: PROTO_KB[p.id] + ' КБ' }]));
+const loadProgs = () => { try { const v = JSON.parse(localStorage.getItem(PROG_KEY) || 'null'); return Array.isArray(v) && v.length && v.every(x => x && x.id) ? progAddNew(v) : null; } catch (e) { return null; } };
+const liveProgs = st => (!st ? PROGRAMS.map(p => ({ ...p, published: true, stock: true, protocol: PROTO0[p.id] || null })) : st.map(x => {
+  const b = PROGRAMS.find(p => p.id === x.id) || {}, items = (Array.isArray(x.items) ? x.items : b.items || []).filter(k => P[k]), f = x.protocol;
+  return { ...b, id: x.id, title: String(x.title || b.title || 'Программа'), symptom: String(x.symptom != null ? x.symptom : b.symptom || ''), fit: (Array.isArray(x.fit) ? x.fit : b.fit || []).map(String).filter(t => t.trim()), items, price: Math.max(0, Number(x.price) || 0), badge: x.badge || '', goal: x.goal != null ? x.goal : b.goal || '', skins: Array.isArray(x.skins) ? x.skins : b.skins || [], published: x.published !== false, stock: x.stock !== false, protocol: f && (f.builtin ? f.src : f.id) ? f : null, h1b: b.h1b || '', course: b.course || 'Утро и вечер', dur: b.dur || 120, am: b.am || [], pm: b.pm || [] };
+})).map(withTiers);
 let LIVE = PROGRAMS;
 const fileGet = id => new Promise(res => { try { const r = indexedDB.open('bb-files', 1); r.onupgradeneeded = () => r.result.createObjectStore('f'); r.onsuccess = () => { try { const q = r.result.transaction('f').objectStore('f').get(id); q.onsuccess = () => res(q.result || null); q.onerror = () => res(null); } catch (e) { res(null); } }; r.onerror = () => res(null); } catch (e) { res(null); } }).then(b => { if (b) return b; let d = null; try { d = localStorage.getItem('bb-file-' + id); } catch (e) {} return d ? fetch(d).then(x => x.blob()).catch(() => null) : null; });
 const mk = o => Object.fromEntries(Object.entries(o).map(([k, v]) => ['--' + k, v]));
 const TH = {
-  a: { name: 'Bom Beauty', note: 'по умолчанию', dot: '#D12F63', v: mk({ bg: '#FAF7F8', sf: '#FFFFFF', sf2: '#F2F3F8', ln: '#E6E8F0', ln2: '#EEF0F5', lnh: '#CDD1E2', ink: '#14142B', mu: '#5B5F7A', ac: '#D12F63', ac2: '#E8603C', aci: '#B3264F', acs: '#FBE0EA', halo: 'rgba(209,47,99,.09)', acsh: 'rgba(209,47,99,.5)', pk: '#D12F63', hl: '#D12F63', hl2: '#D12F63', hbg: 'radial-gradient(120% 340px at 50% 0%, #FCEEF3 0%, rgba(250,247,248,0) 100%)', hink: '#14142B', hmu: '#5B5F7A', hhalo: 'rgba(209,47,99,.09)', hrad: '0px', hal: 'center', hta: 'center', h1s: '37px', glow: '#FCEEF3', hdr: '#FFFFFF', hdrl: '#E9EBF2', wab: '#E6E8F0', rw: '12px', tt: '#F4F1F3', ti: '#5B5F7A', toi: '#14142B', rt: '13px', rti: '10px', tth: 'rgba(20,20,43,.04)', ft: '#0E0E2C', fti: '#E7E8F3', ftm: '#8D90AB', ftl: 'rgba(255,255,255,.1)', chip: '#14142B', rc: '20px', rb: '14px', poster: '#F8E3EA', cbg: '#FFFFFF', cbgi: 'radial-gradient(120% 240px at 50% 0%, #FCEEF3 0%, rgba(255,255,255,0) 100%)' }) },
+  a: { name: 'Bom Beauty', note: 'по умолчанию', dot: '#D12F63', v: mk({ bg: '#FEF6F8', sf: '#FFFFFF', sf2: '#F2F3F8', ln: '#E6E8F0', ln2: '#EEF0F5', lnh: '#CDD1E2', ink: '#14142B', mu: '#5B5F7A', ac: '#D12F63', ac2: '#E8603C', aci: '#B3264F', acs: '#FBE0EA', halo: 'rgba(209,47,99,.09)', acsh: 'rgba(209,47,99,.5)', pk: '#D12F63', hl: '#D12F63', hl2: '#D12F63', hbg: 'radial-gradient(120% 340px at 50% 0%, #FCEEF3 0%, rgba(254,246,248,0) 100%)', hink: '#14142B', hmu: '#5B5F7A', hhalo: 'rgba(209,47,99,.09)', hrad: '0px', hal: 'center', hta: 'center', h1s: '37px', glow: '#FCEEF3', hdr: '#FFFFFF', hdrl: '#E9EBF2', wab: '#E6E8F0', rw: '12px', tt: '#F4F1F3', ti: '#5B5F7A', toi: '#14142B', rt: '13px', rti: '10px', tth: 'rgba(20,20,43,.04)', ft: '#0E0E2C', fti: '#E7E8F3', ftm: '#8D90AB', ftl: 'rgba(255,255,255,.1)', chip: '#14142B', rc: '20px', rb: '14px', poster: '#F8E3EA', cbg: '#FFFFFF', cbgi: 'radial-gradient(120% 240px at 50% 0%, #FCEEF3 0%, rgba(255,255,255,0) 100%)' }) },
   b: { name: 'Небесно-голубая', note: 'вся в голубом', dot: '#AACDEB', v: mk({ bg: '#F5F8FB', sf: '#FFFFFF', sf2: '#EEF2F7', ln: '#E3E8EF', ln2: '#EDF1F6', lnh: '#C9D3E0', ink: '#13233F', mu: '#59647A', ac: '#2F6BB0', ac2: '#7B5CC8', aci: '#255A99', acs: '#E3EEF9', halo: 'rgba(47,107,176,.1)', acsh: 'rgba(47,107,176,.45)', pk: '#DE366B', hl: '#2F6BB0', hl2: '#2F6BB0', hbg: 'radial-gradient(120% 360px at 50% 0%, #D8E8F6 0%, rgba(245,248,251,0) 100%)', hink: '#13233F', hmu: '#59647A', hhalo: 'rgba(47,107,176,.1)', hrad: '0px', hal: 'center', hta: 'center', h1s: '37px', glow: '#E8F1FA', hdr: '#FFFFFF', hdrl: '#E6EBF2', wab: '#E3E8EF', rw: '12px', tt: '#EEF2F7', ti: '#59647A', toi: '#13233F', rt: '13px', rti: '10px', tth: 'rgba(19,35,63,.04)', ft: '#13233F', fti: '#E8EDF5', ftm: '#9AA6BB', ftl: 'rgba(255,255,255,.1)', chip: '#13233F', rc: '20px', rb: '14px', poster: '#DCE9F6', cbg: '#FFFFFF', cbgi: 'radial-gradient(120% 240px at 50% 0%, #E3EEF9 0%, rgba(255,255,255,0) 100%)' }) },
   c: { name: 'Saule', note: 'референс', dot: '#4052D6', v: mk({ bg: '#F6F7FB', sf: '#FFFFFF', sf2: '#F0F1F7', ln: '#E6E8F0', ln2: '#EEF0F5', lnh: '#CDD1E2', ink: '#14142B', mu: '#5B5F7A', ac: '#4052D6', ac2: '#9B4FD0', aci: '#3445C8', acs: '#E2E6FB', halo: 'rgba(64,82,214,.1)', acsh: 'rgba(64,82,214,.5)', pk: '#4052D6', hl: '#4052D6', hl2: '#4052D6', hbg: 'radial-gradient(120% 360px at 50% 0%, #E3E7FB 0%, rgba(246,247,251,0) 100%)', hink: '#14142B', hmu: '#5B5F7A', hhalo: 'rgba(64,82,214,.1)', hrad: '0px', hal: 'center', hta: 'center', h1s: '37px', glow: '#ECEEFC', hdr: '#FFFFFF', hdrl: '#E9EBF2', wab: '#E6E8F0', rw: '12px', tt: '#F0F1F7', ti: '#5B5F7A', toi: '#14142B', rt: '13px', rti: '10px', tth: 'rgba(20,20,43,.04)', ft: '#0E0E2C', fti: '#E7E8F3', ftm: '#8D90AB', ftl: 'rgba(255,255,255,.1)', chip: '#14142B', rc: '20px', rb: '14px', poster: '#E4E8FB', cbg: '#FFFFFF', cbgi: 'radial-gradient(120% 240px at 50% 0%, #E6E9FB 0%, rgba(255,255,255,0) 100%)' }) }
 };
@@ -978,26 +1120,35 @@ const REV_ADDED = ['rv-13', 'rv-14'];
 const revAddNew = v => { if (REV_ADDED.some(id => v.some(r => r && r.id === id))) return v; const out = v.slice(); REV_ADDED.forEach(id => { const k = REV_IDS.findIndex(x => x[0] === id); let at = 0; for (let j = k - 1; j >= 0; j--) { const p = out.findIndex(r => r && r.id === REV_IDS[j][0]); if (p >= 0) { at = p + 1; break; } } out.splice(at, 0, { id, builtin: true, hidden: false }); }); try { localStorage.setItem(REV_KEY, JSON.stringify(out)); } catch (e) {} return out; };
 const loadReviews = () => { try { const v = JSON.parse(localStorage.getItem(REV_KEY) || 'null'); return Array.isArray(v) ? revAddNew(revMigrate(v)) : REV0; } catch (e) { return REV0; } };
 const revSrc = r => r.builtin ? RES(r.id, 'assets/reviews/' + r.id + '.jpg') : (r.src || '');
+const CART_KEY = 'bb-cart';
+const loadCart = () => { try { const v = JSON.parse(localStorage.getItem(CART_KEY) || '[]'); return Array.isArray(v) ? v.filter(x => x && typeof x.k === 'string' && x.k.indexOf('p:') === 0 && x.q > 0) : []; } catch (e) { return []; } };
+const tw = n => (n % 10 === 1 && n % 100 !== 11) ? 'товар' : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) ? 'товара' : 'товаров';
 const QUIZ = [
-  { k: 'skin', title: 'Какой у вас тип кожи или её текущее состояние?', opts: [['dry', 'Сухая / обезвоженная', 'Есть чувство стянутости, шелушения'], ['oily', 'Комбинированная / жирная', 'Блеск в Т-зоне, расширенные поры'], ['normal', 'Нормальная', 'Особых проблем нет, нужен качественный базовый уход'], ['sens', 'Чувствительная / склонная к куперозу', 'Краснеет от косметики или перепадов температуры']] },
-  { k: 'goal', title: 'Какую главную задачу хотите решить прямо сейчас?', opts: [['age', 'Возрастные изменения / лифтинг', 'Морщинки, потеря упругости, «овал плывёт»'], ['pigment', 'Пигментация / тусклый цвет', 'Пятна, постакне, веснушки, хочется сияния'], ['acne', 'Высыпания / акне', 'Воспаления, комедоны, чёрные точки, расширенные поры'], ['barrier', 'Восстановление и глубокое увлажнение', 'Нарушен барьер, сухость, раздражения']] },
-  { k: 'exp', title: 'Пользуетесь ли вы сейчас профессиональной косметикой?', opts: [['pro', 'Да, постоянно', 'Пептиды, PDRN, экзосомы или спикулы'], ['mass', 'Нет, в основном масс-маркет или аптечные марки', ''], ['new', 'Только начинаю знакомство с корейским уходом', '']] },
-  { k: 'fmt', title: 'Какой формат подбора вам удобнее получить?', opts: [['set', 'Готовый набор средств', 'Подборка продуктов прямо на сайте'], ['wa', 'Персональная консультация в WhatsApp', 'Разбор текущего ухода и рекомендации']] }
+  { k: 'goal', title: 'Какую главную задачу вы хотите решить в первую очередь?', opts: [['acne', 'Избавиться от высыпаний, чёрных точек и закрытых комедонов'], ['pigment', 'Уменьшить пигментацию, постакне и выровнять тон'], ['age', 'Повысить упругость, разгладить морщины и подтянуть овал'], ['calm', 'Снять красноту, шелушения, зуд и чувствительность'], ['glow', 'Вернуть сияние «уставшей» и тусклой коже, глубоко увлажнить']] },
+  { k: 'skin', title: 'Как ведёт себя ваша кожа спустя 2–3 часа после умывания?', opts: [['oily', 'Появляется сильный жирный блеск по всему лицу'], ['combo', 'Блестит только Т-зона (лоб, нос, подбородок), а на щеках комфортно'], ['dry', 'Чувствуется стянутость, хочется скорее нанести крем'], ['sens', 'Кожа краснеет, реагирует на воду или смену температуры'], ['normal', 'Всё в порядке, нет явного дискомфорта']] },
+  { k: 'exp', title: 'Использовали ли вы ранее активную профессиональную косметику (кислоты, ретинол, пептиды)?', opts: [['pro', 'Да, регулярно пользуюсь активным уходом, кожа привыкла'], ['some', 'Пробовала отдельные средства, но нет чёткой системы'], ['new', 'Почти не пользовалась / Кожа очень чувствительная, легко раздражается']] },
+  { k: 'age', title: 'Укажите ваш возраст', opts: [['u25', 'До 25 лет'], ['25', '25–35 лет'], ['35', '35–45 лет'], ['45', '45+ лет']] }
 ];
 const qLabel = (k, v) => { const q = QUIZ.find(x => x.k === k); const o = q && q.opts.find(x => x[0] === v); return o ? o[1] : '—'; };
-const Q_SKIN = { dry: 'сухая или обезвоженная кожа', oily: 'комбинированная или жирная кожа', normal: 'нормальная кожа', sens: 'чувствительная кожа' };
-const Q_GOAL = { age: 'лифтинг и упругость', pigment: 'ровный тон и сияние', acne: 'убрать высыпания', barrier: 'восстановление и увлажнение' };
-const Q_REL = { acne: ['pigment'], pigment: ['acne', 'age'], age: ['pigment', 'barrier'], barrier: ['age'] };
+const Q_SKIN = { oily: 'Жирная кожа', combo: 'Комбинированная кожа', dry: 'Сухая кожа', sens: 'Чувствительная кожа', normal: 'Нормальная кожа' };
+const Q_AGE = { u25: 'до 25 лет', '25': '25–35 лет', '35': '35–45 лет', '45': '45+ лет' };
+const Q_REL = { acne: ['pigment'], pigment: ['acne', 'glow'], age: ['glow', 'pigment'], calm: ['glow'], glow: ['calm', 'age'] };
+const skinHit = (sk, a) => sk.indexOf(a) >= 0 || (a === 'combo' && sk.indexOf('oily') >= 0);
 const quizScore = (p, a) => {
   const sk = p.skins || [];
   let n = p.goal === a.goal ? 10 : (Q_REL[a.goal] || []).indexOf(p.goal) >= 0 ? 4 : 0;
-  n += sk.length ? (sk.indexOf(a.skin) >= 0 ? 3 : 0) : 2;
-  if (a.skin === 'sens' && sk.indexOf('sens') >= 0) n += a.goal === 'acne' || a.goal === 'pigment' ? (a.exp === 'pro' ? 5 : 8) : 2;
+  n += sk.length ? (skinHit(sk, a.skin) ? 3 : 0) : 2;
+  if (a.skin === 'sens' && p.goal === 'calm') n += 3;
   return n;
 };
 const quizRank = a => { const r = LIVE.map((p, i) => ({ p, i, n: quizScore(p, a) })).filter(x => x.p.goal && x.n >= 5).sort((x, y) => y.n - x.n || x.i - y.i).slice(0, 3).map(x => x.p); return r.length ? r : LIVE.slice(0, 3); };
-const qForText = a => { const t = [Q_SKIN[a.skin], Q_GOAL[a.goal]].filter(Boolean).join(' · '); return t ? t.charAt(0).toUpperCase() + t.slice(1) : ''; };
-const quizWa = (a, list, choose) => 'Здравствуйте, Нурайым! Прошла тест «Выбрать программу за 1 минуту» на сайте.\n— Тип кожи: ' + qLabel('skin', a.skin) + '\n— Задача: ' + qLabel('goal', a.goal) + '\n— Профессиональная косметика: ' + qLabel('exp', a.exp) + '\n' + (choose ? 'Сайт предложил программы: ' + list.map(p => '«' + p.title + '»').join(', ') + '. Помогите выбрать, пожалуйста.' : 'Сайт рекомендовал программу «' + list[0].title + '». Хочу получить личный разбор ухода.');
+const quizOffers = list => { const top = list[0]; return top.tiers.length > 1 ? top.tiers.map(t => ({ prog: top, tier: t })) : list.map(p => ({ prog: p, tier: tierPick(p, 'opt') })); };
+const recTier = a => { const k = a.exp === 'new' ? 'base' : (a.exp === 'pro' || a.age === '35' || a.age === '45') ? 'max' : 'opt'; return k === 'max' && a.skin === 'sens' ? 'opt' : k; };
+const qForText = a => [Q_SKIN[a.skin], Q_AGE[a.age]].filter(Boolean).join(' · ');
+const quizWa = (a, offers) => 'Здравствуйте, Нурайым! Прошла тест «Подобрать программу ухода за 1 минуту» на сайте.\n— Задача: ' + qLabel('goal', a.goal) + '\n— Кожа через 2–3 часа после умывания: ' + qLabel('skin', a.skin) + '\n— Активная косметика: ' + qLabel('exp', a.exp) + '\n— Возраст: ' + qLabel('age', a.age) + '\nСайт предложил: ' + offers.map(o => '«' + o.prog.title + '»' + (o.prog.tiers.length > 1 ? ' — ' + o.tier.label.toLowerCase() : '') + ', ' + fmt(o.tier.price)).join('; ') + '. Помогите выбрать, пожалуйста.';
+const HOME_KEY = 'bb-home';
+const HOME0 = { best: ['cica', 'pdrn', 'foam', 'aquatoner', 'spf', 'gel'], seoul: ['ronas', 'wserum', 'barrier', 'bha', 'wtoner', 'cream'], fresh: ['ronas', 'barrier', 'oil', 'wtoner'] };
+const loadHome = () => { try { const v = JSON.parse(localStorage.getItem(HOME_KEY) || 'null'); if (v && Array.isArray(v.best) && Array.isArray(v.seoul)) return v; } catch (e) {} return null; };
 const ROUTES = ['home', 'programs', 'set', 'catalog', 'product', 'wholesale'];
 const KEY = 'bb-proto-v3';
 const FORM0 = { name: '', phone: '+996 ', address: '', comment: '' };
@@ -1010,7 +1161,8 @@ const stepW = n => (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20
 const T = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
 const BT = i => i ? '1px solid var(--ln2,#EFEDE9)' : '0';
 const findSet = id => LIVE.find(x => x.id === id) || LIVE[0];
-const progItem = pr => ({ label: 'Программа «' + pr.title + '»', meta: pr.items.length + ' ' + word(pr.items.length) + ' · ' + pr.course.replace('Утро и вечер, курс', 'курс'), price: pr.price, slot: 'bb-set-' + pr.id, img: ph('entry-programs'), back: 'Вернуться к программе' });
+const progItem = (pr, t) => { t = t || tierPick(pr, 'opt'); const n = t.items.length; return { label: 'Программа «' + pr.title + '»' + (pr.tiers.length > 1 ? ' · ' + t.label : ''), meta: n + ' ' + word(n) + ' · ' + pr.course.replace('Утро и вечер, курс', 'курс'), price: t.price, slot: 'bb-set-' + pr.id, img: ph('entry-programs'), back: 'Вернуться к программе' }; };
+const progSum = x => { const ts = x.tiers, ns = ts.map(t => t.items.length), lo = Math.min.apply(null, ns), hi = Math.max.apply(null, ns), mn = Math.min.apply(null, ts.map(t => t.price)); return { count: (lo === hi ? '' : lo + '–') + hi + ' ' + word(hi), price: (ts.length > 1 ? 'от ' : '') + fmt(mn) }; };
 const prodItem = p => ({ label: p.name, meta: p.brand + ' · ' + p.vol, price: p.price, slot: p.slot, img: p.img, back: 'Продолжить покупки' });
 const WS_KINDS = [['cosmo', 'Косметолог', 'Я косметолог'], ['clinic', 'Клиника', 'Представляю клинику'], ['salon', 'Салон', 'Представляю салон'], ['shop', 'Магазин косметики', 'Представляю магазин косметики']];
 const WS_ETA = 'Под заказ: авиа — 7 дней, контейнер — 15 дней';
@@ -1026,12 +1178,12 @@ class Component extends DCLogic {
     this.state = {
       ready: false,
       route: ROUTES.includes(s.route) ? s.route : 'home',
-      setId: findSet(s.setId).id,
+      setId: findSet(s.setId).id, tier: ['base', 'opt', 'max'].indexOf(s.tier) >= 0 ? s.tier : 'opt',
       pid: P[s.pid] ? s.pid : 'cica',
       theme: TH[s.theme] ? s.theme : 'a',
       site: loadSite(), localTheme: false, cur: CURS[s.cur] ? s.cur : 'KGS', curOpen: false,
-      reviews: loadReviews(), revIdx: 0, revOpen: false, revLb: 0, progs: g0, protoHint: '', protoErr: '',
-      cat: 'Все', pqty: 1, gi: 0, callHint: false, catHint: '', wsKind: '', wsCountry: '',
+      home: loadHome(), reviews: loadReviews(), revIdx: 0, revOpen: false, revLb: 0, progs: g0, protoHint: '', protoErr: '',
+      cat: 'Все', prob: '', cart: loadCart(), pqty: 1, gi: 0, callHint: false, catHint: '', wsKind: '', wsCountry: '',
       sheet: false, step: 'form', item: null, qty: 1, sending: false,
       form: { ...FORM0 }, errors: {}, lastMsg: '', lastTime: '',
       video: null, vt: 0, playing: false, qOpen: false, qStep: 0, qA: {}, qFrom: false, scrolled: false,
@@ -1051,7 +1203,7 @@ class Component extends DCLogic {
     this.onKey = e => { if (e.key === 'Escape') { if (this.state.qOpen && !this.state.video) this.closeQuiz(); else if (this.state.revOpen) this.setState({ revOpen: false }); else if (this.state.video) this.closeVideo(); else if (this.state.sheet) this.setState({ sheet: false }); } };
     window.addEventListener('resize', this.onResize);
     window.addEventListener('keydown', this.onKey);
-    this.onStorage = () => { const v = loadSite(), r = loadReviews(), p = {}; if (JSON.stringify(v) !== JSON.stringify(this.state.site)) p.site = v; if (JSON.stringify(r) !== JSON.stringify(this.state.reviews)) p.reviews = r; const g = loadProgs(); if (JSON.stringify(g) !== JSON.stringify(this.state.progs)) p.progs = g; if (Object.keys(p).length) this.setState(p); };
+    this.onStorage = () => { const v = loadSite(), r = loadReviews(), p = {}; if (JSON.stringify(v) !== JSON.stringify(this.state.site)) p.site = v; if (JSON.stringify(r) !== JSON.stringify(this.state.reviews)) p.reviews = r; const g = loadProgs(); if (JSON.stringify(g) !== JSON.stringify(this.state.progs)) p.progs = g; const h = loadHome(); if (JSON.stringify(h) !== JSON.stringify(this.state.home)) p.home = h; if (Object.keys(p).length) this.setState(p); };
     window.addEventListener('storage', this.onStorage);
     window.addEventListener('focus', this.onStorage);
     this.setState({ ready: true });
@@ -1076,7 +1228,8 @@ class Component extends DCLogic {
     this.syncSlots();
     this.ensureProto();
     const s = this.state;
-    const snap = JSON.stringify({ route: s.route, setId: s.setId, pid: s.pid, theme: s.theme, cur: s.cur });
+    const cs = JSON.stringify(s.cart || []); if (cs !== this._cartSaved) { this._cartSaved = cs; try { localStorage.setItem(CART_KEY, cs); } catch (e) {} }
+    const snap = JSON.stringify({ route: s.route, setId: s.setId, tier: s.tier, pid: s.pid, theme: s.theme, cur: s.cur });
     if (snap !== this._saved) {
       this._saved = snap;
       try { localStorage.setItem(KEY, snap); } catch (e) {}
@@ -1087,7 +1240,7 @@ class Component extends DCLogic {
     o = o || {};
     this.closeVideo();
     const vid = o.video ? { video: o.video, vt: 0, playing: true } : {};
-    this.setState(s => ({ route, qOpen: false, qFrom: o.fromQuiz ? true : (route === 'set' || route === 'product') ? s.qFrom : false, setId: o.setId || s.setId, pid: o.pid || s.pid, cat: o.cat || s.cat, sheet: false, callHint: false, catHint: '', curOpen: false, revIdx: 0, revOpen: false, protoHint: '', protoErr: '', prodFrom: route === 'product' ? (s.route === 'product' ? s.prodFrom : { route: s.route, setId: s.setId, y: this.scrollRef.current ? this.scrollRef.current.scrollTop : 0 }) : s.prodFrom, pqty: o.pid ? 1 : s.pqty, gi: o.pid ? 0 : s.gi, ...vid }), () => {
+    this.setState(s => ({ route, qOpen: false, qFrom: o.fromQuiz ? true : (route === 'set' || route === 'product') ? s.qFrom : false, setId: o.setId || s.setId, tier: o.tier || (o.setId ? 'opt' : s.tier), pid: o.pid || s.pid, cat: o.cat || s.cat, prob: 'prob' in o ? o.prob : s.prob, sheet: false, callHint: false, catHint: '', curOpen: false, revIdx: 0, revOpen: false, protoHint: '', protoErr: '', prodFrom: route === 'product' ? (s.route === 'product' ? s.prodFrom : { route: s.route, setId: s.setId, y: this.scrollRef.current ? this.scrollRef.current.scrollTop : 0 }) : s.prodFrom, pqty: o.pid ? 1 : s.pqty, gi: o.pid ? 0 : s.gi, ...vid }), () => {
       this.scrollTo(0);
       const g = this.galRef.current; if (g) g.scrollLeft = 0;
       if (o.video) this.startTimer();
@@ -1110,6 +1263,82 @@ class Component extends DCLogic {
   ext(url) { try { window.open(url, '_blank', 'noopener'); } catch (e) {} }
   wa(text) { this.ext('https://wa.me/' + this.waNum() + (text ? '?text=' + encodeURIComponent(text) : '')); }
   openSheet(item, qty) { this.closeVideo(); clearTimeout(this.sendT); this.setState({ sheet: true, step: 'form', item, qty: qty || 1, errors: {}, sending: false }); }
+  lineOf(k) {
+    const [t, id, tk] = k.split(':');
+    if (t === 'p') { const p = P[id]; return p ? { k, label: p.name, meta: p.brand + ' · ' + p.vol, price: p.price, slot: p.slot, img: p.img } : null; }
+    const pr = LIVE.find(x => x.id === id); if (!pr) return null;
+    const it = progItem(pr, tierPick(pr, tk));
+    return { k, label: it.label, meta: it.meta, price: it.price, slot: 'bb-cover-' + pr.id, img: coverOf(pr.id) };
+  }
+  cartLines() { return (this.state.cart || []).map(x => { const l = this.lineOf(x.k); return l ? { ...l, q: x.q } : null; }).filter(Boolean); }
+  cartAdd(k, q, open) {
+    this.closeVideo(); clearTimeout(this.sendT);
+    this.setState(s => {
+      let c = (s.cart || []).slice();
+      if (k.indexOf('s:') === 0) { const pre = k.split(':').slice(0, 2).join(':') + ':'; c = c.filter(x => x.k === k || x.k.indexOf(pre) !== 0); }
+      const i = c.findIndex(x => x.k === k);
+      if (i >= 0) { if (q) c[i] = { k, q: Math.min(20, c[i].q + q) }; } else c.push({ k, q: q || 1 });
+      return { cart: c, ...(open ? { sheet: true, step: 'form', errors: {}, sending: false } : {}) };
+    });
+  }
+  cartSet(k, q) { this.setState(s => ({ cart: q > 0 ? (s.cart || []).map(x => x.k === k ? { k, q: Math.min(20, q) } : x) : (s.cart || []).filter(x => x.k !== k) })); }
+  cartCtl(k) { const c = (this.state.cart || []).find(x => x.k === k), q = c ? c.q : 0; return { inCart: q > 0, out: q === 0, qty: q, onOrder: () => this.cartAdd(k, 1, false), onInc: () => this.cartSet(k, q + 1), onDec: () => this.cartSet(k, q - 1) }; }
+  sheetLines() { const d = this.state.direct; if (d) { const l = this.lineOf(d.k); return l ? [{ ...l, q: d.q, direct: true }] : []; } return this.cartLines(); }
+  openCart() { this.closeVideo(); clearTimeout(this.sendT); this.setState({ direct: null, sheet: true, step: 'form', errors: {}, sending: false, curOpen: false }); }
+  orderDirect(k) { this.closeVideo(); clearTimeout(this.sendT); this.setState({ direct: { k, q: 1 }, sheet: true, step: 'form', errors: {}, sending: false, curOpen: false }); }
+  async genScheme(pr, t) {
+    try {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      const W = 1240, H = 1754, c = document.createElement('canvas'); c.width = W; c.height = H;
+      const x = c.getContext('2d'), cs = getComputedStyle(this.scrollRef.current || document.body);
+      const ac = (cs.getPropertyValue('--ac') || '').trim() || '#D12F63', ink = '#14142B', mu = '#5B5F7A', L = 100, R = W - 100;
+      const F = (w, sz) => w + ' ' + sz + 'px Onest, system-ui, sans-serif';
+      const wrap = (txt, maxW) => { const out = []; let line = ''; String(txt).split(' ').forEach(w => { const tst = line ? line + ' ' + w : w; if (x.measureText(tst).width > maxW && line) { out.push(line); line = w; } else line = tst; }); if (line) out.push(line); return out; };
+      x.fillStyle = '#FFFFFF'; x.fillRect(0, 0, W, H);
+      let y = 120;
+      x.fillStyle = ac; x.font = F(700, 34); x.fillText('BOM BEAUTY', L, y);
+      x.fillStyle = mu; x.font = F(400, 26); x.textAlign = 'right'; x.fillText('Схема ухода от Нурайым', R, y); x.textAlign = 'left';
+      y += 100; x.fillStyle = ink; x.font = F(700, 60); wrap(pr.title, R - L).forEach(l => { x.fillText(l, L, y); y += 72; });
+      x.fillStyle = mu; x.font = F(400, 30); x.fillText((pr.tiers.length > 1 ? t.label + ' · ' : '') + t.items.length + ' ' + word(t.items.length) + ' · ' + pr.course, L, y);
+      y += 44; x.fillStyle = ac; x.fillRect(L, y, R - L, 4); y += 84;
+      const has = r => t.items.indexOf(r[0]) >= 0 && P[r[0]], am = (pr.am || []).filter(has), pm = (pr.pm || []).filter(has);
+      const block = (title, rows) => {
+        if (!rows.length) return;
+        x.fillStyle = ink; x.font = F(700, 42); x.fillText(title, L, y); y += 62;
+        rows.forEach(([k, d], i) => {
+          x.fillStyle = ac; x.beginPath(); x.arc(L + 22, y - 10, 22, 0, Math.PI * 2); x.fill();
+          x.fillStyle = '#FFFFFF'; x.font = F(700, 24); x.textAlign = 'center'; x.fillText(String(i + 1), L + 22, y - 2); x.textAlign = 'left';
+          x.fillStyle = ink; x.font = F(600, 30); x.fillText(P[k].name, L + 66, y);
+          y += 40; x.fillStyle = mu; x.font = F(400, 26); wrap(d, R - L - 66).forEach(l => { x.fillText(l, L + 66, y); y += 34; });
+          y += 18;
+        });
+        y += 36;
+      };
+      block('Утро', am); block('Вечер', pm);
+      if (!am.length && !pm.length) { x.fillStyle = ink; x.font = F(700, 42); x.fillText('Средства программы', L, y); y += 60; t.items.forEach(k => { if (!P[k]) return; x.font = F(400, 30); x.fillText('•  ' + P[k].name + ' — ' + P[k].brand + ', ' + P[k].vol, L, y); y += 46; }); }
+      x.fillStyle = '#EEF0F5'; x.fillRect(L, H - 150, R - L, 2);
+      x.fillStyle = mu; x.font = F(400, 24); x.fillText('Вопросы по уходу — WhatsApp +' + this.waNum(), L, H - 96); x.textAlign = 'right'; x.fillText('bom-beauty.com', R, H - 96); x.textAlign = 'left';
+      const bin = atob(c.toDataURL('image/jpeg', 0.9).split(',')[1]), img = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) img[i] = bin.charCodeAt(i);
+      const enc = v => new TextEncoder().encode(v), parts = [], offs = [], cmd = 'q 595.28 0 0 841.89 0 0 cm /Im0 Do Q';
+      let len = 0; const push = b => { parts.push(b); len += b.length; };
+      const obj = (n, body) => { offs[n] = len; push(enc(n + ' 0 obj\n')); body.forEach(push); push(enc('\nendobj\n')); };
+      push(enc('%PDF-1.4\n'));
+      obj(1, [enc('<< /Type /Catalog /Pages 2 0 R >>')]);
+      obj(2, [enc('<< /Type /Pages /Kids [3 0 R] /Count 1 >>')]);
+      obj(3, [enc('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>')]);
+      obj(4, [enc('<< /Type /XObject /Subtype /Image /Width ' + W + ' /Height ' + H + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + img.length + ' >>\nstream\n'), img, enc('\nendstream')]);
+      obj(5, [enc('<< /Length ' + cmd.length + ' >>\nstream\n' + cmd + '\nendstream')]);
+      const xref = len; let xr = 'xref\n0 6\n0000000000 65535 f \n';
+      for (let n = 1; n <= 5; n++) xr += String(offs[n]).padStart(10, '0') + ' 00000 n \n';
+      push(enc(xr + 'trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF'));
+      const url = URL.createObjectURL(new Blob(parts, { type: 'application/pdf' })), a = document.createElement('a');
+      a.href = url; a.download = 'Схема ухода — ' + pr.title + (pr.tiers.length > 1 ? ' (' + t.label + ')' : '') + '.pdf';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      this.setState({ protoErr: '' });
+    } catch (e) { this.setState({ protoErr: pr.id }); }
+  }
   openWsLead() { this.closeVideo(); clearTimeout(this.sendT); this.setState({ sheet: true, step: 'ws', sending: false }); }
   catalog(where) { const u = String(this.props.wholesaleCatalogUrl || '').trim(); if (u) this.ext(u); else this.setState({ catHint: where }); }
   sendWs() {
@@ -1131,16 +1360,17 @@ class Component extends DCLogic {
     if (f.phone.replace(/\D/g, '').length < 9) e.phone = 'Нужен номер, чтобы Нурайым могла связаться';
     if (f.address.trim().length < 4) e.address = 'Укажите город, улицу и дом';
     if (Object.keys(e).length) { this.setState({ errors: e }); return; }
-    const it = this.state.item, q = this.state.qty;
-    const lines = ['Здравствуйте! Хочу заказать:', '• ' + it.label + (q > 1 ? ' × ' + q : '') + ' — ' + fmt(it.price * q), '', 'Имя: ' + f.name.trim(), 'Телефон: ' + f.phone.trim(), 'Адрес: ' + f.address.trim()];
+    const ls = this.sheetLines(), isDirect = !!this.state.direct; if (!ls.length) return;
+    const total = ls.reduce((a, l) => a + l.price * l.q, 0);
+    const lines = ['Здравствуйте! Хочу заказать:'].concat(ls.map(l => '• ' + l.label + (l.q > 1 ? ' × ' + l.q : '') + ' — ' + fmt(l.price * l.q)), ls.length > 1 ? ['Итого: ' + fmt(total)] : [], ['', 'Имя: ' + f.name.trim(), 'Телефон: ' + f.phone.trim(), 'Адрес: ' + f.address.trim()]);
     if (f.comment.trim()) lines.push('Комментарий: ' + f.comment.trim());
-    if (CUR.code !== 'KGS') lines.push('Сумма в сомах: ' + fmtKgs(it.price * q));
+    if (CUR.code !== 'KGS') lines.push('Сумма в сомах: ' + fmtKgs(total));
     lines.push('', 'Пришлите, пожалуйста, реквизиты для оплаты.');
     const msg = lines.join('\n');
     if (this.props.openWhatsApp !== false) this.wa(msg);
     const d = new Date();
     this.setState({ sending: true, lastMsg: msg, lastTime: String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') });
-    this.sendT = setTimeout(() => this.setState({ sending: false, step: 'done' }), 700);
+    this.sendT = setTimeout(() => this.setState(isDirect ? { sending: false, step: 'done', direct: null } : { sending: false, step: 'done', cart: [] }), 700);
   }
   openVideo(v) {
     this.setState({ video: v, vt: 0, playing: true });
@@ -1155,9 +1385,23 @@ class Component extends DCLogic {
   qReturn() { clearTimeout(this.qT); this.closeVideo(); this.setState({ qOpen: true, qStep: QUIZ.length }, () => this.qTop()); }
   reset() {
     clearInterval(this.timer); clearTimeout(this.sendT);
-    this.setState({ route: 'home', qOpen: false, qStep: 0, qA: {}, qFrom: false, qHas: false, qPillOff: false, setId: 'acne', pid: 'cica', theme: 'a', localTheme: false, cur: 'KGS', curOpen: false, cat: 'Все', pqty: 1, gi: 0, callHint: false, catHint: '', wsKind: '', wsCountry: '', sheet: false, step: 'form', item: null, qty: 1, sending: false, form: { ...FORM0 }, errors: {}, video: null, playing: false }, () => this.scrollTo(0));
+    this.setState({ route: 'home', qOpen: false, qStep: 0, qA: {}, qFrom: false, qHas: false, qPillOff: false, setId: 'acne', tier: 'opt', pid: 'cica', theme: 'a', localTheme: false, cur: 'KGS', curOpen: false, cat: 'Все', prob: '', cart: [], pqty: 1, gi: 0, callHint: false, catHint: '', wsKind: '', wsCountry: '', sheet: false, step: 'form', item: null, qty: 1, sending: false, form: { ...FORM0 }, errors: {}, video: null, playing: false }, () => this.scrollTo(0));
   }
 
+  relOf(pid, pe) {
+    const ids = [], add = k => { if (ids.length < 6 && k !== pid && P[k] && ids.indexOf(k) < 0) ids.push(k); }, hm = this.state.home || HOME0;
+    LIVE.filter(x => x.items.includes(pid)).forEach(x => x.items.forEach(add));
+    (hm.best || []).concat(hm.seoul || []).forEach(add);
+    const r = ids.map(k => ({ slot: P[k].slot, img: P[k].img, pe, brand: P[k].brand, name: P[k].name, badge: this.bdg(k), hasBadge: !!this.bdg(k), priceLabel: fmt(P[k].price), onOpen: () => this.go('product', { pid: k }), ...this.cartCtl('p:' + k) }));
+    return { relRail: r, hasRel: r.length > 0 };
+  }
+  bdg(k) { const hm = this.state.home || HOME0; return (hm.fresh || HOME0.fresh).indexOf(k) >= 0 ? 'Новинка' : ((P[k] && P[k].badge) || ''); }
+  rails(pe) {
+    const hm = this.state.home || HOME0;
+    const rail = ids => ids.filter((k, i) => P[k] && ids.indexOf(k) === i).map(k => ({ slot: P[k].slot, img: P[k].img, pe, brand: P[k].brand, name: P[k].name, badge: this.bdg(k), hasBadge: !!this.bdg(k), priceLabel: fmt(P[k].price), onOpen: () => this.go('product', { pid: k }), ...this.cartCtl('p:' + k) }));
+    const b = rail(hm.best || []), z = rail(hm.seoul || []), fr = rail(hm.fresh || HOME0.fresh);
+    return { bestRail: b, hasBest: b.length > 0, freshRail: fr, hasFresh: fr.length > 0, seoulRail: z, hasSeoul: z.length > 0 };
+  }
   revGo(i) { const n = (this.state.reviews || []).filter(r => !r.hidden).length; const j = Math.max(0, Math.min(n - 1, i)); const el = this.revRef.current; if (el) el.scrollTo({ left: j * 244, behavior: 'smooth' }); this.setState({ revIdx: j }); }
   renderVals() {
     const s = this.state, pr = this.props;
@@ -1171,18 +1415,20 @@ class Component extends DCLogic {
     const cl = curList(s.site), ck = cl.includes(s.cur) ? s.cur : 'KGS';
     CUR = { ...CURS[ck], rate: curRate(s.site, ck) };
     const revs = (s.reviews || []).filter(r => !r.hidden), ri = Math.max(0, Math.min(s.revIdx, revs.length - 1)), rl = Math.max(0, Math.min(s.revLb, revs.length - 1));
-    const set = findSet(s.setId);
+    const set = findSet(s.setId), tier = tierPick(set, s.tier), tItems = tier.items, sAm = set.am.filter(r => tItems.indexOf(r[0]) >= 0), sPm = set.pm.filter(r => tItems.indexOf(r[0]) >= 0), recKey = s.qFrom && s.qHas ? recTier(s.qA) : 'opt';
     this._proto = s.route === 'set' ? set.protocol : null;
-    const qs = s.qStep, qDone = qs >= QUIZ.length, qq = QUIZ[Math.min(qs, QUIZ.length - 1)], qList = quizRank(s.qA), qPr = qList[0];
-    const qCard = (x, pe_) => ({ title: x.title, badge: x.badge || '', hasBadge: !!x.badge, price: fmt(x.price), count: x.items.length + ' ' + word(x.items.length), vslot: 'bb-video-' + x.id, vimg: RES('nurai-hero', 'assets/nurai-hero.png'), vdur: T(x.dur), pe: pe_, thumbs: x.items.map(k => ({ slot: P[k].slot, img: P[k].img, pe: pe_ })), onVideo: e => { e.stopPropagation(); this.openVideo(setVideo(x)); }, onClick: () => this.go('set', { setId: x.id, fromQuiz: true }) });
-    const n = set.items.length;
-    const sum = set.items.reduce((a, k) => a + P[k].price, 0);
+    const qs = s.qStep, qDone = qs >= QUIZ.length, qq = QUIZ[Math.min(qs, QUIZ.length - 1)], qList = quizRank(s.qA), qPr = qList[0], qOff = quizOffers(qList), qRec = recTier(s.qA);
+    const n = tItems.length;
+    const sum = tItems.reduce((a, k) => a + P[k].price, 0);
     const p = P[s.pid] || P.cica;
+    const cLines = this.cartLines(), cTotal = cLines.reduce((a, l) => a + l.price * l.q, 0), cCount = cLines.reduce((a, l) => a + l.q, 0), sLines = this.sheetLines(), sTotal = sLines.reduce((a, l) => a + l.price * l.q, 0);
+    const probP = s.prob ? LIVE.find(x => x.id === s.prob) || null : null, probSet = probP ? probP.tiers.reduce((a, t) => a.concat(t.items), []) : null;
+    const catItems = Object.keys(P).filter(k => (s.cat === 'Все' || P[k].cat === s.cat) && (!probSet || probSet.indexOf(k) >= 0));
     const heroVideo = pr.heroVideo !== false;
     const pe = pr.photoEdit ? 'auto' : 'none';
     const item = s.item || { label: '', meta: '', price: 0, slot: 'bb-none', img: '', back: '' };
     const v = s.video, ended = !!v && s.vt >= v.dur;
-    const vset = v && v.kind === 'set' ? findSet(v.setId) : null;
+    const vset = v && v.kind === 'set' ? findSet(v.setId) : null, vtier = vset ? tierPick(vset, vset.id === s.setId ? s.tier : 'opt') : null;
     const tab = { catalog: 'catalog', product: 'catalog', programs: 'programs', set: 'programs', wholesale: 'wholesale' }[s.route] || '';
     const hasBar = s.route === 'set' || s.route === 'product';
     const num = this.waNum();
@@ -1198,15 +1444,22 @@ class Component extends DCLogic {
     const openInsta = () => this.ext('https://instagram.com/nurai.krsel');
     return {
       ready: s.ready,
-      entryPrograms: ph('entry-programs'), entryCatalog: ph('entry-catalog'), entryWholesale: ph('entry-wholesale'), heroImg: RES('nurai-hero', 'assets/nurai-hero.png'),
+      heroImg: RES('nurai-hero', 'assets/nurai-hero.png'),
       themeVars: { display: 'contents', ...th.v, ...(useSite ? siteVars(s.site, th.v) : (this.props.blueHeader !== false ? hdrOnly(th.v) : {})), ...(HFONT[this.props.headingFont] || HFONT['Cormorant Garamond']) },
       curMulti: cl.length > 1, curSym: CURS[ck].sym, curCode: ck, curOpen: s.curOpen, curNotKgs: ck !== 'KGS', curRef: this.curRef,
       curWrapBg: s.curOpen ? 'var(--tt,rgba(255,255,255,.42))' : 'transparent', curChev: s.curOpen ? 'rotate(180deg)' : 'none',
       toggleCur: () => { const el = this.curRef.current; this.setState(st => ({ curOpen: !st.curOpen, curX: el ? el.offsetLeft : st.curX })); }, closeCur: () => this.setState({ curOpen: false }),
       curTop: ((phone ? 0 : 47) + 56) + 'px', curLeft: (s.curX != null ? s.curX : 180) + 'px',
       curOpts: cl.map(k => ({ code: k, sym: CURS[k].sym, onClick: () => this.setState({ cur: k, curOpen: false }) })),
-      sheetKgs: fmtKgs((item.price || 0) * (s.qty || 1)),
-      hasRevs: revs.length > 0, revRef: this.revRef,
+      sheetKgs: fmtKgs(sTotal),
+      hdrCart: cCount > 0 && s.route === 'home', heroPadTop: cCount > 0 && s.route === 'home' ? '72px' : '26px', cartHas: sLines.length > 0, cartEmpty: sLines.length === 0, keepOn: !s.direct, cartCount: cCount, cartCountLabel: 'Корзина · ' + cCount + ' ' + tw(cCount), cartTotal: fmt(cTotal),
+      cartLines: sLines.map((l, i) => ({ label: l.label, meta: l.meta, slot: l.slot, img: l.img, qty: l.q, price: fmt(l.price * l.q), bt: BT(i), one: l.q === 1 && !l.direct, many: l.q > 1 || !!l.direct, onDec: () => l.direct ? this.setState(st => st.direct && st.direct.q > 1 ? { direct: { ...st.direct, q: st.direct.q - 1 } } : null) : this.cartSet(l.k, l.q - 1), onInc: () => l.direct ? this.setState(st => st.direct ? { direct: { ...st.direct, q: Math.min(20, st.direct.q + 1) } } : null) : this.cartSet(l.k, l.q + 1) })),
+      openCart: () => this.openCart(), clearCart: () => this.setState({ cart: [] }),
+      keepShopping: () => { if (this.state.route === 'catalog') this.setState({ sheet: false }); else this.go('catalog'); },
+      emptyGoProgs: () => this.go('programs'), emptyGoCat: () => this.go('catalog', { cat: 'Все', prob: '' }),
+      homeProgs: LIVE.map(x => ({ title: x.title, note: x.symptom, price: progSum(x).price, badge: x.badge || '', hasBadge: !!x.badge, vdur: T(x.dur), slot: 'bb-cover-' + x.id, img: coverOf(x.id), pe, onClick: () => this.go('set', { setId: x.id }) })),
+      catalogImg: ph('entry-catalog'), catLinks: CATS.map(c => ({ label: c, onClick: () => this.go('catalog', { cat: c, prob: '' }) })), openCatalogAll: () => this.go('catalog', { cat: 'Все', prob: '' }),
+      ...this.rails(pe), hasRevs: revs.length > 0, revRef: this.revRef,
       onRevScroll: e => { const i = Math.round(e.currentTarget.scrollLeft / 244); if (i !== this.state.revIdx) this.setState({ revIdx: i }); },
       revs: revs.map((r, i) => { const off = i - ri; return { src: revSrc(r), ...revLook(r), tf: off === 0 ? 'none' : 'scale(.88) rotate(' + (off < 0 ? -3 : 3) + 'deg)', op: off === 0 ? 1 : 0.55, shadow: off === 0 ? '0 26px 44px -20px rgba(19,35,63,.5)' : '0 10px 24px -18px rgba(19,35,63,.35)', onOpen: () => { if (i !== this.state.revIdx) this.revGo(i); else this.setState({ revOpen: true, revLb: i }); } }; }),
       revDots: revs.length <= 8 ? revs.map((r, i) => ({ w: i === ri ? '18px' : '6px', bg: i === ri ? 'var(--ink,#13233F)' : 'var(--lnh,#C9D3E0)', onClick: () => this.revGo(i) })) : [],
@@ -1227,7 +1480,7 @@ class Component extends DCLogic {
       screenStyle: phone ? { position: 'relative', width: '100%', height: '100%', overflow: 'hidden', background: 'var(--hdr,#AACDEB)' } : { position: 'relative', width: '390px', height: '844px', borderRadius: '48px', overflow: 'hidden', background: 'var(--hdr,#AACDEB)', transform: 'translateZ(0)' },
       scrollRef: this.scrollRef, galRef: this.galRef, contactRef: this.contactRef,
       barPadBottom: phone ? '18px' : '26px',
-      barSpace: phone ? '88px' : '96px',
+      barSpace: (() => { const n = s.route === 'product' ? cLines.filter(l => l.k !== 'p:' + s.pid).length : 0; return ((phone ? 88 : 96) + (n ? 30 + Math.min(n, 3) * 52 : 0)) + 'px'; })(),
       sheetPadBottom: phone ? '24px' : '34px',
       vTop: phone ? '16px' : '56px',
       vBottom: phone ? '20px' : '30px',
@@ -1254,52 +1507,53 @@ class Component extends DCLogic {
       qSegs: QUIZ.map((_, i) => ({ bg: i <= qs ? 'var(--ac,#2F6BB0)' : 'var(--sf2,#F1F0EC)' })),
       qCanBack: qs > 0, qNoBack: qs === 0, qIsQ: !qDone, qFirst: qs === 0, qTitle: qq.title,
       qOpts: qq.opts.map(([val, l, sub]) => { const on = s.qA[qq.k] === val; return { label: l, sub, hasSub: !!sub, aria: on ? 'true' : 'false', bd: on ? 'var(--ac,#2F6BB0)' : 'var(--ln,#E6E3DE)', bg: on ? 'var(--acs,#E3EEF9)' : 'var(--sf,#FFFFFF)', rb: on ? 'var(--ac,#2F6BB0)' : 'var(--lnh,#CFCAC2)', dot: on ? 'var(--ac,#2F6BB0)' : 'transparent', onClick: () => this.qAnswer(qq.k, val) }; }),
-      qResSet: qDone && s.qA.fmt !== 'wa', qResWa: qDone && s.qA.fmt === 'wa',
-      q1: qCard(qPr, pe), qAlt: qList.slice(1).map(x => qCard(x, pe)), qHasAlt: qList.length > 1, qFor: qForText(s.qA),
-      qSummary: [['Тип кожи', 'skin'], ['Задача', 'goal'], ['Профессиональная косметика', 'exp']].map(([k, key], i) => ({ k, v: qLabel(key, s.qA[key]), bt: BT(i) })).concat([{ k: 'Рекомендуемая программа', v: '«' + qPr.title + '»', bt: BT(1) }]),
+      qResSet: qDone,
+      qProg: { title: qPr.title, vslot: 'bb-video-' + qPr.id, vimg: posterOf(qPr.id), vdur: T(qPr.dur), pe, onVideo: () => this.openVideo(setVideo(qPr)) }, qFor: qForText(s.qA),
+      qOffersHead: qOff.length > 1 && qOff[0].prog === qOff[1].prog ? 'Выберите вариант по бюджету' : 'Подходящие программы',
+      qOffers: qOff.map((o, qi) => { const multi = o.prog.tiers.length > 1, rec = multi ? o.tier.key === qRec : o.prog === qPr, k = o.tier.items.length; return { altHead: qi === 1, label: multi ? o.tier.label : o.prog.title, note: multi ? o.tier.note : o.prog.symptom, price: fmt(o.tier.price), count: k + ' ' + word(k), rec, bd: rec ? '1.5px solid var(--ac,#2F6BB0)' : '1px solid var(--ln,#E6E3DE)', sh: rec ? '0 0 0 4px var(--halo,rgba(47,107,176,.1))' : 'none', thumbs: o.tier.items.slice(0, 5).map(i => ({ slot: P[i].slot, img: P[i].img, pe })), onClick: () => this.go('set', { setId: o.prog.id, tier: o.tier.key, fromQuiz: true }) }; }),
       openQuiz: () => this.openQuiz(), closeQuiz: () => this.closeQuiz(), qBack: () => this.qBack(), qRestart: () => this.openQuiz(),
-      qSeeList: () => this.setState(st => ({ qA: { ...st.qA, fmt: 'set' } }), () => this.qTop()),
       qReturn: () => this.qReturn(), setFromQuiz: false, setNotQuiz: true,
-      ...(() => { const retail = ['home', 'programs', 'catalog'].indexOf(s.route) >= 0 && !s.qHas, ws = s.route === 'wholesale', free = !s.qOpen && !s.sheet && !s.video && !s.revOpen, show = (s.scrolled || s.route === 'catalog') && free; return { stickyRetail: retail, stickyWs: ws, stickySpace: retail || ws, stickyY: show ? '0%' : '110%', stickyPE: show ? 'auto' : 'none' }; })(),
+      ...(() => { const cb = s.route === 'catalog' && cLines.length > 0, retail = !cb && ['home', 'programs', 'catalog'].indexOf(s.route) >= 0 && !s.qHas, ws = s.route === 'wholesale', free = !s.qOpen && !s.sheet && !s.video && !s.revOpen, show = (s.scrolled || s.route === 'catalog') && free; return { cartBar: cb && free, stickyRetail: retail, stickyWs: ws, stickySpace: retail || ws || cb, stickyY: show ? '0%' : '110%', stickyPE: show ? 'auto' : 'none' }; })(),
       onMainScroll: e => { const on = e.currentTarget.scrollTop > 480; if (on !== this.state.scrolled) this.setState({ scrolled: on }); },
       qPill: !!s.qHas && !s.qOpen && !s.qPillOff && !s.video && !s.sheet && !s.revOpen, qPillOpen: () => this.qReturn(), qPillHide: e => { e.stopPropagation(); this.setState({ qPillOff: true }); },
-      qWa: () => this.wa(quizWa(this.state.qA, qList, false)), qWaChoose: () => this.wa(quizWa(this.state.qA, qList, true)),
+      qWaChoose: () => this.wa(quizWa(this.state.qA, qOff)),
 
-      programs: LIVE.map(x => ({ title: x.title, symptom: x.symptom, badge: x.badge || '', hasBadge: !!x.badge, vslot: 'bb-video-' + x.id, vimg: RES('nurai-hero', 'assets/nurai-hero.png'), vdur: T(x.dur), pe, meta: 'Видеоразбор Нурайым', count: x.items.length + ' ' + word(x.items.length), price: fmt(x.price), thumbs: x.items.map(k => ({ slot: P[k].slot, img: P[k].img, pe })), onClick: () => this.go('set', { setId: x.id }) })),
+      programs: LIVE.map(x => ({ title: x.title, symptom: x.symptom, badge: x.badge || '', hasBadge: !!x.badge, vslot: 'bb-video-' + x.id, vimg: posterOf(x.id), vdur: T(x.dur), pe, meta: 'Видеоразбор Нурайым', ...progSum(x), thumbs: x.items.map(k => ({ slot: P[k].slot, img: P[k].img, pe })), onClick: () => this.go('set', { setId: x.id }) })),
 
       set: {
-        h1b: set.h1b, hasH1b: !!set.h1b, noH1b: !set.h1b, title: set.title, inStock: set.stock !== false, preorder: set.stock === false, hasAm: set.am.length > 0, hasPm: set.pm.length > 0, hasRoutine: set.am.length + set.pm.length > 0, hasSave: sum > set.price, course: set.course, fit: set.fit,
+        h1b: set.h1b, hasH1b: !!set.h1b, noH1b: !set.h1b, title: set.title, inStock: set.stock !== false, preorder: set.stock === false, hasAm: sAm.length > 0, hasPm: sPm.length > 0, hasRoutine: sAm.length + sPm.length > 0, hasSave: sum > tier.price, course: set.course, fit: set.fit,
         subBold: 'Готовая программа из ' + n + ' средств',
         contentsSub: n + ' ' + word(n) + ' полного объёма — хватит на весь курс',
         countLabel: 'Программа · ' + n + ' ' + word(n), countShort: n + ' ' + word(n),
-        videoSlot: 'bb-video-' + set.id, videoMin: Math.round(set.dur / 60) + ' мин',
-        products: set.items.map((k, i) => ({ slot: P[k].slot, img: P[k].img, pe, name: P[k].name, line: P[k].purpose, priceLabel: fmt(P[k].price), bt: BT(i), onClick: () => this.go('product', { pid: k }) })),
-        am: steps(set.am), pm: steps(set.pm),
-        amHead: set.am.length + ' ' + stepW(set.am.length) + ' · около 3 минут',
-        pmHead: set.pm.length + ' ' + stepW(set.pm.length) + ' · около 3 минут',
-        priceLabel: fmt(set.price), sumLabel: fmt(sum), saveLabel: '−' + fmt(sum - set.price)
+        videoSlot: 'bb-video-' + set.id, poster: posterOf(set.id), videoMin: Math.round(set.dur / 60) + ' мин',
+        products: tItems.map((k, i) => ({ slot: P[k].slot, img: P[k].img, pe, name: P[k].name, line: P[k].purpose, priceLabel: fmt(P[k].price), bt: BT(i), onClick: () => this.go('product', { pid: k }) })),
+        am: steps(sAm), pm: steps(sPm),
+        amHead: sAm.length + ' ' + stepW(sAm.length) + ' · около ' + Math.max(2, sAm.length) + ' минут',
+        pmHead: sPm.length + ' ' + stepW(sPm.length) + ' · около ' + Math.max(2, sPm.length) + ' минут',
+        priceLabel: fmt(tier.price), sumLabel: fmt(sum), saveLabel: '−' + fmt(sum - tier.price),
       },
       openSetVideo: () => this.openVideo(setVideo(set)),
-      orderSet: () => this.openSheet(progItem(set)),
-      setProto: !!set.protocol, protoRef: this.protoRef,
-      proto: (() => { const f = set.protocol || {}, href = this.protoHref(set.protocol), id = set.id; return { meta: 'Пошаговая схема от Нурайым · PDF, ' + (f.size || ''), href: href || '#', file: f.name || 'Протокол ухода.pdf', hint: s.protoHint === id && !!href, err: s.protoErr === id, onClick: e => { if (href) { this.setState({ protoHint: id, protoErr: '' }); return; } e.preventDefault(); if (f.id && this.protoUrls[f.id] === '') this.setState({ protoErr: id }); }, waAsk: () => this.wa('Здравствуйте, Нурайым! Пришлите, пожалуйста, протокол ухода по программе «' + set.title + '».') }; })(),
+      orderSet: () => this.orderDirect('s:' + set.id + ':' + tier.key),
+      setProto: true, protoRef: this.protoRef,
+      proto: (() => { if (!set.protocol) return { meta: 'Пошаговая схема' + (set.tiers.length > 1 ? ' для варианта «' + tier.label + '»' : '') + ' · PDF', href: '#', file: 'Схема ухода.pdf', hint: false, err: s.protoErr === set.id, onClick: e => { e.preventDefault(); this.genScheme(set, tier); }, waAsk: () => this.wa('Здравствуйте, Нурайым! Пришлите, пожалуйста, схему ухода по программе «' + set.title + '».') }; const f = set.protocol || {}, href = this.protoHref(set.protocol), id = set.id; return { meta: 'Пошаговая схема от Нурайым · PDF, ' + (f.size || ''), href: href || '#', file: f.name || 'Протокол ухода.pdf', hint: s.protoHint === id && !!href, err: s.protoErr === id, onClick: e => { if (href) { this.setState({ protoHint: id, protoErr: '' }); return; } e.preventDefault(); if (f.id && this.protoUrls[f.id] === '') this.setState({ protoErr: id }); }, waAsk: () => this.wa('Здравствуйте, Нурайым! Пришлите, пожалуйста, схему ухода по программе «' + set.title + '».') }; })(),
 
+      probChips: [{ id: '', label: 'Все проблемы' }].concat(LIVE.map(x => ({ id: x.id, label: x.title }))).map(c => ({ label: c.label, active: (probP ? probP.id : '') === c.id, idle: (probP ? probP.id : '') !== c.id, onClick: () => this.setState({ prob: c.id }) })),
+      probOn: !!probP, probProg: probP ? { title: probP.title, price: progSum(probP).price, slot: 'bb-cover-' + probP.id, img: coverOf(probP.id), onClick: () => this.go('set', { setId: probP.id }) } : { title: '', price: '', slot: 'bb-none', img: '', onClick: () => {} },
+      noItems: catItems.length === 0, catName: s.cat, resetCat: () => this.setState({ cat: 'Все' }),
       chips: ['Все'].concat(CATS).map(c => ({ label: c, active: c === s.cat, idle: c !== s.cat, onClick: () => this.setState({ cat: c }) })),
-      items: Object.keys(P).filter(k => s.cat === 'Все' || P[k].cat === s.cat).map(k => ({ ...P[k], hasBadge: !!P[k].badge, pe, priceLabel: fmt(P[k].price), onOpen: () => this.go('product', { pid: k }), onOrder: () => this.openSheet(prodItem(P[k])) })),
+      items: catItems.map(k => ({ ...P[k], badge: this.bdg(k), hasBadge: !!this.bdg(k), pe, priceLabel: fmt(P[k].price), onOpen: () => this.go('product', { pid: k }), ...this.cartCtl('p:' + k) })),
 
       prodBack: () => { const f = this.state.prodFrom; if (f && f.route && f.route !== 'product') this.go(f.route, { setId: f.setId, after: () => this.scrollTo(f.y || 0) }); else this.go('catalog'); },
       prodBackLabel: ({ set: 'К программе', programs: 'Все программы', home: 'На главную', wholesale: 'Оптовикам' })[(s.prodFrom || {}).route] || 'Каталог',
-      prod: { badge: p.badge || '', hasBadge: !!p.badge, brand: p.brand, vol: p.vol, name: p.name, purpose: p.purpose, desc: p.desc, use: p.use, priceLabel: fmt(p.price) },
+      prod: { badge: this.bdg(P[s.pid] ? s.pid : 'cica'), hasBadge: !!this.bdg(P[s.pid] ? s.pid : 'cica'), brand: p.brand, vol: p.vol, name: p.name, purpose: p.purpose, desc: p.desc, use: p.use, comp: p.comp || '', hasComp: !!p.comp, priceLabel: fmt(p.price) },
       gallery: [p.slot, p.slot + '-2', p.slot + '-3'].map((slot, i) => ({ slot, img: p.gal[i], pe, label: 'Фото ' + (i + 1) })),
       gdots: [0, 1, 2].map(i => ({ w: i === s.gi ? '18px' : '6px', bg: i === s.gi ? 'var(--ink,#13233F)' : 'var(--lnh,#CFCAC2)', onClick: () => { const g = this.galRef.current; if (g) g.scrollTo({ left: i * g.clientWidth, behavior: 'smooth' }); } })),
       onGal: e => { const el = e.currentTarget; const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth)); if (i !== this.state.gi) this.setState({ gi: i }); },
+      ...this.relOf(s.pid, pe),
       inPrograms: LIVE.filter(x => x.items.includes(s.pid)).map(x => ({ label: x.title, onClick: () => this.go('set', { setId: x.id }) })),
       hasPrograms: LIVE.some(x => x.items.includes(s.pid)),
-      pqty: s.pqty,
-      pdec: () => this.setState(st => ({ pqty: Math.max(1, st.pqty - 1) })),
-      pinc: () => this.setState(st => ({ pqty: Math.min(9, st.pqty + 1) })),
-      pOrderLabel: 'Заказать · ' + fmt(p.price * s.pqty),
-      orderProduct: () => this.openSheet(prodItem(p), s.pqty),
+      ...(() => { const k = 'p:' + s.pid, c = (s.cart || []).find(x => x.k === k), q = c ? c.q : s.pqty, others = cLines.filter(l => l.k !== k), total = p.price * q + others.reduce((a, l) => a + l.price * l.q, 0), setQ = n => c ? this.cartSet(k, n) : this.setState({ pqty: n });
+        return { pExtras: others.map((l, i) => ({ label: l.label, slot: l.slot, img: l.img, qty: l.q, price: fmt(l.price * l.q), bt: BT(i), one: l.q === 1, many: l.q > 1, onDec: () => this.cartSet(l.k, l.q - 1), onInc: () => this.cartSet(l.k, l.q + 1) })), pHasExtras: others.length > 0, pqty: q, pdec: () => setQ(Math.max(1, q - 1)), pinc: () => setQ(Math.min(20, q + 1)), pOrderLabel: (others.length ? 'Заказать вместе · ' : 'Заказать · ') + fmt(total), pOrderTop: others.length ? 'Заказать вместе' : 'Заказать', pOrderSum: fmt(total), orderProduct: () => { if (!c) this.cartAdd(k, q, false); this.openCart(); } }; })(),
 
       toContacts: () => this.toContacts(),
       wsVideo: !!pr.wholesaleVideo, wsEmpty: !pr.wholesaleVideo,
@@ -1337,14 +1591,14 @@ class Component extends DCLogic {
       onPhone: e => this.setField('phone', e.target.value.replace(/[^\d+\s()-]/g, '')),
       onAddress: e => this.setField('address', e.target.value),
       onComment: e => this.setField('comment', e.target.value),
-      totalLabel: fmt(item.price * s.qty),
+      totalLabel: fmt(sTotal),
       submit: () => this.submit(),
       submitLabel: s.sending ? 'Открываем WhatsApp…' : 'Отправить заказ в WhatsApp',
       btnOpacity: s.sending ? 0.7 : 1,
       lastMsg: s.lastMsg, lastTime: s.lastTime,
       resend: () => this.wa(s.lastMsg),
 
-      vOpen: !!v, vTitle: v ? v.title : '',
+      vPoster: vset ? posterOf(vset.id) : RES('nurai-hero', 'assets/nurai-hero.png'), vOpen: !!v, vTitle: v ? v.title : '',
       vPaused: !!v && !s.playing && !ended, vRunning: !!v && !ended, vEnded: ended,
       vPct: v ? (s.vt / v.dur * 100).toFixed(2) + '%' : '0%',
       vTime: T(s.vt), vDur: v ? T(v.dur) : '0:00',
@@ -1354,18 +1608,19 @@ class Component extends DCLogic {
       vImgStyle: v && v.kind === 'set' ? { position: 'absolute', left: 0, top: '50%', width: '100%', aspectRatio: '16 / 9', transform: 'translateY(-50%)', objectFit: 'cover' } : { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: '50% 40%' },
       vReplay: () => this.setState({ vt: 0, playing: true }),
       vEndTitle: vset ? 'Программа «' + vset.title + '»' : (v && v.kind === 'wholesale' ? 'Давайте сотрудничать' : 'Найдите программу для своей кожи'),
-      vEndText: vset ? vset.items.length + ' ' + word(vset.items.length) + ' · ' + fmt(vset.price) : (v && v.kind === 'wholesale' ? 'Пришлю прайс и помогу подобрать ассортимент' : '4 готовые программы ухода с видео Нурайым'),
+      vEndText: vset ? vtier.items.length + ' ' + word(vtier.items.length) + ' · ' + fmt(vtier.price) : (v && v.kind === 'wholesale' ? 'Пришлю прайс и помогу подобрать ассортимент' : '4 готовые программы ухода с видео Нурайым'),
       vCtaLabel: vset ? 'Заказать программу' : (v && v.kind === 'wholesale' ? 'Получить оптовый прайс' : 'Выбрать программу ухода'),
-      vCta: () => { const cur = this.state.video; if (cur && cur.kind === 'set') this.openSheet(progItem(findSet(cur.setId))); else if (cur && cur.kind === 'wholesale') this.openWsLead(); else this.go('programs'); },
+      vCta: () => { const cur = this.state.video; if (cur && cur.kind === 'set') { const fs = findSet(cur.setId); this.orderDirect('s:' + fs.id + ':' + tierPick(fs, fs.id === this.state.setId ? this.state.tier : 'opt').key); } else if (cur && cur.kind === 'wholesale') this.openWsLead(); else this.go('programs'); },
 
       demo: [
         { label: 'Главная', onClick: () => this.go('home') },
         { label: 'Программы', onClick: () => this.go('programs') },
         { label: 'Программа «Акне»', onClick: () => this.go('set', { setId: 'acne' }) },
         { label: 'Видео Нурайым', onClick: () => this.go('set', { setId: 'acne', video: setVideo(findSet('acne')) }) },
-        { label: 'Форма заказа', onClick: () => this.go('set', { setId: 'acne', after: () => this.openSheet(progItem(findSet('acne'))) }) },
-        { label: 'Протокол ухода', onClick: () => this.go('set', { setId: 'acne', after: () => this.toProto() }) },
+        { label: 'Форма заказа', onClick: () => this.go('set', { setId: 'acne', after: () => this.orderDirect('s:acne:opt') }) },
+        { label: 'Схема ухода', onClick: () => this.go('set', { setId: 'acne', after: () => this.toProto() }) },
         { label: 'Тест за 1 минуту', onClick: () => this.go('home', { after: () => this.openQuiz() }) },
+        { label: 'Результат теста', onClick: () => this.go('home', { after: () => { this.openQuiz(); this.setState({ qA: { goal: 'acne', skin: 'combo', exp: 'some', age: '25' }, qStep: QUIZ.length, qHas: true }); } }) },
         { label: 'Программа «Лифтинг»', onClick: () => this.go('set', { setId: 'lifting' }) },
         { label: 'Каталог', onClick: () => this.go('catalog') },
         { label: 'Карточка товара', onClick: () => this.go('product', { pid: 'cica' }) },

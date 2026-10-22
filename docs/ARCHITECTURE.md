@@ -1,22 +1,23 @@
 # Architecture
 
-Status: v2, 2026-10-17. Reconciled with the imported design (`design/`) and the decisions taken on 2026-10-17
-(section 15). Companion docs: `docs/DATA-MODEL.md`, `docs/API.md`, `docs/TASKS.md`.
+Status: v3, 2026-10-22. Reconciled with the imported design (`design/`), the decisions taken on 2026-10-17 and the
+client revisions of October 2026 (`design/updates-2026-10/README.md`, M8; section 15). Companion docs: `docs/DATA-MODEL.md`, `docs/API.md`, `docs/TASKS.md`.
 
 ## 1. What the system does
 
 Bom Beauty sells professional Korean cosmeceuticals in Kyrgyzstan and the CIS. Sales close in WhatsApp and payment is
 100% prepayment by bank details sent in WhatsApp. The site's job:
 
-1. present ready-made **care programs** (5 products, a video from Нурайым, morning and evening steps, a protocol PDF) and
-   the **catalog** of single products, with prices in сом or the visitor's currency;
-2. turn "Заказать" into a short order form (name, phone, address, quantity) that opens a prefilled WhatsApp chat **and**
-   records the order in the admin;
-3. run the 4-question quiz "Выбрать программу за 1 минуту" that recommends programs or hands the answers to WhatsApp;
+1. present ready-made **care programs** (5 products, a video from Нурайым, a care scheme PDF) and the **catalog** of
+   single products, with prices in сом or the visitor's currency;
+2. collect products in a **cart** (or order a program directly) and turn it into a short order form (name, phone,
+   address) that opens a prefilled WhatsApp chat **and** records the order in the admin;
+3. run the 4-question quiz "Подобрать программу ухода за 1 минуту" that recommends programs and hands the answers to
+   WhatsApp;
 4. sell to professionals on the "Оптовикам" page (price request through WhatsApp, brand catalog PDF);
 5. let Нурайым manage orders, programs, products, the wholesale page, reviews, texts and the site's colours and currencies.
 
-No cart, no online payment, no customer accounts.
+No online payment, no customer accounts. The cart lives in the visitor's browser only.
 
 ## 2. System overview
 
@@ -86,20 +87,21 @@ Each app owns its Playwright specs in `<app>/e2e/`.
 
 ## 5. packages/shared
 
-| Module        | Contents                                                                                                                                                                                                                                 |
-| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `enums.ts`    | `OrderStatus`, `OrderItemType`, `LeadKind`, `UserRole`, `QuizGoal`, `SkinType`, `RoutinePeriod`, `ThemeKey`, `CurrencyCode`. Mirrors Prisma enums (a test keeps them equal).                                                             |
-| `labels.ts`   | Russian labels for domain values (`new: Новый`, `sent: Отправлен`, `cancelled: Отменён`, skin types, goals, badges, wholesale buyer kinds and countries).                                                                                |
-| `money.ts`    | `formatKgs(5900) → "5 900 сом"`; grouping with U+00A0 by hand (no `Intl`, so server and browser render identically).                                                                                                                     |
-| `currency.ts` | `CURRENCIES` (KGS base; USD, EUR quoted as сом per unit; RUB, KZT, UZS, KRW quoted as units per сом; rounding steps 1/10/1/10/1000/100), `convertFromKgs`, `formatMoney`. Port of the design's `CURS`/`fmt`.                             |
-| `theme.ts`    | Theme presets `rose` (default), `sky`, `indigo` and `buildThemeVars({ theme, headerColor, accentColor })` → CSS custom properties. Port of the design's `TH`, `BLUEHDR`, `hdrOnly`, `siteVars`; also `contrastWarnings()` for the admin. |
-| `quiz.ts`     | The 4 questions (keys, labels, hints), `rankPrograms(programs, answers)` (port of `quizScore`/`quizRank`), result summary text. Used by the site (instant result) and the API (stores what was recommended).                             |
-| `whatsapp.ts` | Message builders for order, quiz, wholesale and protocol request (texts verbatim from the design), `waLink(phone, text)`.                                                                                                                |
-| `phone.ts`    | `normalizePhone(input, 'KG')` → E.164 via `libphonenumber-js`; `formatPhoneDisplay`.                                                                                                                                                     |
-| `plural.ts`   | `средство/средства/средств`, `шаг/шага/шагов`, `программа/программы/программ`.                                                                                                                                                           |
-| `slug.ts`     | Cyrillic transliteration + slugify for auto slugs.                                                                                                                                                                                       |
-| `schemas/`    | zod: public order and lead create, catalog responses, admin DTOs, Setting and ContentBlock values per key. Message **codes**, not texts.                                                                                                 |
-| `api/`        | `schema.d.ts` generated by `openapi-typescript` from `backend/openapi.json` + a small typed `fetch` wrapper.                                                                                                                             |
+| Module        | Contents                                                                                                                                                                                                                                      |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enums.ts`    | `OrderStatus`, `OrderItemType`, `LeadKind`, `UserRole`, `QuizGoal`, `SkinType`, `QuizExperience`, `QuizAge`, `RoutinePeriod`, `ThemeKey`, `CurrencyCode`. Mirrors Prisma enums (a test keeps them equal).                                     |
+| `labels.ts`   | Russian labels for domain values (`new: Новый`, `sent: Отправлен`, `cancelled: Отменён`, skin types, goals, badges, wholesale buyer kinds and countries); `displayBadge` («Новинка» wins), `orderSummary` / `orderKindLabel` for order lines. |
+| `money.ts`    | `formatKgs(5900) → "5 900 сом"`; grouping with U+00A0 by hand (no `Intl`, so server and browser render identically).                                                                                                                          |
+| `currency.ts` | `CURRENCIES` (KGS base; USD, EUR quoted as сом per unit; RUB, KZT, UZS, KRW quoted as units per сом; rounding steps 1/10/1/10/1000/100), `convertFromKgs`, `formatMoney`. Port of the design's `CURS`/`fmt`.                                  |
+| `theme.ts`    | Theme presets `rose` (default), `sky`, `indigo` and `buildThemeVars({ theme, headerColor, accentColor })` → CSS custom properties. Port of the design's `TH`, `BLUEHDR`, `hdrOnly`, `siteVars`; also `contrastWarnings()` for the admin.      |
+| `quiz.ts`     | The 4 questions (goal, skin, experience, age), `rankPrograms(programs, answers)` (port of `quizScore`/`quizRank` with related goals), `quizLeadAnswers` (labels for new and pre-October leads). Used by the site and the API.                 |
+| `whatsapp.ts` | Message builders for order (one bullet per line, «Итого» from 2 lines), quiz (with the offered programs), wholesale and care scheme request (texts verbatim from the design), `waLink(phone, text)`.                                          |
+| `phone.ts`    | `normalizePhone(input, 'KG')` → E.164 via `libphonenumber-js`; `formatPhoneDisplay`.                                                                                                                                                          |
+| `plural.ts`   | `средство/средства/средств`, `товар/товара/товаров`, `шаг/шага/шагов`, `программа/программы/программ`.                                                                                                                                        |
+| `limits.ts`   | `LINE_QTY_MAX` (20 per order line), `ORDER_LINES_MAX` (30 lines per order), shared by the cart, the schemas and the API.                                                                                                                      |
+| `slug.ts`     | Cyrillic transliteration + slugify for auto slugs.                                                                                                                                                                                            |
+| `schemas/`    | zod: public order and lead create, catalog responses, admin DTOs, Setting and ContentBlock values per key. Message **codes**, not texts.                                                                                                      |
+| `api/`        | `schema.d.ts` generated by `openapi-typescript` from `backend/openapi.json` + a small typed `fetch` wrapper.                                                                                                                                  |
 
 Built with `tsup` to ESM + CJS + `.d.ts` (Nest is CJS, Next and Vite are ESM); `pnpm dev` runs it in watch mode.
 `pnpm gen:api` writes `backend/openapi.json` and regenerates `schema.d.ts`; both are committed and CI fails on drift.
@@ -138,22 +140,30 @@ thin controllers, `createZodDto` from shared schemas, Prisma `select` everywhere
 
 Routes (design screens in brackets):
 
-| Route                | Content                                                                                                                                                                                                                     |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`                  | Home [isHome]: hero with Нурайым (tap → greeting video), H1 "Время расцвета и сияния вашей кожи", program and quiz CTAs, three entry tiles, "Профессиональный уход vs масс-маркет", about card, reviews carousel + lightbox |
-| `/programs`          | Programs list [isPrograms] with quiz card and "Как это работает"                                                                                                                                                            |
-| `/programs/[slug]`   | Program [isSet]: stock badge, "Уход при …", video, "Кому подходит", "Что входит в программу", price with savings, delivery facts, protocol PDF, sticky "Заказать программу"                                                 |
-| `/catalog`           | Catalog [isCatalog]: category chips (`?category=`), product grid with "Заказать"                                                                                                                                            |
-| `/catalog/[slug]`    | Product [isProduct]: gallery, badge, Описание, Как использовать, optional Состав (INCI), "Входит в программы", sticky quantity + "Заказать · …"                                                                             |
-| `/wholesale`         | Оптовикам [isWholesale]: hero, about, brands and products, benefits, steps, delivery terms by country, contact block                                                                                                        |
-| `/delivery`          | Delivery, payment and FAQ (not in the design; same visual language)                                                                                                                                                         |
-| `/privacy`, `/offer` | Legal texts (markdown from the admin)                                                                                                                                                                                       |
-| `not-found`, `error` | Custom pages                                                                                                                                                                                                                |
+| Route                     | Content                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                       | Home [isHome]: hero with Нурайым (tap → greeting video), «봄 (BOM) — Весна» pill, H1, three trust rows, quiz CTA; programs grid with photo cards and the quiz banner; «Каталог» card with category chips; "Профессиональный уход vs масс-маркет"; about card; reviews carousel + lightbox; rails Бестселлеры / Новинки / Выбор клиник Сеула |
+| `/programs`               | Programs list [isPrograms] with the quiz banner and "Как это работает"                                                                                                                                                                                                                                                                      |
+| `/programs/[slug]`        | Program [isSet]: stock badge, "Уход при …", video, "Кому подходит", "Что входит в программу", price with savings, delivery facts, «Схема ухода» card, sticky "Заказать программу" (direct order, never the cart)                                                                                                                            |
+| `/programs/[slug]/scheme` | Route handler: the care scheme as a one-page A4 PDF built with pdf-lib when the owner uploaded none (`noindex`, `no-cache`)                                                                                                                                                                                                                 |
+| `/catalog`                | Catalog [isCatalog]: chips «По проблеме» (`?problem=`, a program's products plus a banner to it) and «По типу средства» (`?category=`), product grid with «В корзину», cart bar while the cart has items                                                                                                                                    |
+| `/catalog/[slug]`         | Product [isProduct]: gallery, badge, price, «С этим средством ещё берут» rail, "Входит в программы", Описание, Состав, Как использовать, sticky bar with the cart's other items and "Заказать (вместе) · …"                                                                                                                                 |
+| `/wholesale`              | Оптовикам [isWholesale]: hero, about, brands and products, benefits, steps, delivery terms by country, contact block                                                                                                                                                                                                                        |
+| `/delivery`               | Delivery, payment and FAQ (not in the design; same visual language)                                                                                                                                                                                                                                                                         |
+| `/privacy`, `/offer`      | Legal texts (markdown from the admin)                                                                                                                                                                                                                                                                                                       |
+| `not-found`, `error`      | Custom pages                                                                                                                                                                                                                                                                                                                                |
 
-Client overlays (client components): order sheet, wholesale price sheet, quiz (full-screen dialog), video player, review
-lightbox, currency menu. Header: logo, currency picker (shown when more than one currency is enabled), WhatsApp icon,
-tabs Каталог / Программы / Оптовикам. Sticky bottom bars as in the design (quiz CTA on home/programs/catalog after scroll,
-price request on wholesale, order bars on program and product pages).
+Client overlays (client components): order sheet (cart mode or direct program mode), wholesale price sheet, quiz
+(full-screen dialog), video player, review lightbox, currency menu. Header: logo, currency picker (shown when more than
+one currency is enabled), WhatsApp icon, tabs Каталог / Программы / Оптовикам, and under it a stack of floating pills:
+the home cart pill and «К результатам теста». Sticky bottom bars as in the design (quiz CTA on home/programs/catalog,
+replaced on the catalog by the cart bar while the cart has items; price request on wholesale; order bars on program and
+product pages). Bars publish their height as `--sticky-space`, which the footer reserves.
+
+**Cart:** `CartProvider` keeps `[{ slug, qty }]` in `localStorage` (`bb-cart`), products only, 1–20 each, synced across
+tabs. The layout passes the published catalog (name, brand, volume, price, image), so lines always show current data
+and products taken off the site drop out. The cart empties after a cart order is sent; a direct program order leaves it
+as it was.
 
 **Desktop (≥ 1024 px):** the prototype is phone-only; desktop follows the older desktop references in the design project
 (`BomHomeDesktop`, `BomSetDesktop`): 1100 px container, 3-column grids, program page with the vertical video in a left
@@ -194,7 +204,8 @@ Onest and Cormorant live in `packages/config/fonts/og` and are traced into the s
 ("Заказать программу", "Смотреть ещё раз"). No player library.
 
 **Fonts:** Onest (400/600/700) for text, Cormorant Garamond (500/600 + italic) for headings with the italic accent word,
-one-glyph Noto Sans KR subset for "봄" in the footer. Self-hosted woff2 (Cyrillic + Latin) in `packages/config/fonts`,
+one-glyph Noto Sans KR subset for "봄" in the footer and the hero pill. The care scheme PDF embeds static Onest TTFs
+(400/600/700, `packages/config/fonts/pdf`) so its Cyrillic text stays selectable. Self-hosted woff2 (Cyrillic + Latin) in `packages/config/fonts`,
 loaded with `next/font/local` in the site and `@font-face` in the admin.
 
 **Analytics:** Umami on every page (cookie-free) with custom events for WhatsApp clicks that don't create records (header
@@ -206,20 +217,20 @@ landing into `sessionStorage` and attached to orders and leads.
 Screens follow `design/BomAdmin.dc.html`: sidebar at ≥ 1024 px, top bar with scrolling tabs below. Additions where the
 design is silent are marked _(gap)_.
 
-| Nav        | Route                        | Content                                                                                                                                                                                                                                |
-| ---------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| —          | `/login`                     | Email + password, "Запомнить меня" _(gap)_                                                                                                                                                                                             |
-| Обзор      | `/`                          | Greeting, period (Сегодня / 7 дней / 30 дней), 4 stat cards, recent orders, orders by program                                                                                                                                          |
-| Заказы     | `/orders`                    | Tabs Все / Новые / Отправлены / Отменены with counts, search, table with status select and WhatsApp button; row opens a detail drawer with the full message, comment, UTM and a private note _(gap)_; CSV export _(gap)_               |
-| Заявки     | `/leads`                     | Quiz and wholesale hand-offs: answers, recommended programs, time _(gap)_                                                                                                                                                              |
-| Программы  | `/programs`, `/programs/:id` | List with video/protocol/publish status; editor (basics, "Кому подходит", ordered products from the catalog, video, protocol PDF, price with savings, quiz matching, publish and stock toggles) plus slug, headline and course _(gap)_ |
-| Товары     | `/products`, `/products/:id` | Category management, table with stock toggle; editor (name, brand, category, volume, price, short text, description, how to use, 3 photos, stock, badge) plus slug, short name for steps, INCI, publish toggle and SEO _(gap)_         |
-| Оптовикам  | `/wholesale`                 | Contacts, hero, about quote and stats, featured products, benefits, stock note and delivery table, brand catalog PDF, video                                                                                                            |
-| Клиенты    | `/customers`                 | Aggregated from orders by phone: name, city, orders, total, last order, most ordered item, WhatsApp                                                                                                                                    |
-| Отзывы     | `/reviews`                   | Upload screenshots (multi, drag and drop), order, hide/show, delete; demo screenshots hide automatically once real ones exist                                                                                                          |
-| Тексты     | `/content/:key`              | Home texts, delivery facts and FAQ, privacy, offer _(gap)_                                                                                                                                                                             |
-| Оформление | `/appearance`                | Theme preset, header colour, accent colour with contrast warnings, currencies with rates and toggles, live phone preview                                                                                                               |
-| Настройки  | `/settings/:section`         | Shop contacts and legal line, notifications (Telegram, email, test), SEO and analytics, users, audit log, "Выйти на всех устройствах" _(gap)_                                                                                          |
+| Nav        | Route                        | Content                                                                                                                                                                                                                                                                 |
+| ---------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| —          | `/login`                     | Email + password, "Запомнить меня" _(gap)_                                                                                                                                                                                                                              |
+| Обзор      | `/`                          | Greeting, period (Сегодня / 7 дней / 30 дней), 4 stat cards, recent orders, orders by program                                                                                                                                                                           |
+| Заказы     | `/orders`                    | Tabs Все / Новые / Отправлены / Отменены with counts, search, table with status select and WhatsApp button; row opens a detail drawer with the full message, comment, UTM and a private note _(gap)_; CSV export _(gap)_                                                |
+| Заявки     | `/leads`                     | Quiz and wholesale hand-offs: answers, recommended programs, time _(gap)_                                                                                                                                                                                               |
+| Программы  | `/programs`, `/programs/:id` | List with video/scheme/publish status; editor (basics, "Кому подходит", ordered products from the catalog, «Фото для главной» 5:4, video, «Схема ухода» PDF, price with savings, quiz goal and skins, publish and stock toggles) plus slug, headline and course _(gap)_ |
+| Товары     | `/products`, `/products/:id` | Category management, table with stock toggle; editor (name, brand, category, volume, price, short text, description, Состав, how to use, 3 photos, stock, badge, «На главной странице» switches) plus slug, short name for steps, publish toggle and SEO _(gap)_        |
+| Оптовикам  | `/wholesale`                 | Contacts, hero, about quote and stats, featured products, benefits, stock note and delivery table, brand catalog PDF, video                                                                                                                                             |
+| Клиенты    | `/customers`                 | Aggregated from orders by phone: name, city, orders, total, last order, most ordered item, WhatsApp                                                                                                                                                                     |
+| Отзывы     | `/reviews`                   | Upload screenshots (multi, drag and drop), order, hide/show, delete; demo screenshots hide automatically once real ones exist                                                                                                                                           |
+| Тексты     | `/content/:key`              | Home texts (hero, comparison with title + text per point, «Каталог» card photo, about, reviews), delivery facts and FAQ, privacy, offer _(gap)_                                                                                                                         |
+| Оформление | `/appearance`                | Theme preset, header colour, accent colour with contrast warnings, currencies with rates and toggles, live phone preview                                                                                                                                                |
+| Настройки  | `/settings/:section`         | Shop contacts and legal line, notifications (Telegram, email, test), SEO and analytics, users, audit log, "Выйти на всех устройствах" _(gap)_                                                                                                                           |
 
 TanStack Query for server state; the orders counter in the nav polls every 15 s and refetches on window focus. Every
 mutation shows a toast. shadcn/ui primitives are restyled to the design (Onest, ink `#14142B` buttons, `#E4E6EB` borders,
@@ -229,25 +240,30 @@ mutation shows a toast. shadcn/ui primitives are restyled to the design (Onest, 
 
 ### 7.1 Order → admin → WhatsApp
 
-1. "Заказать" (product tile, product page, program page, video end card) opens the order sheet: item, quantity, name,
-   phone (`+996 ` prefilled), address, comment, total in the chosen currency (plus "В сомах: …" when not сом).
+1. Products go into the cart («В корзину» on cards and rails, «Добавить» under a product, the product page's order
+   button); the cart pill, the catalog bar or the product page opens the order sheet in cart mode: lines with steppers,
+   «Добавить ещё средства», «Очистить». "Заказать программу" (program page, video end card) opens it in direct mode with
+   that one program. Both modes ask for name, phone (`+996 ` prefilled), address and comment and show the total in the
+   chosen currency (plus "В сомах: …" when not сом).
 2. On "Отправить заказ в WhatsApp", in the same click handler (iOS blocks popups after an `await`):
-   `fetch(POST /v1/orders, { keepalive: true })` with a browser-generated `clientRef`, then open
-   `wa.me/{shop.whatsapp}?text=…` with the design's message ("Здравствуйте! Хочу заказать: …").
+   `fetch(POST /v1/orders, { keepalive: true })` with `items[]` and a browser-generated `clientRef`, then open
+   `wa.me/{shop.whatsapp}?text=…` with the design's message ("Здравствуйте! Хочу заказать: …", one bullet per line).
 3. A failed POST goes to a `localStorage` outbox and is retried on the next page load; `clientRef` is unique, so retries
    never duplicate.
-4. The API validates, normalises the phone to E.164, recomputes unit price and total in сом from the DB, stores the order
-   (`status = new`, number from 1001 up) and enqueues `notify.telegram`.
+4. The API validates, normalises the phone to E.164, merges repeated lines, recomputes every line's unit price and the
+   total in сом from the DB, stores the order with its `OrderLine`s (`status = new`, number from 1001 up) and enqueues
+   `notify.telegram`.
 5. The sheet shows "Заказ отправлен" with the message bubble and "WhatsApp не открылся? Открыть ещё раз".
 6. In the admin the order shows up in Заказы and Обзор within 15 s; Нурайым confirms in WhatsApp, then sets Отправлен or
    Отменён.
 
 ### 7.2 Quiz
 
-Four questions (skin, goal, experience, format) with auto-advance. Format "Готовый набор" shows up to 3 ranked programs
-(`rankPrograms`); format "Персональная консультация" shows the summary and "Получить разбор в WhatsApp". Any hand-off to
-WhatsApp from the result (`Получить разбор…`, `Спросить Нурайым в WhatsApp`) first sends `POST /v1/leads/quiz`
-(answers, `clientRef`); the API recomputes the recommendation for the record. Opening a recommended program and ordering
+Four questions (goal, skin after 2–3 hours, experience with active care, age) with auto-advance. The result («Отлично!»)
+shows up to 3 programs ranked by goal and skin (`rankPrograms`: related goals score lower, combo skin also matches oily,
+sensitive skin adds a bonus to calming programs; ties keep the admin order). «Спросить Нурайым в WhatsApp» first sends
+`POST /v1/leads/quiz` (answers, `clientRef`); the API recomputes the recommendation for the record and the message lists
+the offered programs with prices. Opening a recommended program and ordering
 it marks the order `fromQuiz`. The "К результатам теста" pill returns to the result.
 
 ### 7.3 Wholesale
@@ -303,7 +319,7 @@ Changing a product or program slug creates `Redirect(from → to)` and collapses
 
 ### 7.8 Notifications
 
-New order → `notify.telegram` (bot token in env, chat id in settings): number, item × qty, total, name, phone, address,
+New order → `notify.telegram` (bot token in env, chat id in settings): number, the lines (title × qty, line total), total, name, phone, address,
 link to `https://admin.bom-beauty.com/orders/{id}`. Leads notify only if enabled. If Telegram fails after retries or is
 off, `notify.email` sends the same over SMTP. Customer input is HTML-escaped. Settings has a test button that reports each
 channel (sent, off, not configured, failed).
@@ -441,6 +457,8 @@ dev containers SeaweedFS (S3) and Mailpit. Since 2026-10-17 dependencies are add
   notifications), `tus-js-client` (admin, resumable video upload to Bunny), `vitest` + `sharp` (frontend dev: share-card
   tests that check drawn pixels).
 - M6: `@axe-core/playwright` (dev, frontend and admin: WCAG 2.2 AA checks in the e2e suites).
+- M8: `pdf-lib` + `@pdf-lib/fontkit` (frontend: the care scheme PDF with embedded Onest, so text stays real and
+  selectable; pure JS, no headless browser).
 
 ## 15. Decisions and deviations
 
@@ -449,8 +467,8 @@ dev containers SeaweedFS (S3) and Mailpit. Since 2026-10-17 dependencies are add
 | D1  | The design wins wherever it shows something; the brief fills gaps (auth, users, settings, notifications, SEO, legal pages, `/delivery`, 404, anti-spam, audit, ops)                                                                                                                                                                  | Agreed 2026-10-17                                                                    |
 | D2  | "Подбор ухода" is the design's quiz; answers go to WhatsApp and are recorded as leads; no skin-photo upload or storage                                                                                                                                                                                                               | Agreed 2026-10-17; removes the private-photo pipeline                                |
 | D3  | Videos on Bunny Stream, uploaded from the admin over TUS, played with native `<video>` (HLS + MP4 fallback)                                                                                                                                                                                                                          | Agreed 2026-10-17; 200 MB uploads exceed Cloudflare's request limit                  |
-| D4  | Seed = the design's 13 products, 5 categories, 5 programs, 14 demo review screenshots, wholesale content; marked as demo in HANDOFF                                                                                                                                                                                                  | Agreed 2026-10-17                                                                    |
-| D5  | Order statuses Новый / Отправлен / Отменён; one item with quantity per order                                                                                                                                                                                                                                                         | Design                                                                               |
+| D4  | Seed = the design's 13 products, 5 categories, 8 programs (5 until M8), 14 demo review screenshots, wholesale content; marked as demo in HANDOFF                                                                                                                                                                                     | Agreed 2026-10-17; programs per the October revisions                                |
+| D5  | Order statuses Новый / Отправлен / Отменён. Until M8 one item per order; superseded by D21                                                                                                                                                                                                                                           | Design                                                                               |
 | D6  | Theme and currency are runtime settings; pages stay static (CSS variables from settings, client-side currency swap)                                                                                                                                                                                                                  | Design's "Оформление" without losing ISR                                             |
 | D7  | Brief routes `/about`, `/reviews`, `/brands`, `/consult` dropped; about and reviews live on home, brands on wholesale                                                                                                                                                                                                                | Design layout                                                                        |
 | D8  | Inbox kinds collapse to **orders** (with contact data) and **leads** (quiz, wholesale)                                                                                                                                                                                                                                               | Design flows                                                                         |
@@ -466,6 +484,13 @@ dev containers SeaweedFS (S3) and Mailpit. Since 2026-10-17 dependencies are add
 | D18 | Contrast beats the design's exact hex where they conflict: admin green `#15805a` → `#137a55` (4.5:1 on its tint), tab counters unfaded on white                                                                                                                                                                                      | WCAG 1.4.3; visually the same                                                        |
 | D19 | Carousel dots stay small, as in the design, but are pointer-only shortcuts; keyboards and screen readers use the arrows or the focusable gallery, with a live status                                                                                                                                                                 | WCAG 2.5.8 equivalent-control exception; keeps the design's spacing                  |
 | D20 | Home hero gets two realistic sakura branches beside the photo (not in the design), behind the content and clipped above the badge: the client's transparent PNGs, committed as AVIF/WebP (400/600/800 w) in `frontend/public/decor`. The one exception to "no media in the repo"; they keep their natural colours whatever the theme | Requested 2026-10-18; drawn SVG branches replaced by the client's photos for realism |
+| D21 | Orders hold lines (`order_lines`: product or program, title and unit price snapshots, qty 1–20, up to 30 lines). The cart is products only and lives in the browser; programs are ordered directly. The API still accepts the pre-M8 `item` + `qty` body                                                                             | October 2026 revisions (cart); old clients keep working                              |
+| D22 | The care scheme PDF is generated per request by a Next route handler (pdf-lib, Onest embedded, theme accent, shop WhatsApp) instead of the prototype's canvas JPEG; an uploaded PDF still wins                                                                                                                                       | README §4 production note: real, selectable text                                     |
+| D23 | Home rails come from three product switches (Бестселлеры, Новинки, Выбор клиник Сеула); inside a rail, products follow the catalog order, since the admin has switches and no per-rail order                                                                                                                                         | README §9: switches only                                                             |
+| D24 | The KR flag in the hero trust row is a local SVG (`frontend/public/flags/kr.svg`), not the design's external link                                                                                                                                                                                                                    | The site CSP allows only own images and media hosts; no third-party request on load  |
+| D25 | The catalog cart bar's «Оформить» chip uses a dark tint (`black/10`) instead of the design's `rgba(255,255,255,.2)`                                                                                                                                                                                                                  | White on the light tint is 3.7:1; WCAG 1.4.3 needs 4.5:1                             |
+| D26 | The M8 migration applies the revised demo data (renames, flags, Состав texts, comparison copy, program order) only where the values are still the original seed, so owner edits survive                                                                                                                                              | Production already has owner data                                                    |
+| D27 | The M8 migration is not additive (order columns move into `order_lines`, quiz enums are rebuilt), the one exception to the forward-compatible migration rule in DEPLOY §4; deploy after a backup, roll back by restoring it                                                                                                          | Keeping both shapes would mean dual writes and old enum values for one release       |
 
 ## 16. Risks to verify early
 

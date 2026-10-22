@@ -2,20 +2,32 @@ import type { ProductCard as ProductCardData } from '@bom/shared';
 import Link from 'next/link';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
+import { AddToCart } from '../cart/add-to-cart';
+import type { CartProduct } from '../cart/cart';
 import { BbImage, PhotoPlaceholder } from '../bb-image';
 import { Price } from '../currency';
 import { SparkleIcon } from '../icons';
-import { card, outlineButton } from '../ui';
-import { OrderButton } from './order-button';
+import { card } from '../ui';
 
-export const productOrderItem = (product: ProductCardData) => ({
-  type: 'product' as const,
+/** What the cart keeps of a product (no blur placeholder, to keep every page's payload small). */
+export const cartProduct = (product: ProductCardData): CartProduct => ({
   slug: product.slug,
-  title: product.name,
-  meta: `${product.brand} · ${product.volume}`,
+  name: product.name,
+  brand: product.brand,
+  volume: product.volume,
   priceKgs: product.priceKgs,
-  image: product.image,
+  image: product.image ? { ...product.image, blurDataUrl: null } : null,
 });
+
+/** White badge on a product photo: «Новинка» or the product's own label (design: bdg). */
+export function ProductBadge({ label }: { label: string }) {
+  return (
+    <span className="absolute top-2 left-2 z-[1] inline-flex h-6 items-center gap-1 rounded-full bg-surface px-[9px] text-xs font-semibold whitespace-nowrap text-accent-ink shadow-[0_2px_8px_rgba(14,14,44,.12)]">
+      <SparkleIcon size={10} />
+      {label}
+    </span>
+  );
+}
 
 /** Catalog grid card (design: isCatalog → items). */
 export function ProductCard({ product, priority = false }: { product: ProductCardData; priority?: boolean }) {
@@ -31,12 +43,7 @@ export function ProductCard({ product, priority = false }: { product: ProductCar
             priority={priority}
             placeholder={<PhotoPlaceholder label={copy.common.productPhoto} />}
           />
-          {product.badge && (
-            <span className="absolute top-2 left-2 z-[1] inline-flex h-6 items-center gap-1 rounded-full bg-surface px-[9px] text-xs font-semibold whitespace-nowrap text-accent-ink shadow-[0_2px_8px_rgba(14,14,44,.12)]">
-              <SparkleIcon size={10} />
-              {product.badge}
-            </span>
-          )}
+          {product.badge && <ProductBadge label={product.badge} />}
         </span>
         <span className="flex flex-1 flex-col px-1.5 pt-3">
           <span className="text-[13px] text-muted">{product.brand}</span>
@@ -47,12 +54,7 @@ export function ProductCard({ product, priority = false }: { product: ProductCar
           </span>
         </span>
       </Link>
-      <OrderButton
-        item={productOrderItem(product)}
-        className={cn(outlineButton, 'mt-2.5 h-11 text-[15px] active:bg-surface-2')}
-      >
-        {copy.common.order}
-      </OrderButton>
+      <AddToCart slug={product.slug} name={product.name} size="card" />
     </article>
   );
 }

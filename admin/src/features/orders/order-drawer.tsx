@@ -13,6 +13,7 @@ import { Button, CloseIcon, PhoneIcon, Spinner, StatusSelect, WhatsAppLink } fro
 import { copy } from '@/content/copy';
 import { useUser } from '@/features/auth/auth';
 import { errorText } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import { useDeleteOrder, useOrder, useUpdateOrder } from '@/api/orders';
 
 /** Order details (gap: the design has no detail view; the brief asks for one with a note). */
@@ -116,15 +117,41 @@ function OrderBody({ order, onClose }: { order: OrderDetail; onClose: () => void
         </Section>
 
         <Section title={copy.order.item}>
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[15px] font-semibold">{order.itemTitle}</span>
-              <span className="text-[13px] text-muted">
-                {ORDER_ITEM_TYPE_LABELS[order.itemType]} · {formatKgs(order.unitPriceKgs)} × {order.qty}
-              </span>
+          <ul className="flex flex-col">
+            {order.lines.map((line, index) => (
+              <li
+                key={`${line.title}-${index}`}
+                className={cn(
+                  'flex items-start justify-between gap-3 py-2 first:pt-0',
+                  index > 0 && 'border-t border-line-2',
+                )}
+              >
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-[15px] font-semibold">
+                    {line.type === 'program' ? copy.order.programLine(line.title) : line.title}
+                  </span>
+                  <span className="text-[13px] text-muted">
+                    {ORDER_ITEM_TYPE_LABELS[line.type]} · {formatKgs(line.unitPriceKgs)} × {line.qty}
+                  </span>
+                </div>
+                <span className="text-[15px] font-semibold whitespace-nowrap">
+                  {formatKgs(line.totalKgs)}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {order.lines.length > 1 && (
+            <div className="flex items-center justify-between gap-3 border-t border-line pt-2.5">
+              <span className="text-[15px] font-semibold">{copy.order.total}</span>
+              <span className="text-[17px] font-semibold whitespace-nowrap">{formatKgs(order.totalKgs)}</span>
             </div>
-            <span className="text-[17px] font-semibold whitespace-nowrap">{formatKgs(order.totalKgs)}</span>
-          </div>
+          )}
+          {order.lines.length === 1 && (
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[15px] text-muted">{copy.order.total}</span>
+              <span className="text-[17px] font-semibold whitespace-nowrap">{formatKgs(order.totalKgs)}</span>
+            </div>
+          )}
           {order.displayCurrency !== 'KGS' && order.displayRate && (
             <span className="text-[13px] text-muted">
               {copy.order.currency(order.displayCurrency, String(order.displayRate))}

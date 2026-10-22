@@ -1,6 +1,7 @@
 # Data model
 
-Status: v2, 2026-10-17, aligned with the design. The Prisma schema below is the M1 target; changes during implementation
+Status: v3, 2026-10-22, aligned with the design and the October 2026 revisions (M8: order lines, quiz enums, product
+rail flags, program cover). The Prisma schema below is the M1 target; changes during implementation
 update this file in the same commit.
 
 Conventions:
@@ -24,21 +25,24 @@ enum MediaKind     { image pdf }
 enum MediaStatus   { pending processing ready failed }
 enum VideoStatus   { created uploading processing ready failed }
 enum RoutinePeriod { am pm }
-enum QuizGoal      { age pigment acne barrier }
-enum SkinType      { dry oily normal sens }
+enum QuizGoal      { acne pigment age calm glow }
+enum SkinType      { oily combo dry sens normal }
 ```
 
-| Value set             | Labels (in `packages/shared/src/labels.ts`)                                                                                               |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| OrderStatus           | new: Новый · sent: Отправлен · cancelled: Отменён                                                                                         |
-| OrderItemType         | product: Товар · program: Программа                                                                                                       |
-| QuizGoal              | age: Возрастные изменения / лифтинг · pigment: Пигментация / тусклый цвет · acne: Высыпания / акне · barrier: Восстановление и увлажнение |
-| SkinType              | dry: Сухая · oily: Комбинированная / жирная · normal: Нормальная · sens: Чувствительная                                                   |
-| Badges (string list)  | Выбор Нурайым · Хит продаж · Хит эксперта · Новинка · Для зрелой кожи                                                                     |
-| Wholesale buyer kinds | cosmo: Косметолог · clinic: Клиника · salon: Салон · shop: Магазин косметики                                                              |
-| Wholesale countries   | kg: Кыргызстан · kz: Казахстан · uz: Узбекистан · ru: Россия                                                                              |
-| Quiz experience       | pro: Да, постоянно · mass: Нет, в основном масс-маркет или аптечные марки · new: Только начинаю знакомство с корейским уходом             |
-| Quiz format           | set: Готовый набор средств · wa: Персональная консультация в WhatsApp                                                                     |
+| Value set             | Labels (in `packages/shared/src/labels.ts`)                                                                                                                                                                                                                                    |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| OrderStatus           | new: Новый · sent: Отправлен · cancelled: Отменён                                                                                                                                                                                                                              |
+| OrderItemType         | product: Товар · program: Программа                                                                                                                                                                                                                                            |
+| QuizGoal              | acne: Высыпания, чёрные точки, комедоны · pigment: Пигментация, постакне, неровный тон · age: Упругость, морщины, овал лица · calm: Краснота, шелушения, чувствительность · glow: Тусклая кожа: сияние и увлажнение (admin labels; the quiz shows the design's longer answers) |
+| SkinType              | oily: Жирная · combo: Комбинированная · dry: Сухая · sens: Чувствительная · normal: Нормальная                                                                                                                                                                                 |
+| Badges (string list)  | Выбор Нурайым · Хит продаж · Хит эксперта · Новинка · Для зрелой кожи                                                                                                                                                                                                          |
+| Wholesale buyer kinds | cosmo: Косметолог · clinic: Клиника · salon: Салон · shop: Магазин косметики                                                                                                                                                                                                   |
+| Wholesale countries   | kg: Кыргызстан · kz: Казахстан · uz: Узбекистан · ru: Россия                                                                                                                                                                                                                   |
+| Quiz experience       | pro · some · new (labels in `quiz.ts`, verbatim from the design)                                                                                                                                                                                                               |
+| Quiz age              | u25: До 25 лет · 25: 25–35 лет · 35: 35–45 лет · 45: 45+ лет                                                                                                                                                                                                                   |
+
+M8 migration: `barrier` goals became `calm` when the program targets sensitive skin, otherwise `glow`. Leads saved before
+M8 keep their old answers (`skin, goal, exp, fmt`); `quizLeadAnswers` labels both versions.
 
 ## 2. Schema
 
@@ -114,8 +118,11 @@ model Product {
   purpose        String         @default("")       // "Коротко, для карточки"
   description    String         @default("")
   howToUse       String         @default("")
-  inci           String?                           // optional "Состав" section
-  badge          String?                           // one of the badge labels
+  inci           String?                           // "Состав" section (admin field «Состав»); hidden when empty
+  badge          String?                           // one of the badge labels; «Новинка» wins while isNew is on
+  bestseller     Boolean        @default(false)    // home rail «Бестселлеры BOM BEAUTY»
+  seoulChoice    Boolean        @default(false)    // home rail «Выбор клиник Сеула»
+  isNew          Boolean        @default(false)    // home rail «Новинки» + the «Новинка» label everywhere
   inStock        Boolean        @default(true)
   published      Boolean        @default(true)
   order          Int            @default(0)
@@ -124,7 +131,7 @@ model Product {
   images         ProductImage[]
   programItems   ProgramItem[]
   routineSteps   ProgramStep[]
-  orders         Order[]
+  orderLines     OrderLine[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
@@ -147,8 +154,8 @@ model ProductImage {
 model Program {
   id              String        @id @default(uuid(7)) @db.Uuid
   slug            String        @unique
-  title           String                           // "Акне и проблемная кожа"
-  headline        String?                          // accent part of "Уход при …": "акне и проблемной коже"
+  title           String                           // "Акне и постакне"
+  headline        String?                          // accent part of "Уход при …": "акне и постакне"
   symptom         String        @default("")       // card subtitle
   description     String        @default("")       // meta description, OG
   course          String        @default("")       // "Утро и вечер, курс на 6–8 недель"
@@ -162,13 +169,15 @@ model Program {
   videoId         String?       @db.Uuid
   video           Video?        @relation("ProgramVideo", fields: [videoId], references: [id], onDelete: SetNull)
   protocolMediaId String?       @db.Uuid
-  protocol        Media?        @relation("ProgramProtocol", fields: [protocolMediaId], references: [id], onDelete: SetNull)
+  protocol        Media?        @relation("ProgramProtocol", fields: [protocolMediaId], references: [id], onDelete: SetNull)  // «Схема ухода» PDF; generated when null
+  coverMediaId    String?       @db.Uuid
+  cover           Media?        @relation("ProgramCover", fields: [coverMediaId], references: [id], onDelete: SetNull)  // 5:4 home card photo
   order           Int           @default(0)
   seoTitle        String?
   seoDescription  String?
   items           ProgramItem[]
-  steps           ProgramStep[]
-  orders          Order[]
+  steps           ProgramStep[]                    // no longer shown on the page; feed the care scheme PDF
+  orderLines      OrderLine[]
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
@@ -234,6 +243,7 @@ model Media {
 
   productImages ProductImage[]
   protocolOf    Program[]    @relation("ProgramProtocol")
+  coverOf       Program[]    @relation("ProgramCover")
   review        Review?
 
   @@index([status, expiresAt])
@@ -296,15 +306,8 @@ model Order {
   id              String        @id @default(uuid(7)) @db.Uuid
   number          Int           @unique @default(autoincrement())   // sequence starts at 1001 (migration)
   status          OrderStatus   @default(new)
-  itemType        OrderItemType
-  productId       String?       @db.Uuid
-  product         Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
-  programId       String?       @db.Uuid
-  program         Program?      @relation(fields: [programId], references: [id], onDelete: SetNull)
-  itemTitle       String                           // snapshot: product name or program title
-  unitPriceKgs    Int                              // computed on the server
-  qty             Int                              // 1–9
-  totalKgs        Int
+  lines           OrderLine[]                      // 1–30, in the order the client saw them
+  totalKgs        Int                              // sum of the lines, computed on the server
   name            String
   phone           String                           // E.164
   address         String                           // "Город, улица, дом, квартира"
@@ -327,19 +330,40 @@ model Order {
   @@index([status, createdAt])
   @@index([createdAt])
   @@index([phone])
-  @@index([programId, createdAt])
-  @@index([productId, createdAt])
   @@map("orders")
-  // The service sets exactly one of productId/programId at creation; either may become null later when the item is
-  // deleted (itemTitle and prices keep the history). Raw SQL CHECK: qty BETWEEN 1 AND 9.
+  // Raw SQL CHECK: total_kgs >= 0.
+}
+
+model OrderLine {
+  id           String        @id @default(uuid(7)) @db.Uuid
+  orderId      String        @db.Uuid
+  order        Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  position     Int           @default(0)
+  type         OrderItemType
+  productId    String?       @db.Uuid
+  product      Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+  programId    String?       @db.Uuid
+  program      Program?      @relation(fields: [programId], references: [id], onDelete: SetNull)
+  title        String                              // snapshot: product name or program title
+  unitPriceKgs Int                                 // computed on the server
+  qty          Int                                 // 1–20
+  totalKgs     Int
+
+  @@index([orderId, position])
+  @@index([programId])
+  @@index([productId])
+  @@map("order_lines")
+  // The service sets the id that matches `type` at creation; it may become null later when the item is deleted (title
+  // and prices keep the history). Raw SQL CHECKs: qty BETWEEN 1 AND 20, unit_price_kgs and total_kgs >= 0. The M8
+  // migration turned every older order into one line.
 }
 
 model Lead {
   id          String   @id @default(uuid(7)) @db.Uuid
   kind        LeadKind
-  answers     Json                                 // quiz: { skin, goal, exp, fmt } · wholesale: { buyer, country }
+  answers     Json                                 // quiz: { goal, skin, exp, age } (before M8: { skin, goal, exp, fmt }) · wholesale: { buyer, country }
   recommended String[]                             // quiz: program slugs in ranked order
-  choose      Boolean  @default(false)             // quiz: "Помогите выбрать" variant
+  choose      Boolean  @default(false)             // quiz: "Помогите выбрать" (every quiz lead since M8)
   message     String                               // exact WhatsApp text
   pageUrl     String?
   referrer    String?
@@ -368,7 +392,7 @@ model AuditLog {
 
 Customers are not a table: `GET /admin/customers` groups orders by `phone` (name and address from the latest order; city
 is the first comma-separated part of the address; total excludes cancelled orders; "Чаще заказывает" is the most frequent
-`itemTitle`).
+line `title`).
 
 ## 3. Settings keys (`Setting.value`)
 
@@ -384,13 +408,13 @@ is the first comma-separated part of the address; total excludes cancelled order
 
 ## 4. Content block keys (`ContentBlock.data`)
 
-| Key         | Shape                                                                                                                                                                                                                                                                                                                                                                                                                            | Used on                    |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| `home`      | `{ heroBadge, heroTitle ("Время *расцвета* и сияния вашей кожи"; `_…_` marks the accent word), heroSubtitle, quizPrompt, heroPhotoMediaId?, greetingVideoId?, entries: [{ key, title, text, imageMediaId? } ×3], comparison: { title, subtitle, mass: { eyebrow, title, points[] }, pro: { eyebrow, title, points[] } }, about: { caption, text, stats: [{ value, label } ×2], photoMediaId? }, reviewsTitle, reviewsSubtitle }` | `/`                        |
-| `wholesale` | `{ phone, whatsapp?, eyebrow, title, subtitle, facts[3], quote, intro[], stats: [{ value, label }], expertise[], featuredProductIds[], benefits: [{ title, text } ×4], steps: [{ title, text } ×4], stockNote, delivery: [{ region, flags[], airDays, seaDays }], catalogMediaId?, portraitMediaId?, videoId? }`                                                                                                                 | `/wholesale`               |
-| `delivery`  | `{ programFacts: [{ label, value }] ("Доставка по Бишкеку" · "в день оплаты", …), markdown, faq: [{ q, a }] }`                                                                                                                                                                                                                                                                                                                   | program pages, `/delivery` |
-| `privacy`   | `{ markdown }`                                                                                                                                                                                                                                                                                                                                                                                                                   | `/privacy`                 |
-| `offer`     | `{ markdown }`                                                                                                                                                                                                                                                                                                                                                                                                                   | `/offer`                   |
+| Key         | Shape                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Used on                    |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| `home`      | `{ heroTitle ("Время *расцвета* и сияния вашей кожи"; `_…_` marks the accent word), heroSubtitle, heroPhotoMediaId?, greetingVideoId?, catalogImageMediaId? (the «Каталог» card, 2:1), comparison: { title, subtitle, mass: { eyebrow, title, points: [{ title, text }] }, pro: { eyebrow, title, points: [{ title, text }] } }, about: { caption, text, stats: [{ value, label } ×2], photoMediaId? }, reviewsTitle, reviewsSubtitle }`. Since M8 `heroBadge`, `quizPrompt` and `entries` are gone; plain-string points from older data read as `{ title, text: "" }` | `/`                        |
+| `wholesale` | `{ phone, whatsapp?, eyebrow, title, subtitle, facts[3], quote, intro[], stats: [{ value, label }], expertise[], featuredProductIds[], benefits: [{ title, text } ×4], steps: [{ title, text } ×4], stockNote, delivery: [{ region, flags[], airDays, seaDays }], catalogMediaId?, portraitMediaId?, videoId? }`                                                                                                                                                                                                                                                       | `/wholesale`               |
+| `delivery`  | `{ programFacts: [{ label, value }] ("Доставка по Бишкеку" · "в день оплаты", …), markdown, faq: [{ q, a }] }`                                                                                                                                                                                                                                                                                                                                                                                                                                                         | program pages, `/delivery` |
+| `privacy`   | `{ markdown }`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | `/privacy`                 |
+| `offer`     | `{ markdown }`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | `/offer`                   |
 
 Static UI strings (buttons, section titles that the design treats as fixed, validation texts) live in `copy.ts`.
 
@@ -407,25 +431,25 @@ new ──► sent
 
 ## 6. Object keys
 
-| Bucket  | Key                               | Notes                                                       |
-| ------- | --------------------------------- | ----------------------------------------------------------- |
-| private | `incoming/{mediaId}`              | presigned POST target; removed after processing             |
-| private | `orig/{mediaId}.{ext}`            | original image, never linked                                |
-| public  | `p/{mediaId}/{width}.{avif,webp}` | immutable, `max-age=31536000, immutable`                    |
-| public  | `p/{mediaId}/share.jpg`           | JPEG ≤ 1200 px for share cards (next/og draws no WebP)      |
-| public  | `d/{mediaId}/{filename}.pdf`      | protocols, brand catalog; `Content-Disposition: attachment` |
+| Bucket  | Key                               | Notes                                                          |
+| ------- | --------------------------------- | -------------------------------------------------------------- |
+| private | `incoming/{mediaId}`              | presigned POST target; removed after processing                |
+| private | `orig/{mediaId}.{ext}`            | original image, never linked                                   |
+| public  | `p/{mediaId}/{width}.{avif,webp}` | immutable, `max-age=31536000, immutable`                       |
+| public  | `p/{mediaId}/share.jpg`           | JPEG ≤ 1200 px for share cards (next/og draws no WebP)         |
+| public  | `d/{mediaId}/{filename}.pdf`      | care schemes, brand catalog; `Content-Disposition: attachment` |
 
 ## 7. Seed (M1)
 
 - Owner from `SEED_OWNER_EMAIL` / `SEED_OWNER_PASSWORD` / `SEED_OWNER_NAME`; dev-only manager.
 - Categories: Очищение, Тонеры, Сыворотки, Кремы, SPF.
 - Brands: Dr. SGN, Dr. SGNBIO, Merikit, TUPS Laboratories, Ronas.
-- 13 products and 5 programs (with items, morning/evening steps, fit lists, quiz matching, courses, headlines) exactly as in
-  `design/Bom Beauty Prototype.dc.html` (`P`, `PROGRAMS`) and `design/BomAdmin.dc.html` (`P0`, `PROGRAMS0`); badges
-  "Хит продаж" (cica) and "Выбор Нурайым" (pdrn).
-- No media: photos, videos, protocol PDFs and review screenshots are uploaded by the owner through the admin after
-  deploy; the site shows placeholders until then.
+- 13 products and 8 programs (with items, morning/evening steps, fit lists, quiz matching, courses, headlines) exactly as
+  in `design/Bom Beauty Prototype.dc.html` (`P`, `PROGRAMS`, `P_ORDER`) and `design/BomAdmin.dc.html`; badges "Хит
+  продаж" (cica) and "Выбор Нурайым" (pdrn); Состав texts and the home rail flags from the October 2026 README (§1.5).
+- No media: photos, videos, care scheme PDFs, program covers and review screenshots are uploaded by the owner through
+  the admin after deploy; the site shows placeholders until then.
 - Settings: shop (WhatsApp `+996706304803`), appearance defaults, currencies with the design's rates, notifications off.
 - Content: home, wholesale (`WS0`), delivery, placeholder privacy and offer texts marked `[...]`.
-- Dev only: ~20 demo orders across statuses (the design's `ORDERS0`) and a few leads.
+- Dev only: ~20 demo orders across statuses (the design's `ORDERS0`, one of them a 3-line cart) and a few leads.
 - Idempotent: upsert by slug/key.

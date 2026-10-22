@@ -1,4 +1,4 @@
-import type { ProductCard } from '@bom/shared';
+import { displayBadge, type ProductCard } from '@bom/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { imageMediaSelect, toImageRef } from '../common/media-refs';
 
@@ -12,6 +12,9 @@ export const productCardSelect = {
   priceKgs: true,
   badge: true,
   inStock: true,
+  bestseller: true,
+  seoulChoice: true,
+  isNew: true,
   brand: { select: { name: true } },
   category: { select: { slug: true, name: true } },
   images: { orderBy: { order: 'asc' }, take: 1, select: { alt: true, media: { select: imageMediaSelect } } },
@@ -30,8 +33,11 @@ export function toProductCard(row: ProductCardRow): ProductCard {
     volume: row.volume,
     purpose: row.purpose,
     priceKgs: row.priceKgs,
-    badge: row.badge,
+    badge: displayBadge(row),
     inStock: row.inStock,
+    bestseller: row.bestseller,
+    seoulChoice: row.seoulChoice,
+    isNew: row.isNew,
     image: toImageRef(main?.media, main?.alt || row.name),
   };
 }

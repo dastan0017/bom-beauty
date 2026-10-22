@@ -8,8 +8,11 @@ import { securityHeaders } from './src/security-headers';
 const nextConfig: NextConfig = {
   output: 'standalone',
   outputFileTracingRoot: resolve(process.cwd(), '..'),
-  // Static TTF fonts for the Open Graph cards (src/lib/og.tsx) live outside this package.
-  outputFileTracingIncludes: { '/**': ['../packages/config/fonts/og/*.ttf'] },
+  // Static TTF fonts for the Open Graph cards (src/lib/og.tsx) and the care scheme PDF (src/lib/scheme-pdf.ts) live
+  // outside this package.
+  outputFileTracingIncludes: {
+    '/**': ['../packages/config/fonts/og/*.ttf', '../packages/config/fonts/pdf/*.ttf'],
+  },
   typedRoutes: true,
   poweredByHeader: false,
   headers: async () => [

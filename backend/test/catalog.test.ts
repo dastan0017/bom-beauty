@@ -1,6 +1,7 @@
 import type {
   ContentResponse,
   ProductCard,
+  ProductDetail,
   ProgramCard,
   ProgramDetail,
   PublicSettings,
@@ -53,11 +54,14 @@ describe('public catalog', () => {
     ]);
     expect(res.body.sumKgs).toBe(7400);
     expect(res.body.priceKgs).toBe(5900);
+    // Steps with products outside the program (the design's oil and PDRN) are not seeded.
     expect(res.body.steps.pm.map((s) => s.text)).toEqual([
       'Смывает SPF и себум за день',
       'Помогает очистить поры',
       'Увлажняет без жирной плёнки',
     ]);
+    expect(res.body.title).toBe('Акне и постакне');
+    expect(res.body.cover).toBeNull();
     expect(res.body.protocol).toBeNull();
     expect(res.body.video).toBeNull();
   });
@@ -66,12 +70,54 @@ describe('public catalog', () => {
     const res = await request<ProgramCard[]>(ctx.url('/v1/catalog/programs'));
     expect(res.body.map((p) => p.slug)).toEqual([
       'acne',
-      'dry-skin',
+      'pores',
       'pigmentation',
-      'sensitive-skin',
       'lifting',
+      'glow',
+      'dry-skin',
+      'sensitive-skin',
+      'recovery',
     ]);
-    expect(res.body[0]?.quiz).toEqual({ goal: 'acne', skins: ['oily', 'normal'] });
+    expect(res.body[0]?.quiz).toEqual({ goal: 'acne', skins: ['combo', 'normal', 'dry'] });
+  });
+
+  it('marks new products with «Новинка» over their own badge and flags the home rails', async () => {
+    const res = await request<ProductCard[]>(ctx.url('/v1/catalog/products'));
+    const bySlug = (slug: string) => res.body.find((p) => p.slug === slug);
+    expect(bySlug('dr-sgn-cica-serum')).toMatchObject({
+      badge: 'Хит продаж',
+      bestseller: true,
+      isNew: false,
+    });
+    expect(bySlug('ronas-stem-cell-z-serum')).toMatchObject({
+      badge: 'Новинка',
+      isNew: true,
+      seoulChoice: true,
+    });
+    await ctx.prisma.product.update({
+      where: { slug: 'dr-sgn-pdrn-perfect-ampoule' },
+      data: { isNew: true },
+    });
+    const pdrn = await request<ProductCard>(ctx.url('/v1/catalog/products/dr-sgn-pdrn-perfect-ampoule'));
+    expect(pdrn.body.badge).toBe('Новинка');
+    await ctx.prisma.product.update({
+      where: { slug: 'dr-sgn-pdrn-perfect-ampoule' },
+      data: { isNew: false },
+    });
+  });
+
+  it('suggests the other products of its programs first, then the rails, up to six', async () => {
+    const res = await request<ProductDetail>(ctx.url('/v1/catalog/products/merikit-cleansing-oil'));
+    // The oil is only in «Чёрные точки и поры»: its other items come first, then bestsellers and Seoul picks.
+    expect(res.body.related.map((p) => p.slug)).toEqual([
+      'dr-sgn-centella-cleansing-foam',
+      'tups-bha-toner',
+      'merikit-moisture-cream-gel',
+      'dr-sgnbio-sun-fluid-spf50',
+      'merikit-hydrating-toner',
+      'dr-sgn-cica-serum',
+    ]);
+    expect(res.body.related.map((p) => p.slug)).not.toContain('merikit-cleansing-oil');
   });
 
   it('serves public settings with only enabled currencies', async () => {

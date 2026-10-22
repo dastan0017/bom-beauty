@@ -12,17 +12,18 @@ export type LeadKind = (typeof LEAD_KINDS)[number];
 export const USER_ROLES = ['owner', 'manager'] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
-export const QUIZ_GOALS = ['age', 'pigment', 'acne', 'barrier'] as const;
+export const QUIZ_GOALS = ['acne', 'pigment', 'age', 'calm', 'glow'] as const;
 export type QuizGoal = (typeof QUIZ_GOALS)[number];
 
-export const SKIN_TYPES = ['dry', 'oily', 'normal', 'sens'] as const;
+export const SKIN_TYPES = ['oily', 'combo', 'dry', 'sens', 'normal'] as const;
 export type SkinType = (typeof SKIN_TYPES)[number];
 
-export const QUIZ_EXPERIENCES = ['pro', 'mass', 'new'] as const;
+export const QUIZ_EXPERIENCES = ['pro', 'some', 'new'] as const;
 export type QuizExperience = (typeof QUIZ_EXPERIENCES)[number];
 
-export const QUIZ_FORMATS = ['set', 'wa'] as const;
-export type QuizFormat = (typeof QUIZ_FORMATS)[number];
+/** Age bands in the quiz; they go to WhatsApp only and do not change the ranking. */
+export const QUIZ_AGES = ['u25', '25', '35', '45'] as const;
+export type QuizAge = (typeof QUIZ_AGES)[number];
 
 export const ROUTINE_PERIODS = ['am', 'pm'] as const;
 export type RoutinePeriod = (typeof ROUTINE_PERIODS)[number];

@@ -1,7 +1,7 @@
 import { z } from '../zod';
 import {
+  QUIZ_AGES,
   QUIZ_EXPERIENCES,
-  QUIZ_FORMATS,
   QUIZ_GOALS,
   SKIN_TYPES,
   WHOLESALE_BUYERS,
@@ -10,10 +10,10 @@ import {
 import { submissionMetaShape } from './common';
 
 export const quizAnswersSchema = z.object({
-  skin: z.enum(SKIN_TYPES),
   goal: z.enum(QUIZ_GOALS),
+  skin: z.enum(SKIN_TYPES),
   exp: z.enum(QUIZ_EXPERIENCES),
-  fmt: z.enum(QUIZ_FORMATS),
+  age: z.enum(QUIZ_AGES),
 });
 
 export const wholesaleAnswersSchema = z.object({
@@ -25,8 +25,11 @@ export const wholesaleAnswersSchema = z.object({
 export const createQuizLeadSchema = z.object({
   ...submissionMetaShape,
   answers: quizAnswersSchema,
-  /** true: "Спросить Нурайым в WhatsApp" (help choosing); false: "Получить разбор в WhatsApp". */
-  choose: z.boolean().default(false),
+  /**
+   * true: "Спросить Нурайым в WhatsApp" (help choosing). The October 2026 quiz has only this hand-off;
+   * false marks leads from the earlier "Получить разбор в WhatsApp" button.
+   */
+  choose: z.boolean().default(true),
 });
 export type CreateQuizLeadInput = z.input<typeof createQuizLeadSchema>;
 export type CreateQuizLead = z.output<typeof createQuizLeadSchema>;

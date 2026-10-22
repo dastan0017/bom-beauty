@@ -1,10 +1,4 @@
-import {
-  formatKgs,
-  formatPhoneDisplay,
-  ORDER_ITEM_TYPE_LABELS,
-  relativeDateTime,
-  type OrderStatus,
-} from '@bom/shared';
+import { formatKgs, formatPhoneDisplay, relativeDateTime, type OrderStatus } from '@bom/shared';
 import { useEffect, useState, type CSSProperties } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
@@ -25,7 +19,7 @@ import {
 import { copy } from '@/content/copy';
 import { useUser } from '@/features/auth/auth';
 import { download, saveBlob } from '@/lib/api';
-import { errorText, itemLabel } from '@/lib/format';
+import { errorText, itemLabel, kindLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { OrderDrawer } from './order-drawer';
 import { useOrderCounters, useOrders, useUpdateOrder } from '@/api/orders';
@@ -172,7 +166,7 @@ export function OrdersPage() {
               </span>
               <span className="flex min-w-0 flex-col gap-0.5">
                 <span className="text-[15px]">{itemLabel(order)}</span>
-                <span className="text-[13px] text-muted">{ORDER_ITEM_TYPE_LABELS[order.itemType]}</span>
+                <span className="text-[13px] text-muted">{kindLabel(order)}</span>
               </span>
               <span className="truncate text-[15px] text-muted" title={order.address}>
                 {order.city}

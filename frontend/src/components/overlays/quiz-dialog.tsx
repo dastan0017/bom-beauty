@@ -1,23 +1,15 @@
 'use client';
 
 import type { ProgramCard, QuizAnswers, QuizKey } from '@bom/shared';
-import {
-  buildQuizMessage,
-  QUIZ_QUESTIONS,
-  quizAnswerLabel,
-  quizResultCaption,
-  rankPrograms,
-  waLink,
-} from '@bom/shared/web';
+import { buildQuizMessage, QUIZ_QUESTIONS, rankPrograms, waLink } from '@bom/shared/web';
 import { useRef, type ReactNode } from 'react';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
 import { openExternal, submissionMeta, submit } from '@/lib/submission';
 import { productsCount } from '@/lib/words';
 import { BbImage } from '../bb-image';
-import { useCurrency } from '../currency';
-import { ArrowLeftIcon, ChevronRightIcon, CheckIcon, SparkleIcon, WhatsAppIcon } from '../icons';
-import { VideoThumb } from '../video-thumb';
+import { Price, useCurrency } from '../currency';
+import { ArrowLeftIcon, ChevronRightIcon, SparkleIcon, WhatsAppIcon } from '../icons';
 import { CloseButton } from './sheet';
 import { useModal, usePresence } from './use-dialog';
 
@@ -29,7 +21,7 @@ export interface QuizState {
 
 const TOTAL = QUIZ_QUESTIONS.length;
 
-/** "Выбрать программу за 1 минуту": full-screen dialog, four questions, then results (design: qIsQ / qResSet / qResWa). */
+/** «Подобрать программу ухода за 1 минуту»: full-screen dialog, four questions, then up to three programs (README §2). */
 export function QuizDialog({
   state,
   programs,
@@ -38,7 +30,6 @@ export function QuizDialog({
   onBack,
   onClose,
   onRestart,
-  onSeeList,
   onPick,
 }: {
   state: QuizState;
@@ -48,9 +39,9 @@ export function QuizDialog({
   onBack: () => void;
   onClose: () => void;
   onRestart: () => void;
-  onSeeList: () => void;
   onPick: (slug: string) => void;
 }) {
+  const { format } = useCurrency();
   const { mounted, visible } = usePresence(state.open);
   const panel = useRef<HTMLDivElement>(null);
   useModal(panel, state.open, onClose);
@@ -63,15 +54,15 @@ export function QuizDialog({
     state.answers,
   );
 
-  const handOff = (choose: boolean) => {
+  // "Спросить Нурайым в WhatsApp": the answers and the suggested programs go to her, and the lead is recorded.
+  const handOff = () => {
     const answers = state.answers as QuizAnswers;
     const message = buildQuizMessage(
       answers,
-      ranked.map((program) => program.title),
-      choose,
+      ranked.map((program) => ({ title: program.title, price: format(program.priceKgs) })),
     );
     openExternal(waLink(whatsapp, message));
-    submit('/leads/quiz', { ...submissionMeta(message), answers, choose });
+    submit('/leads/quiz', { ...submissionMeta(message), answers, choose: true });
   };
 
   return (
@@ -164,67 +155,26 @@ export function QuizDialog({
                           className={cn('size-2.5 rounded-full', selected ? 'bg-accent' : 'bg-transparent')}
                         />
                       </span>
-                      <span className="flex min-w-0 flex-col gap-[3px]">
-                        <span className="text-base leading-[1.3] font-semibold">{option.label}</span>
-                        {option.hint && (
-                          <span className="text-sm leading-[1.4] text-muted">{option.hint}</span>
-                        )}
-                      </span>
+                      <span className="min-w-0 text-base leading-[1.4] text-pretty">{option.label}</span>
                     </button>
                   );
                 })}
               </div>
             </>
-          ) : state.answers.fmt === 'wa' ? (
-            <>
-              <div className="flex flex-col items-center text-center">
-                <span className="mt-2 flex size-[68px] items-center justify-center rounded-full bg-success-soft text-success-ink">
-                  <CheckIcon size={30} strokeWidth={2.6} />
-                </span>
-                <h2 className="mt-5 heading text-[calc(28px*var(--fhk))] leading-[1.12]">
-                  {copy.quiz.doneTitle}
-                </h2>
-                <p className="mt-2.5 text-base leading-normal text-balance text-muted">
-                  {copy.quiz.doneText}
-                </p>
-              </div>
-              <dl className="mt-6 flex flex-col rounded-card border border-line bg-surface">
-                {(
-                  [
-                    [copy.quiz.summary.skin, quizAnswerLabel('skin', state.answers.skin)],
-                    [copy.quiz.summary.goal, quizAnswerLabel('goal', state.answers.goal)],
-                    [copy.quiz.summary.exp, quizAnswerLabel('exp', state.answers.exp)],
-                    [copy.quiz.summary.program, ranked[0]?.title ?? '—'],
-                  ] as const
-                ).map(([key, value], index) => (
-                  <div
-                    key={key}
-                    className={cn(
-                      'flex flex-col gap-[3px] px-[18px] py-3.5',
-                      index > 0 && 'border-t border-line-2',
-                    )}
-                  >
-                    <dt className="text-[13px] text-muted">{key}</dt>
-                    <dd className="text-[15px] leading-[1.35] font-semibold">{value}</dd>
-                  </div>
-                ))}
-              </dl>
-              <button
-                type="button"
-                onClick={() => handOff(false)}
-                className="mt-6 flex h-[58px] w-full items-center justify-center gap-2.5 rounded-button bg-accent px-[22px] text-[17px] font-semibold text-white shadow-[0_18px_32px_-14px_var(--acsh)] hover:brightness-[.94]"
-              >
-                <WhatsAppIcon size={20} />
-                {copy.quiz.getReview}
-              </button>
-              <SecondaryButton onClick={onSeeList}>{copy.quiz.seeList}</SecondaryButton>
-              <RestartButton onClick={onRestart} />
-            </>
           ) : (
             <>
-              <h2 className="heading text-[calc(28px*var(--fhk))] leading-[1.12]">{copy.quiz.resultTitle}</h2>
-              <p className="mt-2 text-[15px] leading-[1.45] text-muted">{quizResultCaption(state.answers)}</p>
-              <div className="mt-[22px] flex flex-col gap-2.5">
+              <div className="flex flex-col items-center text-center">
+                <span className="flex size-16 items-center justify-center rounded-full bg-accent-soft text-accent">
+                  <SparkleIcon size={28} />
+                </span>
+                <h2 className="mt-[18px] heading text-[calc(30px*var(--fhk))] leading-[1.1]">
+                  {copy.quiz.resultTitle}
+                </h2>
+                <p className="mt-2.5 text-base leading-normal text-balance text-muted">
+                  {copy.quiz.resultLead}
+                </p>
+              </div>
+              <div className="mt-6 flex flex-col gap-2.5">
                 {ranked.map((program, index) => (
                   <div key={program.slug} className="contents">
                     {index === 1 && (
@@ -237,7 +187,7 @@ export function QuizDialog({
                 ))}
               </div>
               <p className="mt-7 text-center text-[15px] text-muted">{copy.quiz.unsure}</p>
-              <SecondaryButton onClick={() => handOff(true)} className="mt-2.5">
+              <SecondaryButton onClick={handOff} className="mt-2.5">
                 <WhatsAppIcon size={18} className="text-whatsapp" />
                 {copy.quiz.askNurai}
               </SecondaryButton>
@@ -250,6 +200,7 @@ export function QuizDialog({
   );
 }
 
+/** A suggested program: title, symptom and price, then the product thumbs and «Подробнее» (README §2). */
 function ResultCard({
   program,
   primary,
@@ -259,48 +210,51 @@ function ResultCard({
   primary: boolean;
   onPick: () => void;
 }) {
-  const { format } = useCurrency();
   return (
     <button
       type="button"
       onClick={onPick}
       className={cn(
-        'flex w-full items-center gap-3.5 rounded-card bg-surface p-3 text-left transition-colors',
-        primary ? 'border-[1.5px] border-accent' : 'border border-line hover:border-line-hover',
+        'flex w-full flex-col gap-3 rounded-card bg-surface p-4 text-left transition-colors',
+        primary
+          ? 'border-[1.5px] border-accent shadow-[0_0_0_4px_var(--halo)]'
+          : 'border border-line hover:border-line-hover',
       )}
     >
-      <VideoThumb program={program} className={primary ? 'h-[90px] w-[68px]' : 'h-20 w-[60px]'} />
-      <span className="flex min-w-0 flex-1 flex-col gap-1">
-        {primary ? (
-          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="inline-flex h-[22px] items-center gap-1 rounded-full bg-accent-soft px-2 text-xs font-semibold text-accent-ink">
-              <SparkleIcon size={10} />
-              {copy.quiz.recommended}
-            </span>
-            {program.badge && <span className="text-xs font-semibold text-muted">{program.badge}</span>}
-          </span>
-        ) : (
-          program.badge && <span className="text-xs font-semibold text-muted">{program.badge}</span>
-        )}
-        <span className={cn('leading-[1.3] font-semibold', primary ? 'text-[17px]' : 'text-base')}>
-          {program.title}
+      {primary && (
+        <span className="inline-flex h-[26px] items-center gap-[5px] self-start rounded-full bg-accent-soft px-2.5 text-[13px] font-semibold text-accent-ink">
+          <SparkleIcon size={11} />
+          {copy.quiz.recommended}
         </span>
-        <span className="text-[15px] leading-[1.35] font-semibold">{format(program.priceKgs)}</span>
-        <span className="mt-0.5 flex items-center gap-2">
+      )}
+      <span className="flex items-start justify-between gap-3">
+        <span className="flex min-w-0 flex-col gap-[3px]">
+          <span className="text-lg leading-[1.25] font-semibold">{program.title}</span>
+          <span className="text-sm leading-[1.4] text-pretty text-muted">{program.symptom}</span>
+        </span>
+        <span className="flex-none text-lg leading-[1.25] font-semibold tracking-[-0.01em] whitespace-nowrap">
+          <Price kgs={program.priceKgs} />
+        </span>
+      </span>
+      <span className="flex items-center justify-between gap-2.5 border-t border-line-2 pt-3">
+        <span className="flex min-w-0 items-center gap-2">
           <span className="flex pl-[7px]">
-            {program.thumbs.map((thumb) => (
+            {program.thumbs.slice(0, 5).map((thumb) => (
               <span
                 key={thumb.slug}
-                className="relative -ml-[7px] size-6 flex-none overflow-hidden rounded-[7px] bg-surface-2 shadow-[0_0_0_2px_var(--sf)]"
+                className="relative -ml-[7px] size-[26px] flex-none overflow-hidden rounded-lg bg-surface-2 shadow-[0_0_0_2px_var(--sf)]"
               >
-                <BbImage image={thumb.image} sizes="24px" width={48} alt="" />
+                <BbImage image={thumb.image} sizes="26px" width={52} alt="" />
               </span>
             ))}
           </span>
-          <span className="text-[13px] whitespace-nowrap text-muted">{productsCount(program.itemCount)}</span>
+          <span className="text-sm whitespace-nowrap text-muted">{productsCount(program.itemCount)}</span>
+        </span>
+        <span className="flex flex-none items-center gap-0.5 text-sm font-semibold text-accent-ink">
+          {copy.quiz.details}
+          <ChevronRightIcon size={16} />
         </span>
       </span>
-      <ChevronRightIcon size={18} className="flex-none text-muted" />
     </button>
   );
 }

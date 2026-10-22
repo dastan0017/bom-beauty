@@ -17,6 +17,10 @@ variable files) with layout features limited to `kern,liga,clig,calt,ccmp,locl,m
 `og/*.ttf`: static 600 TTF instances for the Open Graph cards (Satori reads neither WOFF2 nor variable fonts),
 subset to Latin + Cyrillic with `kern,liga`.
 
+`pdf/onest-{400,600,700}.ttf`: static Onest instances for the care scheme PDF (`frontend/src/lib/scheme-pdf.ts`;
+pdf-lib embeds TTF only and subsets per document), subset to Latin + Cyrillic. Traced into the standalone build by
+`outputFileTracingIncludes` in `frontend/next.config.ts`.
+
 Rebuild (fontTools): `python3 -m fontTools.varLib.instancer <ttf> wght=400:700` (Onest) or `wght=600` (Cormorant), then
 `python3 -m fontTools.subset <ttf> --unicodes=<ranges> --layout-features='*' --flavor=woff2`.
 Ranges: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0400-052F, U+1C80-1C88,

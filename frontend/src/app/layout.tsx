@@ -2,12 +2,13 @@ import { buildThemeVars } from '@bom/shared/web';
 import type { Metadata, Viewport } from 'next';
 import type { CSSProperties, ReactNode } from 'react';
 import { Analytics } from '@/components/analytics';
+import { cartProduct } from '@/components/catalog/product-card';
 import { SiteOverlays } from '@/components/overlays/site-overlays';
 import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 import { copy } from '@/content/copy';
 import { env } from '@/env';
-import { getProgramsSafe, getSettings } from '@/lib/data';
+import { getProductsSafe, getProgramsSafe, getSettings } from '@/lib/data';
 import { BASE_OPEN_GRAPH } from '@/lib/seo';
 import { cormorant, notoKr, onest } from './fonts';
 import './globals.css';
@@ -36,7 +37,11 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const [settings, programs] = await Promise.all([getSettings(), getProgramsSafe()]);
+  const [settings, programs, products] = await Promise.all([
+    getSettings(),
+    getProgramsSafe(),
+    getProductsSafe(),
+  ]);
   // Theme from "Оформление" in the admin; changing it revalidates the "settings" tag (no rebuild).
   const themeVars = buildThemeVars(settings.appearance) as CSSProperties;
   const themeColor = settings.appearance.headerColor;
@@ -55,6 +60,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           whatsapp={settings.shop.whatsapp}
           currencies={settings.currencies}
           programs={programs}
+          products={products.map(cartProduct)}
           turnstileSiteKey={settings.turnstileSiteKey}
         >
           <a

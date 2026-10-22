@@ -8,7 +8,7 @@ export default function GlobalError({ reset }: { error: Error & { digest?: strin
   return (
     <html lang="ru">
       <body
-        style={{ margin: 0, fontFamily: 'system-ui, sans-serif', background: '#FAF7F8', color: '#14142B' }}
+        style={{ margin: 0, fontFamily: 'system-ui, sans-serif', background: '#FEF6F8', color: '#14142B' }}
       >
         <main style={{ maxWidth: 480, margin: '0 auto', padding: '80px 20px', textAlign: 'center' }}>
           <h1 style={{ fontSize: 28, margin: 0 }}>{copy.error.title}</h1>

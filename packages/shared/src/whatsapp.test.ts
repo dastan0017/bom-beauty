@@ -1,12 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { formatKgs } from './money';
-import { buildOrderMessage, buildQuizMessage, buildWholesaleMessage, waLink } from './whatsapp';
+import {
+  buildOrderMessage,
+  buildQuizMessage,
+  buildSchemeRequestMessage,
+  buildWholesaleMessage,
+  waLink,
+} from './whatsapp';
 
 describe('WhatsApp messages', () => {
-  it('order message matches the design format', () => {
+  it('one-line order: no "Итого", × only above 1', () => {
     const text = buildOrderMessage({
-      item: { type: 'program', title: 'Акне и проблемная кожа' },
-      qty: 2,
+      lines: [{ type: 'program', title: 'Акне и постакне', qty: 2, total: formatKgs(11800) }],
       total: formatKgs(11800),
       name: ' Айгерим ',
       phone: '+996 555 12 34 56',
@@ -16,7 +21,7 @@ describe('WhatsApp messages', () => {
     expect(text).toBe(
       [
         'Здравствуйте! Хочу заказать:',
-        '• Программа «Акне и проблемная кожа» × 2 — 11\u00a0800\u00a0сом',
+        '• Программа «Акне и постакне» × 2 — 11\u00a0800\u00a0сом',
         '',
         'Имя: Айгерим',
         'Телефон: +996 555 12 34 56',
@@ -27,19 +32,35 @@ describe('WhatsApp messages', () => {
     );
   });
 
-  it('adds the сом total and comment when present', () => {
+  it('cart order lists every line, the total and the сом sum', () => {
     const text = buildOrderMessage({
-      item: { type: 'product', title: 'PDRN Perfect Ampoule' },
-      qty: 1,
-      total: '45\u00a0$',
-      totalKgs: formatKgs(3900),
+      lines: [
+        { type: 'product', title: 'PDRN Perfect Ampoule', qty: 1, total: '45\u00a0$' },
+        { type: 'product', title: 'Солнцезащитный флюид SPF 50+', qty: 2, total: '30\u00a0$' },
+      ],
+      total: '75\u00a0$',
+      totalKgs: formatKgs(6500),
       name: 'Сабина',
       phone: '+7 701 334 12 08',
       address: 'Алматы',
       comment: 'Позвонить за час',
     });
-    expect(text).toContain('• PDRN Perfect Ampoule — 45\u00a0$');
-    expect(text).toContain('Комментарий: Позвонить за час\nСумма в сомах: 3\u00a0900\u00a0сом');
+    expect(text).toBe(
+      [
+        'Здравствуйте! Хочу заказать:',
+        '• PDRN Perfect Ampoule — 45\u00a0$',
+        '• Солнцезащитный флюид SPF 50+ × 2 — 30\u00a0$',
+        'Итого: 75\u00a0$',
+        '',
+        'Имя: Сабина',
+        'Телефон: +7 701 334 12 08',
+        'Адрес: Алматы',
+        'Комментарий: Позвонить за час',
+        'Сумма в сомах: 6\u00a0500\u00a0сом',
+        '',
+        'Пришлите, пожалуйста, реквизиты для оплаты.',
+      ].join('\n'),
+    );
   });
 
   it('wholesale message with and without choices', () => {
@@ -52,15 +73,26 @@ describe('WhatsApp messages', () => {
     expect(buildWholesaleMessage({ country: 'kz' })).toContain('\n\nДоставка в Казахстан.');
   });
 
-  it('quiz message lists answers and programs', () => {
-    const text = buildQuizMessage(
-      { skin: 'oily', goal: 'acne', exp: 'new' },
-      ['Акне и проблемная кожа', 'Пигментация'],
-      true,
+  it('quiz message lists the four answers and the suggested programs', () => {
+    const text = buildQuizMessage({ goal: 'acne', skin: 'combo', exp: 'some', age: '25' }, [
+      { title: 'Акне и постакне', price: formatKgs(5900) },
+      { title: 'Чёрные точки и поры', price: formatKgs(5400) },
+    ]);
+    expect(text).toBe(
+      [
+        'Здравствуйте, Нурайым! Прошла тест «Подобрать программу ухода за 1 минуту» на сайте.',
+        '— Задача: Избавиться от высыпаний, чёрных точек и закрытых комедонов',
+        '— Кожа через 2–3 часа после умывания: Блестит только Т-зона (лоб, нос, подбородок), а на щеках комфортно',
+        '— Активная косметика: Пробовала отдельные средства, но нет чёткой системы',
+        '— Возраст: 25–35 лет',
+        'Сайт предложил: «Акне и постакне», 5\u00a0900\u00a0сом; «Чёрные точки и поры», 5\u00a0400\u00a0сом. Помогите выбрать, пожалуйста.',
+      ].join('\n'),
     );
-    expect(text).toContain('— Тип кожи: Комбинированная / жирная');
-    expect(text).toContain(
-      'Сайт предложил программы: «Акне и проблемная кожа», «Пигментация». Помогите выбрать, пожалуйста.',
+  });
+
+  it('scheme request names the program', () => {
+    expect(buildSchemeRequestMessage('Пигментация')).toBe(
+      'Здравствуйте, Нурайым! Пришлите, пожалуйста, схему ухода по программе «Пигментация».',
     );
   });
 

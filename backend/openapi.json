@@ -3263,6 +3263,15 @@
           "inStock": {
             "type": "boolean"
           },
+          "bestseller": {
+            "type": "boolean"
+          },
+          "seoulChoice": {
+            "type": "boolean"
+          },
+          "isNew": {
+            "type": "boolean"
+          },
           "image": {
             "anyOf": [
               {
@@ -3329,6 +3338,9 @@
           "priceKgs",
           "badge",
           "inStock",
+          "bestseller",
+          "seoulChoice",
+          "isNew",
           "image"
         ],
         "additionalProperties": false
@@ -3391,6 +3403,15 @@
             ]
           },
           "inStock": {
+            "type": "boolean"
+          },
+          "bestseller": {
+            "type": "boolean"
+          },
+          "seoulChoice": {
+            "type": "boolean"
+          },
+          "isNew": {
             "type": "boolean"
           },
           "image": {
@@ -3530,6 +3551,147 @@
               "additionalProperties": false
             }
           },
+          "related": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "slug": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "shortName": {
+                  "type": "string"
+                },
+                "brand": {
+                  "type": "string"
+                },
+                "category": {
+                  "type": "object",
+                  "properties": {
+                    "slug": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "slug",
+                    "name"
+                  ],
+                  "additionalProperties": false
+                },
+                "volume": {
+                  "type": "string"
+                },
+                "purpose": {
+                  "type": "string"
+                },
+                "priceKgs": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "badge": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "inStock": {
+                  "type": "boolean"
+                },
+                "bestseller": {
+                  "type": "boolean"
+                },
+                "seoulChoice": {
+                  "type": "boolean"
+                },
+                "isNew": {
+                  "type": "boolean"
+                },
+                "image": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "width": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "height": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "alt": {
+                          "type": "string"
+                        },
+                        "blurDataUrl": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "widths": {
+                          "type": "array",
+                          "items": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "width",
+                        "height",
+                        "alt",
+                        "blurDataUrl",
+                        "widths"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "slug",
+                "name",
+                "shortName",
+                "brand",
+                "category",
+                "volume",
+                "purpose",
+                "priceKgs",
+                "badge",
+                "inStock",
+                "bestseller",
+                "seoulChoice",
+                "isNew",
+                "image"
+              ],
+              "additionalProperties": false
+            }
+          },
           "seo": {
             "type": "object",
             "properties": {
@@ -3570,12 +3732,16 @@
           "priceKgs",
           "badge",
           "inStock",
+          "bestseller",
+          "seoulChoice",
+          "isNew",
           "image",
           "description",
           "howToUse",
           "inci",
           "images",
           "programs",
+          "related",
           "seo",
           "updatedAt"
         ],
@@ -3690,6 +3856,59 @@
               "additionalProperties": false
             }
           },
+          "cover": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "width": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "height": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "alt": {
+                    "type": "string"
+                  },
+                  "blurDataUrl": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "widths": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  }
+                },
+                "required": [
+                  "id",
+                  "width",
+                  "height",
+                  "alt",
+                  "blurDataUrl",
+                  "widths"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "video": {
             "anyOf": [
               {
@@ -3733,10 +3952,11 @@
                   {
                     "type": "string",
                     "enum": [
-                      "age",
-                      "pigment",
                       "acne",
-                      "barrier"
+                      "pigment",
+                      "age",
+                      "calm",
+                      "glow"
                     ]
                   },
                   {
@@ -3749,10 +3969,11 @@
                 "items": {
                   "type": "string",
                   "enum": [
-                    "dry",
                     "oily",
-                    "normal",
-                    "sens"
+                    "combo",
+                    "dry",
+                    "sens",
+                    "normal"
                   ]
                 }
               }
@@ -3774,6 +3995,7 @@
           "inStock",
           "itemCount",
           "thumbs",
+          "cover",
           "video",
           "quiz"
         ],
@@ -3888,6 +4110,59 @@
               "additionalProperties": false
             }
           },
+          "cover": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "width": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "height": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "alt": {
+                    "type": "string"
+                  },
+                  "blurDataUrl": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "widths": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    }
+                  }
+                },
+                "required": [
+                  "id",
+                  "width",
+                  "height",
+                  "alt",
+                  "blurDataUrl",
+                  "widths"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "video": {
             "anyOf": [
               {
@@ -3977,10 +4252,11 @@
                   {
                     "type": "string",
                     "enum": [
-                      "age",
-                      "pigment",
                       "acne",
-                      "barrier"
+                      "pigment",
+                      "age",
+                      "calm",
+                      "glow"
                     ]
                   },
                   {
@@ -3993,10 +4269,11 @@
                 "items": {
                   "type": "string",
                   "enum": [
-                    "dry",
                     "oily",
-                    "normal",
-                    "sens"
+                    "combo",
+                    "dry",
+                    "sens",
+                    "normal"
                   ]
                 }
               }
@@ -4087,6 +4364,15 @@
                 "inStock": {
                   "type": "boolean"
                 },
+                "bestseller": {
+                  "type": "boolean"
+                },
+                "seoulChoice": {
+                  "type": "boolean"
+                },
+                "isNew": {
+                  "type": "boolean"
+                },
                 "image": {
                   "anyOf": [
                     {
@@ -4153,6 +4439,9 @@
                 "priceKgs",
                 "badge",
                 "inStock",
+                "bestseller",
+                "seoulChoice",
+                "isNew",
                 "image"
               ],
               "additionalProperties": false
@@ -4293,6 +4582,7 @@
           "inStock",
           "itemCount",
           "thumbs",
+          "cover",
           "video",
           "quiz",
           "headline",
@@ -4630,6 +4920,15 @@
                     "inStock": {
                       "type": "boolean"
                     },
+                    "bestseller": {
+                      "type": "boolean"
+                    },
+                    "seoulChoice": {
+                      "type": "boolean"
+                    },
+                    "isNew": {
+                      "type": "boolean"
+                    },
                     "image": {
                       "anyOf": [
                         {
@@ -4696,6 +4995,9 @@
                     "priceKgs",
                     "badge",
                     "inStock",
+                    "bestseller",
+                    "seoulChoice",
+                    "isNew",
                     "image"
                   ],
                   "additionalProperties": false
@@ -4857,6 +5159,39 @@
             "type": "string",
             "maxLength": 4000
           },
+          "items": {
+            "minItems": 1,
+            "maxItems": 30,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "product",
+                    "program"
+                  ]
+                },
+                "slug": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100,
+                  "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+                },
+                "qty": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 20
+                }
+              },
+              "required": [
+                "type",
+                "slug",
+                "qty"
+              ]
+            }
+          },
           "item": {
             "oneOf": [
               {
@@ -4946,8 +5281,6 @@
           "clientRef",
           "message",
           "pageUrl",
-          "item",
-          "qty",
           "name",
           "phone",
           "address"
@@ -5030,49 +5363,53 @@
           "answers": {
             "type": "object",
             "properties": {
-              "skin": {
-                "type": "string",
-                "enum": [
-                  "dry",
-                  "oily",
-                  "normal",
-                  "sens"
-                ]
-              },
               "goal": {
                 "type": "string",
                 "enum": [
-                  "age",
-                  "pigment",
                   "acne",
-                  "barrier"
+                  "pigment",
+                  "age",
+                  "calm",
+                  "glow"
+                ]
+              },
+              "skin": {
+                "type": "string",
+                "enum": [
+                  "oily",
+                  "combo",
+                  "dry",
+                  "sens",
+                  "normal"
                 ]
               },
               "exp": {
                 "type": "string",
                 "enum": [
                   "pro",
-                  "mass",
+                  "some",
                   "new"
                 ]
               },
-              "fmt": {
+              "age": {
                 "type": "string",
                 "enum": [
-                  "set",
-                  "wa"
+                  "25",
+                  "35",
+                  "45",
+                  "u25"
                 ]
               }
             },
             "required": [
-              "skin",
               "goal",
+              "skin",
               "exp",
-              "fmt"
+              "age"
             ]
           },
           "choose": {
-            "default": false,
+            "default": true,
             "type": "boolean"
           }
         },
@@ -5206,20 +5543,47 @@
                 "phone": {
                   "type": "string"
                 },
-                "itemTitle": {
-                  "type": "string"
-                },
-                "itemType": {
-                  "type": "string",
-                  "enum": [
-                    "product",
-                    "program"
-                  ]
-                },
-                "qty": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
+                "lines": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "product",
+                          "program"
+                        ]
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "unitPriceKgs": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "qty": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "totalKgs": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "title",
+                      "unitPriceKgs",
+                      "qty",
+                      "totalKgs"
+                    ],
+                    "additionalProperties": false
+                  }
                 },
                 "address": {
                   "type": "string"
@@ -5251,9 +5615,7 @@
                 "number",
                 "name",
                 "phone",
-                "itemTitle",
-                "itemType",
-                "qty",
+                "lines",
                 "address",
                 "city",
                 "totalKgs",
@@ -5333,20 +5695,47 @@
           "phone": {
             "type": "string"
           },
-          "itemTitle": {
-            "type": "string"
-          },
-          "itemType": {
-            "type": "string",
-            "enum": [
-              "product",
-              "program"
-            ]
-          },
-          "qty": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "product",
+                    "program"
+                  ]
+                },
+                "title": {
+                  "type": "string"
+                },
+                "unitPriceKgs": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "qty": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "totalKgs": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "type",
+                "title",
+                "unitPriceKgs",
+                "qty",
+                "totalKgs"
+              ],
+              "additionalProperties": false
+            }
           },
           "address": {
             "type": "string"
@@ -5371,11 +5760,6 @@
             "type": "string",
             "format": "date-time",
             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
-          },
-          "unitPriceKgs": {
-            "type": "integer",
-            "minimum": -9007199254740991,
-            "maximum": 9007199254740991
           },
           "comment": {
             "anyOf": [
@@ -5533,15 +5917,12 @@
           "number",
           "name",
           "phone",
-          "itemTitle",
-          "itemType",
-          "qty",
+          "lines",
           "address",
           "city",
           "totalKgs",
           "status",
           "createdAt",
-          "unitPriceKgs",
           "comment",
           "message",
           "note",
@@ -5856,20 +6237,47 @@
                 "phone": {
                   "type": "string"
                 },
-                "itemTitle": {
-                  "type": "string"
-                },
-                "itemType": {
-                  "type": "string",
-                  "enum": [
-                    "product",
-                    "program"
-                  ]
-                },
-                "qty": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
+                "lines": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "product",
+                          "program"
+                        ]
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "unitPriceKgs": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "qty": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "totalKgs": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "title",
+                      "unitPriceKgs",
+                      "qty",
+                      "totalKgs"
+                    ],
+                    "additionalProperties": false
+                  }
                 },
                 "address": {
                   "type": "string"
@@ -5901,9 +6309,7 @@
                 "number",
                 "name",
                 "phone",
-                "itemTitle",
-                "itemType",
-                "qty",
+                "lines",
                 "address",
                 "city",
                 "totalKgs",
@@ -6195,6 +6601,18 @@
           "published": {
             "type": "boolean"
           },
+          "bestseller": {
+            "default": false,
+            "type": "boolean"
+          },
+          "seoulChoice": {
+            "default": false,
+            "type": "boolean"
+          },
+          "isNew": {
+            "default": false,
+            "type": "boolean"
+          },
           "imageIds": {
             "maxItems": 3,
             "type": "array",
@@ -6326,6 +6744,15 @@
             "type": "boolean"
           },
           "published": {
+            "type": "boolean"
+          },
+          "bestseller": {
+            "type": "boolean"
+          },
+          "seoulChoice": {
+            "type": "boolean"
+          },
+          "isNew": {
             "type": "boolean"
           },
           "images": {
@@ -6509,6 +6936,9 @@
           "badge",
           "inStock",
           "published",
+          "bestseller",
+          "seoulChoice",
+          "isNew",
           "images",
           "seoTitle",
           "seoDescription",
@@ -6576,10 +7006,11 @@
               {
                 "type": "string",
                 "enum": [
-                  "age",
-                  "pigment",
                   "acne",
-                  "barrier"
+                  "pigment",
+                  "age",
+                  "calm",
+                  "glow"
                 ]
               },
               {
@@ -6775,10 +7206,11 @@
               {
                 "type": "string",
                 "enum": [
-                  "age",
-                  "pigment",
                   "acne",
-                  "barrier"
+                  "pigment",
+                  "age",
+                  "calm",
+                  "glow"
                 ]
               },
               {
@@ -6791,10 +7223,11 @@
             "items": {
               "type": "string",
               "enum": [
-                "dry",
                 "oily",
-                "normal",
-                "sens"
+                "combo",
+                "dry",
+                "sens",
+                "normal"
               ]
             }
           },
@@ -6881,6 +7314,19 @@
             ]
           },
           "protocolMediaId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "coverMediaId": {
+            "default": null,
             "anyOf": [
               {
                 "type": "string",
@@ -7002,10 +7448,11 @@
               {
                 "type": "string",
                 "enum": [
-                  "age",
-                  "pigment",
                   "acne",
-                  "barrier"
+                  "pigment",
+                  "age",
+                  "calm",
+                  "glow"
                 ]
               },
               {
@@ -7018,10 +7465,11 @@
             "items": {
               "type": "string",
               "enum": [
-                "dry",
                 "oily",
-                "normal",
-                "sens"
+                "combo",
+                "dry",
+                "sens",
+                "normal"
               ]
             }
           },
@@ -7392,6 +7840,128 @@
               }
             ]
           },
+          "cover": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "pending",
+                      "processing",
+                      "ready",
+                      "failed"
+                    ]
+                  },
+                  "image": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "width": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "height": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "alt": {
+                            "type": "string"
+                          },
+                          "blurDataUrl": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "widths": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "width",
+                          "height",
+                          "alt",
+                          "blurDataUrl",
+                          "widths"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "file": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "url": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "bytes": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "url",
+                          "name",
+                          "bytes"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "status",
+                  "image",
+                  "file"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "seoTitle": {
             "anyOf": [
               {
@@ -7438,6 +8008,7 @@
           "sumKgs",
           "video",
           "protocol",
+          "cover",
           "seoTitle",
           "seoDescription",
           "updatedAt"

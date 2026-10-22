@@ -876,6 +876,9 @@ export interface components {
             priceKgs: number;
             badge: string | null;
             inStock: boolean;
+            bestseller: boolean;
+            seoulChoice: boolean;
+            isNew: boolean;
             image: {
                 /** Format: uuid */
                 id: string;
@@ -902,6 +905,9 @@ export interface components {
             priceKgs: number;
             badge: string | null;
             inStock: boolean;
+            bestseller: boolean;
+            seoulChoice: boolean;
+            isNew: boolean;
             image: {
                 /** Format: uuid */
                 id: string;
@@ -926,6 +932,35 @@ export interface components {
             programs: {
                 slug: string;
                 title: string;
+            }[];
+            related: {
+                /** Format: uuid */
+                id: string;
+                slug: string;
+                name: string;
+                shortName: string;
+                brand: string;
+                category: {
+                    slug: string;
+                    name: string;
+                };
+                volume: string;
+                purpose: string;
+                priceKgs: number;
+                badge: string | null;
+                inStock: boolean;
+                bestseller: boolean;
+                seoulChoice: boolean;
+                isNew: boolean;
+                image: {
+                    /** Format: uuid */
+                    id: string;
+                    width: number;
+                    height: number;
+                    alt: string;
+                    blurDataUrl: string | null;
+                    widths: number[];
+                } | null;
             }[];
             seo: {
                 title: string | null;
@@ -956,13 +991,22 @@ export interface components {
                     widths: number[];
                 } | null;
             }[];
+            cover: {
+                /** Format: uuid */
+                id: string;
+                width: number;
+                height: number;
+                alt: string;
+                blurDataUrl: string | null;
+                widths: number[];
+            } | null;
             video: {
                 durationSec: number | null;
                 poster: string | null;
             } | null;
             quiz: {
-                goal: ("age" | "pigment" | "acne" | "barrier") | null;
-                skins: ("dry" | "oily" | "normal" | "sens")[];
+                goal: ("acne" | "pigment" | "age" | "calm" | "glow") | null;
+                skins: ("oily" | "combo" | "dry" | "sens" | "normal")[];
             };
         };
         ProgramDetailDto_Output: {
@@ -987,6 +1031,15 @@ export interface components {
                     widths: number[];
                 } | null;
             }[];
+            cover: {
+                /** Format: uuid */
+                id: string;
+                width: number;
+                height: number;
+                alt: string;
+                blurDataUrl: string | null;
+                widths: number[];
+            } | null;
             video: {
                 /** Format: uuid */
                 id: string;
@@ -998,8 +1051,8 @@ export interface components {
                 mp4: string | null;
             } | null;
             quiz: {
-                goal: ("age" | "pigment" | "acne" | "barrier") | null;
-                skins: ("dry" | "oily" | "normal" | "sens")[];
+                goal: ("acne" | "pigment" | "age" | "calm" | "glow") | null;
+                skins: ("oily" | "combo" | "dry" | "sens" | "normal")[];
             };
             headline: string | null;
             course: string;
@@ -1021,6 +1074,9 @@ export interface components {
                 priceKgs: number;
                 badge: string | null;
                 inStock: boolean;
+                bestseller: boolean;
+                seoulChoice: boolean;
+                isNew: boolean;
                 image: {
                     /** Format: uuid */
                     id: string;
@@ -1127,6 +1183,9 @@ export interface components {
                     priceKgs: number;
                     badge: string | null;
                     inStock: boolean;
+                    bestseller: boolean;
+                    seoulChoice: boolean;
+                    isNew: boolean;
                     image: {
                         /** Format: uuid */
                         id: string;
@@ -1174,7 +1233,13 @@ export interface components {
             };
             website?: string;
             turnstileToken?: string;
-            item: {
+            items?: {
+                /** @enum {string} */
+                type: "product" | "program";
+                slug: string;
+                qty: number;
+            }[];
+            item?: {
                 /** @constant */
                 type: "product";
                 slug: string;
@@ -1183,7 +1248,7 @@ export interface components {
                 type: "program";
                 slug: string;
             };
-            qty: number;
+            qty?: number;
             name: string;
             phone: string;
             address: string;
@@ -1219,15 +1284,15 @@ export interface components {
             turnstileToken?: string;
             answers: {
                 /** @enum {string} */
-                skin: "dry" | "oily" | "normal" | "sens";
+                goal: "acne" | "pigment" | "age" | "calm" | "glow";
                 /** @enum {string} */
-                goal: "age" | "pigment" | "acne" | "barrier";
+                skin: "oily" | "combo" | "dry" | "sens" | "normal";
                 /** @enum {string} */
-                exp: "pro" | "mass" | "new";
+                exp: "pro" | "some" | "new";
                 /** @enum {string} */
-                fmt: "set" | "wa";
+                age: "25" | "35" | "45" | "u25";
             };
-            /** @default false */
+            /** @default true */
             choose: boolean;
         };
         CreateLeadResponseDto_Output: {
@@ -1264,10 +1329,14 @@ export interface components {
                 number: number;
                 name: string;
                 phone: string;
-                itemTitle: string;
-                /** @enum {string} */
-                itemType: "product" | "program";
-                qty: number;
+                lines: {
+                    /** @enum {string} */
+                    type: "product" | "program";
+                    title: string;
+                    unitPriceKgs: number;
+                    qty: number;
+                    totalKgs: number;
+                }[];
                 address: string;
                 city: string;
                 totalKgs: number;
@@ -1290,10 +1359,14 @@ export interface components {
             number: number;
             name: string;
             phone: string;
-            itemTitle: string;
-            /** @enum {string} */
-            itemType: "product" | "program";
-            qty: number;
+            lines: {
+                /** @enum {string} */
+                type: "product" | "program";
+                title: string;
+                unitPriceKgs: number;
+                qty: number;
+                totalKgs: number;
+            }[];
             address: string;
             city: string;
             totalKgs: number;
@@ -1301,7 +1374,6 @@ export interface components {
             status: "new" | "sent" | "cancelled";
             /** Format: date-time */
             createdAt: string;
-            unitPriceKgs: number;
             comment: string | null;
             message: string;
             note: string;
@@ -1394,10 +1466,14 @@ export interface components {
                 number: number;
                 name: string;
                 phone: string;
-                itemTitle: string;
-                /** @enum {string} */
-                itemType: "product" | "program";
-                qty: number;
+                lines: {
+                    /** @enum {string} */
+                    type: "product" | "program";
+                    title: string;
+                    unitPriceKgs: number;
+                    qty: number;
+                    totalKgs: number;
+                }[];
                 address: string;
                 city: string;
                 totalKgs: number;
@@ -1459,6 +1535,12 @@ export interface components {
             badge: ("Выбор Нурайым" | "Хит продаж" | "Хит эксперта" | "Новинка" | "Для зрелой кожи") | null;
             inStock: boolean;
             published: boolean;
+            /** @default false */
+            bestseller: boolean;
+            /** @default false */
+            seoulChoice: boolean;
+            /** @default false */
+            isNew: boolean;
             imageIds: string[];
             seoTitle: string | null;
             seoDescription: string | null;
@@ -1481,6 +1563,9 @@ export interface components {
             badge: ("Выбор Нурайым" | "Хит продаж" | "Хит эксперта" | "Новинка" | "Для зрелой кожи") | null;
             inStock: boolean;
             published: boolean;
+            bestseller: boolean;
+            seoulChoice: boolean;
+            isNew: boolean;
             images: {
                 /** Format: uuid */
                 id: string;
@@ -1526,7 +1611,7 @@ export interface components {
             itemCount: number;
             published: boolean;
             inStock: boolean;
-            quizGoal: ("age" | "pigment" | "acne" | "barrier") | null;
+            quizGoal: ("acne" | "pigment" | "age" | "calm" | "glow") | null;
             videoStatus: ("created" | "uploading" | "processing" | "ready" | "failed") | null;
             protocolStatus: ("pending" | "processing" | "ready" | "failed") | null;
             thumbs: ({
@@ -1550,8 +1635,8 @@ export interface components {
             fit: string[];
             priceKgs: number;
             badge: ("Выбор Нурайым" | "Хит продаж" | "Хит эксперта" | "Новинка" | "Для зрелой кожи") | null;
-            quizGoal: ("age" | "pigment" | "acne" | "barrier") | null;
-            quizSkins: ("dry" | "oily" | "normal" | "sens")[];
+            quizGoal: ("acne" | "pigment" | "age" | "calm" | "glow") | null;
+            quizSkins: ("oily" | "combo" | "dry" | "sens" | "normal")[];
             published: boolean;
             inStock: boolean;
             itemIds: string[];
@@ -1569,6 +1654,8 @@ export interface components {
             };
             videoId: string | null;
             protocolMediaId: string | null;
+            /** @default null */
+            coverMediaId: string | null;
             seoTitle: string | null;
             seoDescription: string | null;
         };
@@ -1584,8 +1671,8 @@ export interface components {
             fit: string[];
             priceKgs: number;
             badge: ("Выбор Нурайым" | "Хит продаж" | "Хит эксперта" | "Новинка" | "Для зрелой кожи") | null;
-            quizGoal: ("age" | "pigment" | "acne" | "barrier") | null;
-            quizSkins: ("dry" | "oily" | "normal" | "sens")[];
+            quizGoal: ("acne" | "pigment" | "age" | "calm" | "glow") | null;
+            quizSkins: ("oily" | "combo" | "dry" | "sens" | "normal")[];
             published: boolean;
             inStock: boolean;
             items: {
@@ -1634,6 +1721,26 @@ export interface components {
                 createdAt: string;
             } | null;
             protocol: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                status: "pending" | "processing" | "ready" | "failed";
+                image: {
+                    /** Format: uuid */
+                    id: string;
+                    width: number;
+                    height: number;
+                    alt: string;
+                    blurDataUrl: string | null;
+                    widths: number[];
+                } | null;
+                file: {
+                    url: string;
+                    name: string;
+                    bytes: number | null;
+                } | null;
+            } | null;
+            cover: {
                 /** Format: uuid */
                 id: string;
                 /** @enum {string} */

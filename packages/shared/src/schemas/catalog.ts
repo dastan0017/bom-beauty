@@ -18,8 +18,13 @@ export const productCardSchema = z.object({
   volume: z.string(),
   purpose: z.string(),
   priceKgs: z.number().int(),
+  /** The one label the card shows: «Новинка» for new products, otherwise the product's own badge. */
   badge: z.string().nullable(),
   inStock: z.boolean(),
+  /** Home page rails: «Бестселлеры BOM BEAUTY», «Выбор клиник Сеула», «Новинки». */
+  bestseller: z.boolean(),
+  seoulChoice: z.boolean(),
+  isNew: z.boolean(),
   image: imageRefSchema.nullable(),
 });
 export type ProductCard = z.infer<typeof productCardSchema>;
@@ -32,6 +37,8 @@ export const productDetailSchema = productCardSchema.extend({
   inci: z.string().nullable(),
   images: z.array(imageRefSchema),
   programs: z.array(z.object({ slug: z.string(), title: z.string() })),
+  /** «С этим средством ещё берут»: up to 6 other products (README §6.1). */
+  related: z.array(productCardSchema),
   seo: seoSchema,
   updatedAt: z.iso.datetime(),
 });
@@ -46,7 +53,10 @@ export const programCardSchema = z.object({
   priceKgs: z.number().int(),
   inStock: z.boolean(),
   itemCount: z.number().int(),
+  /** Every item of the program, in order (the catalog's problem filter uses the slugs). */
   thumbs: z.array(z.object({ slug: z.string(), image: imageRefSchema.nullable() })),
+  /** 5:4 photo for the home grid, the catalog banner and order lines. */
+  cover: imageRefSchema.nullable(),
   video: videoRefSchema.pick({ durationSec: true, poster: true }).nullable(),
   /** The site ranks quiz results locally with `rankPrograms`. */
   quiz: z.object({ goal: z.enum(QUIZ_GOALS).nullable(), skins: z.array(z.enum(SKIN_TYPES)) }),

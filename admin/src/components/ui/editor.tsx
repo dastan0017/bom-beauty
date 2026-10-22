@@ -80,13 +80,16 @@ export function Panel({
         className,
       )}
     >
+      {/* Design: title and aside share a row; the hint runs full width under them. */}
       {(title || hint) && (
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex flex-col gap-1">
-            {title && <h2 className="text-lg font-semibold">{title}</h2>}
-            {hint && <span className="text-sm leading-[1.45] text-muted">{hint}</span>}
-          </div>
-          {aside}
+        <div className="flex flex-col gap-1">
+          {(title || aside) && (
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+              {title && <h2 className="text-lg font-semibold">{title}</h2>}
+              {aside}
+            </div>
+          )}
+          {hint && <span className="text-sm leading-[1.45] text-muted">{hint}</span>}
         </div>
       )}
       {children}

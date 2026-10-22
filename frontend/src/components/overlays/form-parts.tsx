@@ -1,5 +1,6 @@
 'use client';
 
+import { LINE_QTY_MAX } from '@bom/shared/web';
 import type { UseFormRegisterReturn } from 'react-hook-form';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
@@ -8,7 +9,7 @@ import { MinusIcon, PlusIcon, WhatsAppIcon } from '../icons';
 // Small form pieces shared by the order sheet, the product page and the wholesale sheet. Kept apart from the order
 // sheet so those pages do not load its validation code (zod schemas, phone parsing) up front.
 
-const MAX_QTY = 9;
+const MAX_QTY = LINE_QTY_MAX;
 
 export function QtyStepper({
   value,

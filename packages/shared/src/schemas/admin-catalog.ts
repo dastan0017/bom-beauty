@@ -80,6 +80,10 @@ export const productInputSchema = z.object({
   badge: z.enum(BADGES).nullable(),
   inStock: z.boolean(),
   published: z.boolean(),
+  /** «На главной странице»: the three home rails; isNew also puts the «Новинка» label on the product. */
+  bestseller: z.boolean().default(false),
+  seoulChoice: z.boolean().default(false),
+  isNew: z.boolean().default(false),
   /** Up to three photos, the first is the main one. */
   imageIds: z.array(z.uuid()).max(3, 'product.images.max'),
   seoTitle: optionalText(200),
@@ -129,6 +133,9 @@ export const adminProductSchema = z.object({
   badge: z.enum(BADGES).nullable(),
   inStock: z.boolean(),
   published: z.boolean(),
+  bestseller: z.boolean(),
+  seoulChoice: z.boolean(),
+  isNew: z.boolean(),
   images: z.array(adminMediaSchema),
   seoTitle: z.string().nullable(),
   seoDescription: z.string().nullable(),
@@ -164,6 +171,8 @@ export const programInputSchema = z.object({
   steps: z.object({ am: z.array(stepInput).max(10), pm: z.array(stepInput).max(10) }),
   videoId: z.uuid().nullable(),
   protocolMediaId: z.uuid().nullable(),
+  /** «Фото для главной», 5:4. */
+  coverMediaId: z.uuid().nullable().default(null),
   seoTitle: optionalText(200),
   seoDescription: optionalText(300),
 });
@@ -224,6 +233,7 @@ export const adminProgramSchema = z.object({
   sumKgs: z.number().int(),
   video: adminVideoSchema.nullable(),
   protocol: adminMediaSchema.nullable(),
+  cover: adminMediaSchema.nullable(),
   seoTitle: z.string().nullable(),
   seoDescription: z.string().nullable(),
   updatedAt: z.iso.datetime(),

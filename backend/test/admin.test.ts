@@ -39,11 +39,18 @@ describe('admin: orders, leads, customers, overview', () => {
     const createdAt = new Date(Date.now() - (data.minutesAgo ?? 0) * 60_000);
     return ctx.prisma.order.create({
       data: {
-        itemType: data.program ? 'program' : 'product',
-        ...(data.program ? { programId } : {}),
-        itemTitle: data.title ?? 'Cica-сыворотка',
-        unitPriceKgs: data.total ?? 1900,
-        qty: 1,
+        lines: {
+          create: [
+            {
+              type: data.program ? 'program' : 'product',
+              ...(data.program ? { programId } : {}),
+              title: data.title ?? 'Cica-сыворотка',
+              unitPriceKgs: data.total ?? 1900,
+              qty: 1,
+              totalKgs: data.total ?? 1900,
+            },
+          ],
+        },
         totalKgs: data.total ?? 1900,
         name: data.name,
         phone: data.phone,
@@ -284,5 +291,55 @@ describe('admin: orders, leads, customers, overview', () => {
     expect(res.body.items[0]?.answers).toEqual({ skin: 'oily', goal: 'acne', exp: 'new', fmt: 'set' });
     expect(res.body.items[0]?.recommended[1]).toEqual({ slug: 'gone-program', title: 'gone-program' });
     expect(res.body.items[0]?.recommended[0]?.slug).toBe('acne');
+  });
+
+  it('shows every line of a cart order and finds it by any of its products', async () => {
+    const cart = await ctx.prisma.order.create({
+      data: {
+        lines: {
+          create: [
+            {
+              position: 0,
+              type: 'product',
+              title: 'Cica-сыворотка',
+              unitPriceKgs: 1900,
+              qty: 2,
+              totalKgs: 3800,
+            },
+            {
+              position: 1,
+              type: 'product',
+              title: 'Флюид SPF 50+',
+              unitPriceKgs: 1300,
+              qty: 1,
+              totalKgs: 1300,
+            },
+          ],
+        },
+        totalKgs: 5100,
+        name: 'Корзина',
+        phone: '+996700000010',
+        address: 'Бишкек',
+        message: 'Здравствуйте! Хочу заказать',
+        clientRef: randomUUID(),
+      },
+    });
+    const detail = await request<OrderDetail>(ctx.url(`/v1/admin/orders/${cart.id}`), {
+      headers: manager.read,
+    });
+    expect(detail.body.lines.map((line) => [line.title, line.qty, line.totalKgs])).toEqual([
+      ['Cica-сыворотка', 2, 3800],
+      ['Флюид SPF 50+', 1, 1300],
+    ]);
+    const found = await request<OrderList>(ctx.url(`/v1/admin/orders?q=${encodeURIComponent('флюид')}`), {
+      headers: manager.read,
+    });
+    expect(found.body.items.map((o) => o.name)).toContain('Корзина');
+    const csv = await (
+      await fetch(ctx.url('/v1/admin/orders/export.csv?q=%D0%9A%D0%BE%D1%80%D0%B7'), {
+        headers: owner.read,
+      })
+    ).text();
+    expect(csv).toContain(';Корзина · 3 товара;Cica-сыворотка × 2, Флюид SPF 50+;3;;5100;');
   });
 });

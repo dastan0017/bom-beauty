@@ -1,12 +1,11 @@
 import {
   LEAD_KIND_LABELS,
-  quizAnswerLabel,
+  quizLeadAnswers,
   relativeDateTime,
   WHOLESALE_BUYER_LABELS,
   WHOLESALE_COUNTRY_LABELS,
   type LeadKind,
   type LeadRow,
-  type QuizKey,
   type WholesaleBuyer,
   type WholesaleCountry,
 } from '@bom/shared';
@@ -30,14 +29,8 @@ import { cn } from '@/lib/utils';
 type Tab = 'all' | LeadKind;
 const TABS: Tab[] = ['all', 'quiz', 'wholesale'];
 const COLUMNS = '150px 90px 2.2fr 1.6fr 1fr';
-const QUIZ_KEYS: QuizKey[] = ['skin', 'goal', 'exp', 'fmt'];
-
 function answersText(lead: LeadRow): string[] {
-  if (lead.kind === 'quiz') {
-    return QUIZ_KEYS.filter((key) => lead.answers[key]).map((key) =>
-      quizAnswerLabel(key, lead.answers[key] as never),
-    );
-  }
+  if (lead.kind === 'quiz') return quizLeadAnswers(lead.answers);
   const buyer = lead.answers.buyer as WholesaleBuyer | undefined;
   const country = lead.answers.country as WholesaleCountry | undefined;
   return [

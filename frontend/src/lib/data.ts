@@ -13,7 +13,14 @@ import {
   SETTING_DEFAULTS,
   sitemapSchema,
 } from '@bom/shared';
-import type { ContentKey, ContentResponse, ContentValue, ProgramCard, PublicSettings } from '@bom/shared';
+import type {
+  ContentKey,
+  ContentResponse,
+  ContentValue,
+  ProductCard,
+  ProgramCard,
+  PublicSettings,
+} from '@bom/shared';
 import { FOREIGN_CURRENCY_CODES } from '@bom/shared/web';
 import { cache } from 'react';
 import { z } from 'zod';
@@ -71,6 +78,15 @@ export const getProducts = cache((category?: string) =>
     [TAGS.products],
   ),
 );
+
+/** Products for the cart and the home rails on every page; an API failure must not break the page. */
+export const getProductsSafe = cache(async (): Promise<ProductCard[]> => {
+  try {
+    return await getProducts();
+  } catch {
+    return [];
+  }
+});
 
 export const getProduct = cache((slug: string) =>
   apiGetOrNull(`/catalog/products/${encodeURIComponent(slug)}`, productDetailSchema, [

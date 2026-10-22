@@ -22,10 +22,10 @@ const vars = (values: Record<string, string>): CssVars => {
 
 // prettier-ignore
 const ROSE = vars({
-  bg: '#FAF7F8', sf: '#FFFFFF', sf2: '#F2F3F8', ln: '#E6E8F0', ln2: '#EEF0F5', lnh: '#CDD1E2',
+  bg: '#FEF6F8', sf: '#FFFFFF', sf2: '#F2F3F8', ln: '#E6E8F0', ln2: '#EEF0F5', lnh: '#CDD1E2',
   ink: '#14142B', mu: '#5B5F7A', ac: '#D12F63', ac2: '#E8603C', aci: '#B3264F', acs: '#FBE0EA',
   halo: 'rgba(209,47,99,.09)', acsh: 'rgba(209,47,99,.5)', pk: '#D12F63', hl: '#D12F63', hl2: '#D12F63',
-  hbg: 'radial-gradient(120% 340px at 50% 0%, #FCEEF3 0%, rgba(250,247,248,0) 100%)',
+  hbg: 'radial-gradient(120% 340px at 50% 0%, #FCEEF3 0%, rgba(254,246,248,0) 100%)',
   hink: '#14142B', hmu: '#5B5F7A', hhalo: 'rgba(209,47,99,.09)', hrad: '0px', hal: 'center', hta: 'center',
   h1s: '37px', glow: '#FCEEF3', hdr: '#FFFFFF', hdrl: '#E9EBF2', wab: '#E6E8F0', rw: '12px', tt: '#F4F1F3',
   ti: '#5B5F7A', toi: '#14142B', rt: '13px', rti: '10px', tth: 'rgba(20,20,43,.04)', ft: '#0E0E2C',
@@ -78,7 +78,7 @@ export const THEMES: Record<ThemeKey, ThemePreset> = {
     note: 'голубая шапка · выбор Нурайым',
     headerColor: '#aacdeb',
     accentColor: '#d12f63',
-    bg: '#FAF7F8',
+    bg: '#FEF6F8',
     vars: ROSE,
   },
   sky: {

@@ -227,6 +227,30 @@ export const PRODUCTS: SeedProduct[] = [
 
 type ProductKey = (typeof PRODUCTS)[number]['key'];
 
+/** «Состав» from the design (COMP). */
+export const COMPOSITION: Record<ProductKey, string> = {
+  foam: 'Экстракт центеллы азиатской, мягкие ПАВ на основе аминокислот, пантенол, аллантоин, глицерин',
+  oil: 'Масло семян подсолнечника, масло жожоба, масло виноградной косточки, эмульгатор, токоферол',
+  bha: 'Салициловая кислота (BHA), экстракт чайного дерева, ниацинамид, пантенол, бетаин',
+  aquatoner: 'Гиалуроновая кислота, бета-глюкан, пантенол, экстракт алоэ вера, аллантоин',
+  wtoner: 'Ниацинамид, арбутин, экстракт солодки, аденозин, гиалуроновая кислота',
+  cica: 'Экстракт центеллы азиатской, мадекассосид, пантенол, аллантоин, бета-глюкан',
+  wserum: 'Ниацинамид, транексамовая кислота, арбутин, глутатион, аденозин',
+  pdrn: 'PDRN (полидезоксирибонуклеотид), пептиды, аденозин, гиалуроновая кислота, пантенол',
+  ronas: 'Экстракт стволовых клеток растений, пептиды, EGF, ниацинамид, аденозин',
+  barrier: 'Керамиды, холестерин, жирные кислоты, пантенол, сквалан',
+  gel: 'Гиалуроновая кислота, экстракт зелёного чая, ниацинамид, бетаин, аллантоин',
+  cream: 'Керамиды, масло ши, сквалан, пантенол, гиалуроновая кислота',
+  spf: 'UV-фильтры нового поколения, ниацинамид, экстракт центеллы, гиалуроновая кислота. SPF 50+ PA++++',
+};
+
+/** Home rails from the design (HOME0). */
+export const HOME_RAILS: Record<'bestseller' | 'seoulChoice' | 'isNew', ProductKey[]> = {
+  bestseller: ['cica', 'pdrn', 'foam', 'aquatoner', 'spf', 'gel'],
+  seoulChoice: ['ronas', 'wserum', 'barrier', 'bha', 'wtoner', 'cream'],
+  isNew: ['ronas', 'barrier', 'oil', 'wtoner'],
+};
+
 export interface SeedProgram {
   slug: string;
   title: string;
@@ -239,22 +263,24 @@ export interface SeedProgram {
   quizSkins: SkinType[];
   items: ProductKey[];
   fit: string[];
+  /** Steps for the care scheme PDF. The design lists a few products outside the program; the seed skips those. */
   am: [ProductKey, string][];
   pm: [ProductKey, string][];
 }
 
+/** The eight programs, in the design's admin order (P_ORDER). */
 export const PROGRAMS: SeedProgram[] = [
   {
     slug: 'acne',
-    title: 'Акне и проблемная кожа',
-    headline: 'акне и проблемной коже',
-    symptom: 'Воспаления, чёрные точки, жирный блеск',
+    title: 'Акне и постакне',
+    headline: 'акне и постакне',
+    symptom: 'Воспаления, высыпания и следы постакне',
     description:
       'Готовая программа из 5 средств: утро и вечер, курс на 6–8 недель. Помогает уменьшить воспаления и чёрные точки без пересушивания.',
     course: 'Утро и вечер, курс на 6–8 недель',
     priceKgs: 5900,
     quizGoal: 'acne',
-    quizSkins: ['oily', 'normal'],
+    quizSkins: ['combo', 'normal', 'dry'],
     items: ['foam', 'bha', 'cica', 'gel', 'spf'],
     fit: [
       'Регулярно появляются воспаления и покраснения',
@@ -264,11 +290,133 @@ export const PROGRAMS: SeedProgram[] = [
     am: [
       ['foam', 'Мягко очищает и не стягивает кожу'],
       ['cica', 'Помогает уменьшить покраснения'],
+      ['gel', 'Лёгкое увлажнение без жирной плёнки'],
       ['spf', 'Защищает от новых пятен постакне'],
     ],
     pm: [
+      ['oil', 'Первый этап очищения: растворяет SPF и себум'],
       ['foam', 'Смывает SPF и себум за день'],
       ['bha', 'Помогает очистить поры'],
+      ['pdrn', 'Помогает коже быстрее восстанавливаться после воспалений'],
+      ['gel', 'Увлажняет без жирной плёнки'],
+    ],
+  },
+  {
+    slug: 'pores',
+    title: 'Чёрные точки и поры',
+    headline: 'чёрных точках и расширенных порах',
+    symptom: 'Забитые поры, закрытые комедоны, жирный блеск',
+    description: 'Программа из 5 средств для чистых пор: двойное очищение и BHA-кислота, курс на 6–8 недель.',
+    course: 'Утро и вечер, курс на 6–8 недель',
+    priceKgs: 5400,
+    quizGoal: 'acne',
+    quizSkins: ['oily', 'combo'],
+    items: ['oil', 'foam', 'bha', 'gel', 'spf'],
+    fit: [
+      'Есть чёрные точки и закрытые комедоны',
+      'Поры заметные, кожа быстро блестит',
+      'Хочется гладкую кожу без пересушивания',
+    ],
+    am: [
+      ['foam', 'Убирает себум, не пересушивая'],
+      ['aquatoner', 'Увлажняет и успокаивает после умывания'],
+      ['gel', 'Лёгкое увлажнение без жирной плёнки'],
+      ['spf', 'Обязательно при уходе с кислотами'],
+    ],
+    pm: [
+      ['oil', 'Растворяет себум и пробки в порах'],
+      ['foam', 'Второй этап очищения'],
+      ['bha', 'Очищает поры изнутри'],
+      ['cica', 'Снимает покраснения после очищения'],
+      ['gel', 'Увлажняет без жирной плёнки'],
+    ],
+  },
+  {
+    slug: 'pigmentation',
+    title: 'Пигментация',
+    headline: 'пигментации',
+    symptom: 'Пятна после солнца и следы постакне',
+    description: 'Программа из 5 средств для ровного тона: курс на 8 недель.',
+    course: 'Утро и вечер, курс на 8 недель',
+    priceKgs: 6900,
+    quizGoal: 'pigment',
+    quizSkins: ['dry', 'oily', 'combo', 'normal'],
+    items: ['foam', 'wtoner', 'wserum', 'gel', 'spf'],
+    fit: [
+      'Остались следы после высыпаний',
+      'Появились пятна после солнца',
+      'Хочется ровный тон без плотного тонального',
+    ],
+    am: [
+      ['foam', 'Бережно очищает, не раздражая кожу'],
+      ['wtoner', 'Выравнивает тон и готовит кожу к уходу'],
+      ['spf', 'Главный шаг: без SPF пятна возвращаются'],
+    ],
+    pm: [
+      ['oil', 'Первый этап очищения: растворяет SPF'],
+      ['foam', 'Смывает SPF и загрязнения за день'],
+      ['wserum', 'Помогает сделать пятна светлее'],
+      ['pdrn', 'Помогает коже восстанавливаться и выглядеть ровнее'],
+      ['gel', 'Увлажняет и смягчает кожу'],
+    ],
+  },
+  {
+    slug: 'lifting',
+    title: 'Анти-эйдж и лифтинг',
+    headline: 'возрастных изменениях',
+    symptom: 'Морщинки, потеря упругости, «овал плывёт»',
+    description:
+      'Программа из 5 средств с PDRN-ампулой: утро и вечер, курс на 8 недель. Для упругости, плотности и сияния кожи.',
+    course: 'Утро и вечер, курс на 8 недель',
+    priceKgs: 7900,
+    quizGoal: 'age',
+    quizSkins: ['dry', 'normal', 'combo'],
+    items: ['foam', 'aquatoner', 'pdrn', 'cream', 'spf'],
+    fit: [
+      'Появились морщинки и потеря упругости',
+      'Хочется подтянутый овал и сияние',
+      'Кожа выглядит уставшей и тусклой',
+    ],
+    am: [
+      ['aquatoner', 'Увлажняет и готовит кожу к уходу'],
+      ['ronas', 'Упругость и сияние на весь день'],
+      ['cream', 'Питает и смягчает кожу на весь день'],
+      ['spf', 'Защищает от фотостарения'],
+    ],
+    pm: [
+      ['oil', 'Растворяет SPF и макияж'],
+      ['foam', 'Бережно очищает, не пересушивая'],
+      ['pdrn', 'Помогает коже выглядеть плотнее и упругее'],
+      ['cream', 'Восстанавливает кожу за ночь'],
+    ],
+  },
+  {
+    slug: 'glow',
+    title: 'Тусклая кожа и сияние',
+    headline: 'тусклой и уставшей коже',
+    symptom: 'Уставший вид, серый тон, нет сияния',
+    description: 'Программа из 5 средств для ровного тона и сияния: курс на 6–8 недель.',
+    course: 'Утро и вечер, курс на 6–8 недель',
+    priceKgs: 7900,
+    quizGoal: 'glow',
+    quizSkins: ['oily', 'combo', 'normal'],
+    items: ['foam', 'wtoner', 'ronas', 'gel', 'spf'],
+    fit: [
+      'Кожа выглядит уставшей и серой',
+      'Хочется ровный тон и сияние без тонального',
+      'Нужен уход с заметным эффектом',
+    ],
+    am: [
+      ['foam', 'Мягко очищает и освежает кожу'],
+      ['wtoner', 'Выравнивает тон и придаёт сияние'],
+      ['ronas', 'Упругость и сияние на весь день'],
+      ['spf', 'Защищает от тусклости и пигмента'],
+    ],
+    pm: [
+      ['oil', 'Растворяет SPF и загрязнения'],
+      ['foam', 'Смывает загрязнения за день'],
+      ['wtoner', 'Второй слой для ровного тона'],
+      ['pdrn', 'Восстанавливает кожу за ночь'],
       ['gel', 'Увлажняет без жирной плёнки'],
     ],
   },
@@ -280,7 +428,7 @@ export const PROGRAMS: SeedProgram[] = [
     description: 'Программа из 5 средств для сухой и обезвоженной кожи: утро и вечер, курс на 6–8 недель.',
     course: 'Утро и вечер, курс на 6–8 недель',
     priceKgs: 6700,
-    quizGoal: 'barrier',
+    quizGoal: 'glow',
     quizSkins: ['dry', 'normal'],
     items: ['foam', 'aquatoner', 'barrier', 'cream', 'spf'],
     fit: [
@@ -294,36 +442,11 @@ export const PROGRAMS: SeedProgram[] = [
       ['spf', 'Защищает сухую кожу от солнца и ветра'],
     ],
     pm: [
+      ['oil', 'Мягко растворяет SPF, не пересушивая'],
       ['foam', 'Бережно очищает, не пересушивая'],
       ['barrier', 'Помогает восстановить защитный барьер'],
+      ['pdrn', 'Возвращает коже плотность и сияние'],
       ['cream', 'Питает кожу за ночь'],
-    ],
-  },
-  {
-    slug: 'pigmentation',
-    title: 'Пигментация',
-    headline: 'пигментации',
-    symptom: 'Пятна после солнца и следы постакне',
-    description: 'Программа из 5 средств для ровного тона: курс на 8 недель.',
-    course: 'Утро и вечер, курс на 8 недель',
-    priceKgs: 6900,
-    quizGoal: 'pigment',
-    quizSkins: ['dry', 'oily', 'normal'],
-    items: ['foam', 'wtoner', 'wserum', 'gel', 'spf'],
-    fit: [
-      'Остались следы после высыпаний',
-      'Появились пятна после солнца',
-      'Хочется ровный тон без плотного тонального',
-    ],
-    am: [
-      ['foam', 'Бережно очищает, не раздражая кожу'],
-      ['wtoner', 'Выравнивает тон и готовит кожу к уходу'],
-      ['spf', 'Главный шаг: без SPF пятна возвращаются'],
-    ],
-    pm: [
-      ['foam', 'Смывает SPF и загрязнения за день'],
-      ['wserum', 'Помогает сделать пятна светлее'],
-      ['gel', 'Увлажняет и смягчает кожу'],
     ],
   },
   {
@@ -334,7 +457,7 @@ export const PROGRAMS: SeedProgram[] = [
     description: 'Бережная программа из 5 средств для чувствительной кожи: курс на 6–8 недель.',
     course: 'Утро и вечер, курс на 6–8 недель',
     priceKgs: 7200,
-    quizGoal: 'barrier',
+    quizGoal: 'calm',
     quizSkins: ['sens'],
     items: ['foam', 'cica', 'barrier', 'cream', 'spf'],
     fit: [
@@ -349,82 +472,83 @@ export const PROGRAMS: SeedProgram[] = [
     ],
     pm: [
       ['foam', 'Бережно очищает без стянутости'],
+      ['aquatoner', 'Возвращает комфорт после умывания'],
       ['barrier', 'Помогает укрепить защитный барьер'],
+      ['pdrn', 'Помогает коже восстанавливаться'],
       ['cream', 'Возвращает коже комфорт за ночь'],
     ],
   },
   {
-    slug: 'lifting',
-    title: 'Лифтинг и сияние с PDRN',
-    headline: 'возрастных изменениях',
-    symptom: 'Морщинки, потеря упругости, «овал плывёт»',
+    slug: 'recovery',
+    title: 'Восстановление барьера',
+    headline: 'повреждённом барьере кожи',
+    symptom: 'Шелушения, зуд, жжение после кислот и процедур',
     description:
-      'Программа из 5 средств с PDRN-ампулой: утро и вечер, курс на 8 недель. Для упругости, плотности и сияния кожи.',
-    course: 'Утро и вечер, курс на 8 недель',
-    priceKgs: 7900,
-    quizGoal: 'age',
-    quizSkins: ['dry', 'normal'],
-    items: ['foam', 'aquatoner', 'pdrn', 'cream', 'spf'],
+      'Программа из 5 средств для восстановления барьера после кислот и процедур: курс на 4–6 недель.',
+    course: 'Утро и вечер, курс на 4–6 недель',
+    priceKgs: 8200,
+    quizGoal: 'calm',
+    quizSkins: ['dry', 'normal', 'sens'],
+    items: ['foam', 'barrier', 'pdrn', 'cream', 'spf'],
     fit: [
-      'Появились морщинки и потеря упругости',
-      'Хочется подтянутый овал и сияние',
-      'Кожа выглядит уставшей и тусклой',
+      'Кожа шелушится, зудит или жжёт',
+      'Раздражение после кислот, ретинола или процедур',
+      'Любой крем щиплет, кожа стала тонкой',
     ],
     am: [
-      ['aquatoner', 'Увлажняет и готовит кожу к уходу'],
-      ['cream', 'Питает и смягчает кожу на весь день'],
-      ['spf', 'Защищает от фотостарения'],
+      ['aquatoner', 'Мягко увлажняет без умывания пенкой'],
+      ['barrier', 'Укрепляет защитный барьер с утра'],
+      ['cream', 'Защищает от сухости и ветра'],
+      ['spf', 'Обязательная защита после процедур'],
     ],
     pm: [
-      ['foam', 'Бережно очищает, не пересушивая'],
-      ['pdrn', 'Помогает коже выглядеть плотнее и упругее'],
+      ['foam', 'Бережно очищает без стянутости'],
+      ['cica', 'Снимает раздражение и зуд'],
+      ['pdrn', 'Ускоряет восстановление кожи'],
       ['cream', 'Восстанавливает кожу за ночь'],
     ],
   },
 ];
 
 export const HOME_CONTENT: ContentValue<'home'> = {
-  heroBadge: 'Доставка по Бишкеку и СНГ',
   heroTitle: 'Время *расцвета* и сияния вашей кожи',
   heroSubtitle: 'с профессиональной косметикой',
-  quizPrompt: 'Не уверены, какая программа подойдёт? Ответьте на 4 простых вопроса',
   heroPhotoMediaId: null,
   greetingVideoId: null,
-  entries: [
-    {
-      key: 'programs',
-      title: 'Готовые программы ухода',
-      text: 'Полный уход под вашу проблему кожи',
-      imageMediaId: null,
-    },
-    {
-      key: 'catalog',
-      title: 'Каталог',
-      text: 'Корейская косметика для ежедневного ухода',
-      imageMediaId: null,
-    },
-    {
-      key: 'wholesale',
-      title: 'Для оптовиков',
-      text: 'Профессиональная косметика для вашего бизнеса',
-      imageMediaId: null,
-    },
-  ],
+  catalogImageMediaId: null,
   comparison: {
     title: 'Профессиональный уход vs масс-маркет',
     subtitle: 'Корейская косметика бывает разного уровня',
     mass: {
-      eyebrow: 'Обычный',
+      eyebrow: 'Обычная косметика',
       title: 'Масс-маркет',
-      points: ['Низкая концентрация активов', 'Поверхностное увлажнение', 'Временный эффект'],
+      points: [
+        { title: 'Низкая концентрация (3–5%)', text: 'В составе преобладают вода, базы и отдушки.' },
+        { title: 'Поверхностный эффект', text: 'Крупные молекулы не проникают в глубокие слои кожи.' },
+        {
+          title: 'Формулы «для всех»',
+          text: 'Не способны решить конкретные проблемы (акне, пигмент, морщины).',
+        },
+        { title: 'Временный результат', text: 'Работает, только пока нанесён на кожу.' },
+      ],
     },
     pro: {
-      eyebrow: 'Bom Beauty',
-      title: 'Проф. космецевтика',
+      eyebrow: 'BOM BEAUTY',
+      title: 'Профессиональная косметика',
       points: [
-        'Высокая концентрация активов',
-        'Работает в глубоких слоях кожи',
-        'Накопительный, видимый результат',
+        {
+          title: 'Высокая концентрация (до 30–50%)',
+          text: 'Терапевтические дозы PDRN, пептидов, экзосом и др.',
+        },
+        {
+          title: 'Глубокое действие',
+          text: 'Часто используют запатентованные комплексы доставки веществ вглубь кожи.',
+        },
+        {
+          title: 'Работа с проблемой',
+          text: 'Направленный уход против высыпаний, пигментации, старения и др.',
+        },
+        { title: 'Накопительный результат', text: 'Восстанавливает и обновляет кожу на клеточном уровне.' },
       ],
     },
   },
@@ -528,8 +652,8 @@ export const OFFER_CONTENT: ContentValue<'offer'> = {
 export const DEMO_ORDERS: {
   name: string;
   phone: string;
-  item: { type: 'product' | 'program'; key: string };
-  qty: number;
+  /** Program orders use the program slug, products their seed key. */
+  lines: { type: 'product' | 'program'; key: string; qty: number }[];
   city: string;
   daysAgo: number;
   time: string;
@@ -538,8 +662,7 @@ export const DEMO_ORDERS: {
   {
     name: 'Айгерим Т.',
     phone: '+996 555 12 34 56',
-    item: { type: 'program', key: 'acne' },
-    qty: 1,
+    lines: [{ type: 'program', key: 'acne', qty: 1 }],
     city: 'Бишкек',
     daysAgo: 0,
     time: '12:41',
@@ -548,8 +671,7 @@ export const DEMO_ORDERS: {
   {
     name: 'Нургуль Б.',
     phone: '+996 700 48 21 90',
-    item: { type: 'program', key: 'pigmentation' },
-    qty: 1,
+    lines: [{ type: 'program', key: 'pigmentation', qty: 1 }],
     city: 'Бишкек',
     daysAgo: 0,
     time: '12:05',
@@ -558,8 +680,7 @@ export const DEMO_ORDERS: {
   {
     name: 'Сабина Р.',
     phone: '+7 701 334 12 08',
-    item: { type: 'program', key: 'dry-skin' },
-    qty: 1,
+    lines: [{ type: 'program', key: 'dry-skin', qty: 1 }],
     city: 'Алматы',
     daysAgo: 0,
     time: '11:32',
@@ -568,8 +689,11 @@ export const DEMO_ORDERS: {
   {
     name: 'Мээрим С.',
     phone: '+996 772 90 14 33',
-    item: { type: 'product', key: 'cica' },
-    qty: 2,
+    lines: [
+      { type: 'product', key: 'cica', qty: 2 },
+      { type: 'product', key: 'spf', qty: 1 },
+      { type: 'product', key: 'gel', qty: 1 },
+    ],
     city: 'Ош',
     daysAgo: 0,
     time: '10:58',
@@ -578,8 +702,7 @@ export const DEMO_ORDERS: {
   {
     name: 'Асель К.',
     phone: '+996 555 76 02 11',
-    item: { type: 'program', key: 'acne' },
-    qty: 1,
+    lines: [{ type: 'program', key: 'acne', qty: 1 }],
     city: 'Бишкек',
     daysAgo: 0,
     time: '10:14',
@@ -588,8 +711,7 @@ export const DEMO_ORDERS: {
   {
     name: 'Жанара О.',
     phone: '+996 709 11 45 67',
-    item: { type: 'program', key: 'sensitive-skin' },
-    qty: 1,
+    lines: [{ type: 'program', key: 'sensitive-skin', qty: 1 }],
     city: 'Бишкек',
     daysAgo: 0,
     time: '09:47',
@@ -598,8 +720,7 @@ export const DEMO_ORDERS: {
   {
     name: 'Динара А.',
     phone: '+7 777 210 33 45',
-    item: { type: 'program', key: 'pigmentation' },
-    qty: 1,
+    lines: [{ type: 'program', key: 'pigmentation', qty: 1 }],
     city: 'Астана',
     daysAgo: 0,
     time: '09:20',
@@ -608,8 +729,7 @@ export const DEMO_ORDERS: {
   {
     name: 'Бермет Н.',
     phone: '+996 551 66 70 02',
-    item: { type: 'product', key: 'spf' },
-    qty: 1,
+    lines: [{ type: 'product', key: 'spf', qty: 1 }],
     city: 'Каракол',
     daysAgo: 1,
     time: '18:52',
@@ -618,8 +738,7 @@ export const DEMO_ORDERS: {
   {
     name: 'Айгерим Т.',
     phone: '+996 555 12 34 56',
-    item: { type: 'product', key: 'gel' },
-    qty: 1,
+    lines: [{ type: 'product', key: 'gel', qty: 1 }],
     city: 'Бишкек',
     daysAgo: 1,
     time: '16:10',
@@ -628,8 +747,7 @@ export const DEMO_ORDERS: {
   {
     name: 'Камила Ж.',
     phone: '+996 707 33 22 11',
-    item: { type: 'program', key: 'dry-skin' },
-    qty: 1,
+    lines: [{ type: 'program', key: 'dry-skin', qty: 1 }],
     city: 'Бишкек',
     daysAgo: 1,
     time: '14:03',
@@ -638,8 +756,7 @@ export const DEMO_ORDERS: {
   {
     name: 'Нургуль Б.',
     phone: '+996 700 48 21 90',
-    item: { type: 'product', key: 'wserum' },
-    qty: 1,
+    lines: [{ type: 'product', key: 'wserum', qty: 1 }],
     city: 'Бишкек',
     daysAgo: 3,
     time: '19:22',
@@ -648,8 +765,7 @@ export const DEMO_ORDERS: {
   {
     name: 'Элина М.',
     phone: '+7 705 118 90 44',
-    item: { type: 'program', key: 'acne' },
-    qty: 1,
+    lines: [{ type: 'program', key: 'acne', qty: 1 }],
     city: 'Алматы',
     daysAgo: 3,
     time: '11:45',

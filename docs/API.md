@@ -60,7 +60,7 @@ of login and `/auth/me`; there is no CSRF cookie.
 | ----------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------- |
 | `GET /catalog/categories`           |                                                     | `{ slug, name, count }[]` (published products only)                     |
 | `GET /catalog/products`             | `category?`                                         | `ProductCard[]` ordered by category order, product order                |
-| `GET /catalog/products/:slug`       |                                                     | `ProductDetail` (gallery, programs it belongs to)                       |
+| `GET /catalog/products/:slug`       |                                                     | `ProductDetail` (gallery, programs it belongs to, related products)     |
 | `GET /catalog/programs`             |                                                     | `ProgramCard[]` (published, by order)                                   |
 | `GET /catalog/programs/:slug`       |                                                     | `ProgramDetail`                                                         |
 | `GET /catalog/brands`               |                                                     | `{ slug, name }[]` with at least one published product                  |
@@ -109,16 +109,22 @@ type ProductCard = {
   volume: string;
   purpose: string;
   priceKgs: number;
-  badge: string | null;
+  badge: string | null; // resolved: «Новинка» while isNew is on, else the product's own badge
+  bestseller: boolean; // home rails (M8)
+  seoulChoice: boolean;
+  isNew: boolean;
   inStock: boolean;
   image: ImageRef | null;
 };
 type ProductDetail = ProductCard & {
   description: string;
   howToUse: string;
-  inci: string | null;
+  inci: string | null; // «Состав»
   images: ImageRef[];
   programs: { slug: string; title: string }[];
+  // «С этим средством ещё берут»: up to 6, never this product; the other items of its programs (program order), then
+  // bestsellers, then Seoul choice, in catalog order
+  related: ProductCard[];
   seo: { title: string | null; description: string | null };
 };
 type ProgramCard = {
@@ -131,6 +137,7 @@ type ProgramCard = {
   inStock: boolean;
   itemCount: number;
   thumbs: ImageRef[];
+  cover: ImageRef | null; // 5:4 home card photo (M8)
   video: Pick<VideoRef, 'durationSec' | 'poster'> | null;
   quiz: { goal: QuizGoal | null; skins: SkinType[] }; // the site ranks quiz results locally
 };
@@ -141,9 +148,9 @@ type ProgramDetail = ProgramCard & {
   description: string;
   items: (ProductCard & { order: number })[];
   sumKgs: number; // sum of item prices, for "По отдельности"
-  steps: { am: RoutineStep[]; pm: RoutineStep[] }; // RoutineStep = { productSlug, title, text }
+  steps: { am: RoutineStep[]; pm: RoutineStep[] }; // RoutineStep = { productSlug, title, text }; feeds the scheme PDF
   video: VideoRef | null;
-  protocol: FileRef | null;
+  protocol: FileRef | null; // uploaded «Схема ухода»; null → the site generates /programs/{slug}/scheme
   seo: { title: string | null; description: string | null };
 };
 type ReviewCard = { id: string; image: ImageRef };
@@ -176,8 +183,8 @@ type PublicSettings = {
 ```ts
 {
   clientRef: uuid,
-  item: { type: 'product', slug } | { type: 'program', slug },
-  qty: 1..9,
+  items: { type: 'product' | 'program', slug, qty: 1..20 }[],   // 1..30 lines; a cart sends products, a direct order one program
+  // deprecated (pre-M8 clients and retry outboxes): item: { type, slug }, qty: 1..9. One of items/item is required.
   name: string (2..80), phone: string, address: string (4..300), comment?: string (..500),
   displayCurrency: CurrencyCode, displayRate?: number,
   message: string (..2000),            // the exact WhatsApp text
@@ -188,14 +195,15 @@ type PublicSettings = {
 }
 ```
 
-Server: item must be published; unit price and total from the DB; phone normalised to E.164 (KG default, international
-accepted); a repeated `clientRef` returns the original `201` body.
+Server: repeated lines merge (qty capped at 20); every line must be published, else `404` for the whole order; unit
+prices and totals from the DB, stored as `OrderLine`s with title and price snapshots; phone normalised to E.164 (KG
+default, international accepted); a repeated `clientRef` returns the original `201` body.
 
 ### POST /leads/quiz and POST /leads/wholesale
 
 ```ts
 // POST /leads/quiz
-{ clientRef, answers: { skin, goal, exp, fmt }, choose?: boolean, message, pageUrl, referrer?, utm?, website, turnstileToken? }
+{ clientRef, answers: { goal, skin, exp, age }, choose?: boolean /* default true */, message, pageUrl, referrer?, utm?, website, turnstileToken? }
 // POST /leads/wholesale
 { clientRef, answers: { buyer?, country? }, message, pageUrl, referrer?, utm?, website, turnstileToken? }
 ```
@@ -218,9 +226,9 @@ Server recomputes `recommended` for quiz leads with `rankPrograms` over publishe
 
 | Method & path                  | Role | Notes                                                                                                                                                                                                                                                            |
 | ------------------------------ | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /admin/orders`            | M    | `status?`, `q?` (name, phone, item, number), `from?`, `to?`, cursor → rows `{ id, number, name, phone, itemTitle, itemType, qty, address, city, totalKgs, status, createdAt }`                                                                                   |
+| `GET /admin/orders`            | M    | `status?`, `q?` (name, phone, item, number), `from?`, `to?`, cursor → rows `{ id, number, name, phone, lines: { type, title, unitPriceKgs, qty, totalKgs }[], address, city, totalKgs, status, createdAt }`                                                      |
 | `GET /admin/orders/counters`   | M    | `{ all, new, sent, cancelled }` (polled every 15 s)                                                                                                                                                                                                              |
-| `GET /admin/orders/:id`        | M    | all fields incl. message, comment, UTM, note, status history from AuditLog                                                                                                                                                                                       |
+| `GET /admin/orders/:id`        | M    | all fields incl. lines, message, comment, UTM, note, status history from AuditLog                                                                                                                                                                                |
 | `PATCH /admin/orders/:id`      | M    | `{ status?, note? }`                                                                                                                                                                                                                                             |
 | `GET /admin/orders/export.csv` | O    | same filters; UTF-8 BOM, `;` separator, Asia/Bishkek times                                                                                                                                                                                                       |
 | `DELETE /admin/orders/:id`     | O    | personal-data deletion on request                                                                                                                                                                                                                                |
@@ -230,13 +238,13 @@ Server recomputes `recommended` for quiz leads with `rankPrograms` over publishe
 
 ### Catalog
 
-| Resource   | Endpoints                                                                                                                                          | Notes                                                                                                                                                                                                             |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Categories | `GET`, `POST`, `PUT /:id`, `DELETE /:id` (409 unless empty)                                                                                        |                                                                                                                                                                                                                   |
-| Brands     | `GET ?q=`                                                                                                                                          | autocomplete; created implicitly by product saves                                                                                                                                                                 |
-| Products   | `GET ?category=&q=`, `POST`, `GET /:id`, `PUT /:id`, `PATCH /:id` (`{ inStock?, published? }`), `DELETE /:id` (409 while in a program)             | `PUT` takes the full object incl. `brandName`, `imageIds[]` (≤ 3, ordered); empty `slug` = generated; a slug change adds a 308 redirect                                                                           |
-| Programs   | `GET`, `POST`, `GET /:id`, `PUT /:id`, `PATCH /:id` (`{ published?, inStock? }`), `DELETE /:id`                                                    | `PUT` takes `itemIds[]` ordered, `steps: { am: [{ productId, text }], pm: [...] }` (products from `itemIds` only), `videoId?`, `protocolMediaId?`; response includes `sumKgs`; delete leaves a 302 to `/programs` |
-| Reviews    | `GET`, `POST` (`{ mediaIds[] }`), `PATCH /:id` (`{ isHidden }`), `PUT /admin/reviews/order` (`{ ids }`), `DELETE /:id`; each returns the full list | `POST` takes ready review images, puts them first in upload order and hides the demo examples                                                                                                                     |
+| Resource   | Endpoints                                                                                                                                          | Notes                                                                                                                                                                                                                                            |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Categories | `GET`, `POST`, `PUT /:id`, `DELETE /:id` (409 unless empty)                                                                                        |                                                                                                                                                                                                                                                  |
+| Brands     | `GET ?q=`                                                                                                                                          | autocomplete; created implicitly by product saves                                                                                                                                                                                                |
+| Products   | `GET ?category=&q=`, `POST`, `GET /:id`, `PUT /:id`, `PATCH /:id` (`{ inStock?, published? }`), `DELETE /:id` (409 while in a program)             | `PUT` takes the full object incl. `brandName`, `imageIds[]` (≤ 3, ordered), `inci`, `bestseller` / `seoulChoice` / `isNew`; empty `slug` = generated; a slug change adds a 308 redirect                                                          |
+| Programs   | `GET`, `POST`, `GET /:id`, `PUT /:id`, `PATCH /:id` (`{ published?, inStock? }`), `DELETE /:id`                                                    | `PUT` takes `itemIds[]` ordered, `steps: { am: [{ productId, text }], pm: [...] }` (products from `itemIds` only), `videoId?`, `protocolMediaId?`, `coverMediaId?` (ready image); response includes `sumKgs`; delete leaves a 302 to `/programs` |
+| Reviews    | `GET`, `POST` (`{ mediaIds[] }`), `PATCH /:id` (`{ isHidden }`), `PUT /admin/reviews/order` (`{ ids }`), `DELETE /:id`; each returns the full list | `POST` takes ready review images, puts them first in upload order and hides the demo examples                                                                                                                                                    |
 
 Every catalog mutation writes AuditLog and revalidates the affected site tags (`RevalidateService` enqueues one
 `web.revalidate` job with all tags of the change). Product changes also revalidate `programs` and `content`. Product and
@@ -261,11 +269,12 @@ program create, update, publish toggle and delete also enqueue `indexnow.submit`
 
 ## 7. Web (Next.js) endpoints
 
-| Method & path           | Auth                  | Purpose                                                      |
-| ----------------------- | --------------------- | ------------------------------------------------------------ |
-| `POST /api/revalidate`  | `X-Revalidate-Secret` | `{ tags: string[] }` → `revalidateTag`; called by the worker |
-| `GET /indexnow-key.txt` | none                  | IndexNow key file (`INDEXNOW_KEY`); 404 when unset           |
-| `GET /health`           | none                  | liveness                                                     |
+| Method & path                 | Auth                  | Purpose                                                                                                                                                                            |
+| ----------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /api/revalidate`        | `X-Revalidate-Secret` | `{ tags: string[] }` → `revalidateTag`; called by the worker                                                                                                                       |
+| `GET /indexnow-key.txt`       | none                  | IndexNow key file (`INDEXNOW_KEY`); 404 when unset                                                                                                                                 |
+| `GET /programs/{slug}/scheme` | none                  | Care scheme PDF (A4, pdf-lib) for a published program; `attachment` with a UTF-8 file name «Схема ухода — <title>.pdf», `no-cache`, `X-Robots-Tag: noindex`; 404 for unknown slugs |
+| `GET /health`                 | none                  | liveness                                                                                                                                                                           |
 
 ## 8. Background jobs (BullMQ)
 

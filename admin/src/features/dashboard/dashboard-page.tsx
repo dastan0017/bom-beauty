@@ -3,7 +3,6 @@ import {
   formatKgs,
   formatPhoneDisplay,
   longDate,
-  ORDER_ITEM_TYPE_LABELS,
   ordersWord,
   relativeDateTime,
   type Dashboard,
@@ -26,7 +25,7 @@ import { copy } from '@/content/copy';
 import { useUser } from '@/features/auth/auth';
 import { keys } from '@/api/keys';
 import { api, unwrap } from '@/lib/api';
-import { itemLabel } from '@/lib/format';
+import { itemLabel, kindLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 const PERIODS: DashboardPeriod[] = ['today', 'week', 'month'];
@@ -185,7 +184,7 @@ export function DashboardPage() {
                     </span>
                     <span className="flex min-w-0 flex-col gap-0.5">
                       <span className="text-[15px]">{itemLabel(order)}</span>
-                      <span className="text-[13px] text-muted">{ORDER_ITEM_TYPE_LABELS[order.itemType]}</span>
+                      <span className="text-[13px] text-muted">{kindLabel(order)}</span>
                     </span>
                     <span className="text-[15px] text-muted">{order.city}</span>
                     <span className="text-[15px] font-semibold whitespace-nowrap">

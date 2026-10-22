@@ -2,6 +2,8 @@ import {
   formatKgs,
   formatPhoneDisplay,
   LEAD_KIND_LABELS,
+  orderItemLabel,
+  QUIZ_QUESTIONS,
   quizAnswerLabel,
   WHOLESALE_BUYER_LABELS,
   WHOLESALE_COUNTRY_LABELS,
@@ -18,9 +20,7 @@ export const escapeHtml = (text: string): string =>
 export interface OrderForMessage {
   id: string;
   number: number;
-  itemTitle: string;
-  itemType: 'product' | 'program';
-  qty: number;
+  lines: { type: 'product' | 'program'; title: string; qty: number }[];
   totalKgs: number;
   name: string;
   phone: string;
@@ -33,9 +33,11 @@ export function orderMessage(
   order: OrderForMessage,
   adminOrigin: string,
 ): { html: string; text: string; subject: string } {
-  const item = `${order.itemType === 'program' ? `Программа «${order.itemTitle}»` : order.itemTitle}${order.qty > 1 ? ` × ${order.qty}` : ''}`;
+  const items = order.lines.map((line) => `${orderItemLabel(line)}${line.qty > 1 ? ` × ${line.qty}` : ''}`);
   const lines = [
-    `${item} · ${formatKgs(order.totalKgs)}`,
+    ...(items.length === 1
+      ? [`${items[0]} · ${formatKgs(order.totalKgs)}`]
+      : [...items.map((item) => `• ${item}`), `Итого: ${formatKgs(order.totalKgs)}`]),
     `${order.name} · ${formatPhoneDisplay(order.phone)}`,
     order.address,
     ...(order.comment ? [`Комментарий: ${order.comment}`] : []),
@@ -69,9 +71,11 @@ export function leadMessage(
   const subject = `Новая заявка: ${LEAD_KIND_LABELS[lead.kind].toLowerCase()}`;
   const lines: string[] = [];
   if (lead.kind === 'quiz') {
-    for (const key of ['skin', 'goal', 'exp', 'fmt'] as QuizKey[]) {
+    // Leads from before October 2026 hold other answer values; those are skipped instead of printed as "—".
+    for (const key of QUIZ_QUESTIONS.map((question) => question.key) as QuizKey[]) {
       const value = lead.answers[key];
-      if (typeof value === 'string') lines.push(quizAnswerLabel(key, value as never));
+      const label = typeof value === 'string' ? quizAnswerLabel(key, value as never) : '—';
+      if (label !== '—') lines.push(label);
     }
     if (lead.recommendedTitles.length)
       lines.push(`Подобрано: ${lead.recommendedTitles.map((t) => `«${t}»`).join(', ')}`);

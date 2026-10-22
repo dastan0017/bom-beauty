@@ -34,9 +34,7 @@ describe('notification texts', () => {
       {
         id: 'abc',
         number: 1041,
-        itemTitle: 'Акне и проблемная кожа',
-        itemType: 'program',
-        qty: 2,
+        lines: [{ type: 'program', title: 'Акне и постакне', qty: 2 }],
         totalKgs: 11800,
         name: 'Айгерим <script>',
         phone: '+996555123456',
@@ -47,19 +45,59 @@ describe('notification texts', () => {
       'https://admin.bom-beauty.com',
     );
     expect(message.subject).toBe('Новый заказ №1041');
-    expect(message.html).toContain('Программа «Акне и проблемная кожа» × 2 · 11 800 сом');
+    expect(message.html).toContain('Программа «Акне и постакне» × 2 · 11 800 сом');
     expect(message.html).toContain('Айгерим &lt;script&gt; · +996 555 12 34 56');
     expect(message.html).toContain('Позвонить &amp; заехать');
     expect(message.html).toContain('<a href="https://admin.bom-beauty.com/orders/abc">');
     expect(message.text).not.toContain('—');
   });
 
+  it('lists every line of a cart order with the total', () => {
+    const message = orderMessage(
+      {
+        id: 'abc',
+        number: 1042,
+        lines: [
+          { type: 'product', title: 'Cica-сыворотка', qty: 2 },
+          { type: 'product', title: 'Флюид SPF 50+', qty: 1 },
+        ],
+        totalKgs: 5100,
+        name: 'Мээрим',
+        phone: '+996555123456',
+        address: 'Ош',
+        comment: null,
+        fromQuiz: false,
+      },
+      'https://admin.bom-beauty.com',
+    );
+    expect(message.text).toContain('• Cica-сыворотка × 2\n• Флюид SPF 50+\nИтого: 5 100 сом');
+  });
+
   it('formats quiz and wholesale leads', () => {
     const quiz = leadMessage(
-      { kind: 'quiz', answers: { skin: 'oily', goal: 'acne' }, recommendedTitles: ['Акне'], choose: true },
+      {
+        kind: 'quiz',
+        answers: { goal: 'acne', skin: 'combo', exp: 'some', age: '25' },
+        recommendedTitles: ['Акне'],
+        choose: true,
+      },
       'https://admin',
     );
+    expect(quiz.text).toContain('Избавиться от высыпаний, чёрных точек и закрытых комедонов');
+    expect(quiz.text).toContain('25–35 лет');
     expect(quiz.text).toContain('Подобрано: «Акне»');
+    // Answers saved by the earlier quiz are skipped, not printed as "—".
+    const old = leadMessage(
+      {
+        kind: 'quiz',
+        answers: { skin: 'oily', goal: 'barrier', fmt: 'wa' },
+        recommendedTitles: [],
+        choose: false,
+      },
+      'https://admin',
+    );
+    expect(old.text).toContain('Появляется сильный жирный блеск по всему лицу');
+    expect(old.text).not.toContain('—');
     expect(quiz.text).toContain('Просит помочь выбрать');
     const wholesale = leadMessage(
       { kind: 'wholesale', answers: { buyer: 'salon', country: 'kz' }, recommendedTitles: [], choose: false },

@@ -186,6 +186,19 @@ made private again, the 500 MB Free plan limit applies (one release is about 330
 only go forward: keep schema changes additive (new columns nullable, drop in a later release), so the previous image
 still runs on the new schema. If data was damaged, restore the database (`infra/scripts/restore.md`).
 
+**Release notes that need a step**
+
+- **M8, client revisions (2026-10-22, migration `20261022120000_client_revisions`)**. The one migration that is not
+  additive: orders move into `order_lines` and the quiz enums are rebuilt, so images from before M8 cannot run on the
+  new schema.
+  1. Back up first: `gh workflow run ops.yml -f task=backup-db` and wait for it to pass.
+  2. Push or run **Deploy** as usual; the migration keeps every existing order as one line and applies the revised
+     demo texts only where the owner has not changed them.
+  3. Run the seed once (`gh workflow run ops.yml -f task=seed`) to add the three new programs (Чёрные точки и поры,
+     Тусклая кожа и сияние, Восстановление барьера). It never touches existing rows.
+  4. Rolling back past M8 means restoring the backup from step 1; orders placed after the deploy are then in Telegram
+     and WhatsApp only.
+
 **Logs**: `docker compose -f docker-compose.prod.yml logs -f --tail=200 api worker web`. The API logs JSON with request
 ids and never logs phones, names, addresses, cookies or tokens. Docker keeps 5 × 10 MB per container.
 

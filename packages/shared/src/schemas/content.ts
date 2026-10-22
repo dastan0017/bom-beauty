@@ -10,24 +10,28 @@ import { fileRefSchema, imageRefSchema, videoRefSchema } from './common';
 const text = (max = 500) => z.string().trim().max(max);
 const titledText = z.object({ title: text(120), text: text(400) });
 const stat = z.object({ value: text(40), label: text(120) });
-const comparisonSide = z.object({ eyebrow: text(60), title: text(80), points: z.array(text(120)).max(5) });
+/**
+ * A point of "Профессиональный уход vs масс-маркет": a short title over one line of text (design 2026-10). Rows saved
+ * before then hold plain strings; they read as titles without text.
+ */
+const comparisonPoint = z.preprocess(
+  (value) => (typeof value === 'string' ? { title: value, text: '' } : value),
+  z.object({ title: text(80), text: text(200) }),
+);
+const comparisonSide = z.object({
+  eyebrow: text(60),
+  title: text(80),
+  points: z.array(comparisonPoint).max(5),
+});
 
 export const homeContentSchema = z.object({
-  heroBadge: text(80),
   heroTitle: text(160),
   heroSubtitle: text(200),
-  quizPrompt: text(200),
   /** Нурайым's photo in the hero; tapping it plays the greeting video when there is one. */
   heroPhotoMediaId: z.uuid().nullable().default(null),
   greetingVideoId: z.uuid().nullable(),
-  entries: z
-    .array(
-      titledText.extend({
-        key: z.enum(['programs', 'catalog', 'wholesale']),
-        imageMediaId: z.uuid().nullable(),
-      }),
-    )
-    .length(3),
+  /** 2:1 photo on top of the «Каталог» card. */
+  catalogImageMediaId: z.uuid().nullable().default(null),
   comparison: z.object({ title: text(120), subtitle: text(200), mass: comparisonSide, pro: comparisonSide }),
   about: z.object({
     caption: text(80),

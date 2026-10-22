@@ -22,8 +22,7 @@ describe('Turnstile on public submissions', () => {
   let ctx: TestContext;
   const order = (turnstileToken?: string): CreateOrderInput => ({
     clientRef: randomUUID(),
-    item: { type: 'product', slug: 'dr-sgn-cica-serum' },
-    qty: 1,
+    items: [{ type: 'product', slug: 'dr-sgn-cica-serum', qty: 1 }],
     name: 'Тест',
     phone: '+996 555 12 34 56',
     address: 'Бишкек',

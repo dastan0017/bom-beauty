@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { formatPhoneDisplay, normalizePhone } from './phone';
-import { productsWord, stepsWord } from './plural';
+import { itemsWord, productsWord, stepsWord } from './plural';
 import { slugify } from './slug';
 
 describe('phone', () => {
@@ -30,6 +30,18 @@ describe('plural', () => {
   ])('%i → %s', (n, word) => expect(productsWord(n)).toBe(word));
 
   it('steps', () => expect(stepsWord(3)).toBe('шага'));
+
+  it.each([
+    [1, 'товар'],
+    [2, 'товара'],
+    [4, 'товара'],
+    [5, 'товаров'],
+    [11, 'товаров'],
+    [14, 'товаров'],
+    [20, 'товаров'],
+    [21, 'товар'],
+    [22, 'товара'],
+  ])('cart units: %i → %s', (n, word) => expect(itemsWord(n)).toBe(word));
 });
 
 describe('slugify', () => {

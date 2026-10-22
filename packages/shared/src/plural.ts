@@ -8,6 +8,8 @@ export function plural(n: number, one: string, few: string, many: string): strin
 }
 
 export const productsWord = (n: number): string => plural(n, 'средство', 'средства', 'средств');
+/** Units in the cart: "1 товар", "2 товара", "5 товаров". */
+export const itemsWord = (n: number): string => plural(n, 'товар', 'товара', 'товаров');
 export const stepsWord = (n: number): string => plural(n, 'шаг', 'шага', 'шагов');
 export const programsWord = (n: number): string => plural(n, 'программа', 'программы', 'программ');
 export const ordersWord = (n: number): string => plural(n, 'заказ', 'заказа', 'заказов');

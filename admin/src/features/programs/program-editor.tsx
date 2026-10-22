@@ -24,7 +24,7 @@ import {
   Toggle,
   useUnsavedGuard,
 } from '@/components/ui/editor';
-import { MediaPreview, PdfSlot, VideoSlot } from '@/components/ui/media';
+import { ImageSlot, MediaPreview, PdfSlot, VideoSlot } from '@/components/ui/media';
 import { copy } from '@/content/copy';
 import { env } from '@/env';
 import { ConfirmDelete, Text } from '@/features/products/product-editor';
@@ -50,6 +50,7 @@ const EMPTY: ProgramInput = {
   steps: { am: [], pm: [] },
   videoId: null,
   protocolMediaId: null,
+  coverMediaId: null,
   seoTitle: null,
   seoDescription: null,
 };
@@ -73,6 +74,7 @@ function toInput(program: AdminProgram): ProgramInput {
     steps: program.steps,
     videoId: program.video?.id ?? null,
     protocolMediaId: program.protocol?.id ?? null,
+    coverMediaId: program.cover?.id ?? null,
     seoTitle: program.seoTitle,
     seoDescription: program.seoDescription,
   };
@@ -113,6 +115,7 @@ function ProgramForm({ program }: { program: AdminProgram | null }) {
   const [current, setCurrent] = useState(program);
   const [video, setVideo] = useState(program?.video ?? null);
   const [protocol, setProtocol] = useState(program?.protocol ?? null);
+  const [cover, setCover] = useState(program?.cover ?? null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   // A just-created item arrives here with { saved: true } after the redirect to its own URL.
   const location = useLocation();
@@ -168,6 +171,7 @@ function ProgramForm({ program }: { program: AdminProgram | null }) {
           setCurrent(result);
           setVideo(result.video);
           setProtocol(result.protocol);
+          setCover(result.cover);
           setErrors({});
           setSaved(true);
           if (!program)
@@ -437,6 +441,23 @@ function ProgramForm({ program }: { program: AdminProgram | null }) {
         </div>
 
         <div className="flex max-w-[440px] min-w-0 flex-[1_1_320px] flex-col gap-4">
+          <Panel
+            title={copy.program.cover}
+            hint={copy.program.coverHint}
+            aside={<span className="text-[13px] text-muted">{copy.media.dropHint}</span>}
+          >
+            <ImageSlot
+              media={form.coverMediaId ? cover : null}
+              label={copy.program.coverLabel}
+              purpose="content"
+              className="aspect-[5/4]"
+              onChange={(uploaded) => {
+                setCover(uploaded);
+                set('coverMediaId', uploaded.id);
+              }}
+              {...(form.coverMediaId ? { onRemove: () => set('coverMediaId', null) } : {})}
+            />
+          </Panel>
           <Panel title={copy.program.video} aside={<span className="text-[13px] text-muted">9:16</span>}>
             <VideoSlot
               video={form.videoId ? video : null}
@@ -456,7 +477,7 @@ function ProgramForm({ program }: { program: AdminProgram | null }) {
           >
             <PdfSlot
               media={form.protocolMediaId ? protocol : null}
-              hint={copy.media.pdfHint}
+              hint={copy.program.protocolEmpty}
               purpose="protocol"
               onChange={(uploaded) => {
                 setProtocol(uploaded);

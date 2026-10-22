@@ -12,7 +12,7 @@ export function SiteFooter({ shop }: { shop: PublicSettings['shop'] }) {
   const year = new Date().getFullYear();
   return (
     <footer className="site-footer mt-[72px] bg-footer text-footer-muted">
-      <div className="mx-auto flex max-w-[1100px] flex-col gap-6 px-5 pt-9 pb-[30px] lg:grid lg:grid-cols-[1.4fr_1fr_1fr] lg:gap-x-12 lg:px-6 lg:pt-12">
+      <div className="mx-auto flex max-w-[1100px] flex-col gap-6 px-5 pt-9 pb-[calc(30px+var(--sticky-space,0px))] lg:grid lg:grid-cols-[1.4fr_1fr_1fr] lg:gap-x-12 lg:px-6 lg:pt-12">
         <div className="flex flex-col gap-4">
           {/* Coloured footers use the dark lockup, dark footers the white one (theme vars --ftc / --ftw). */}
           <Image

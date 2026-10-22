@@ -1,8 +1,8 @@
 import { GENERIC_QUESTION_MESSAGE, waLink } from '@bom/shared/web';
 import type { Metadata } from 'next';
 import { TrackedLink } from '@/components/header-client';
-import { QuizLink } from '@/components/home/home-client';
-import { ArrowRightIcon, SparkleOutlineIcon } from '@/components/icons';
+import { QuizBanner } from '@/components/home/home-client';
+import { ArrowRightIcon } from '@/components/icons';
 import { JsonLd } from '@/components/json-ld';
 import { ProgramCard } from '@/components/program/program-card';
 import { QuizStickyBar } from '@/components/sticky-bar';
@@ -39,16 +39,7 @@ export default async function ProgramsPage() {
       </PageIntro>
 
       <section className={cn(container, 'flex flex-col gap-2.5 px-4 pt-6 lg:grid lg:grid-cols-2 lg:gap-4')}>
-        <QuizLink className="flex items-center gap-3 rounded-card bg-accent-soft py-3.5 pr-3.5 pl-4 transition-transform active:scale-[.985] lg:col-span-2">
-          <SparkleOutlineIcon size={22} className="flex-none text-accent" />
-          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <span className="text-base leading-[1.3] font-semibold">{copy.programs.quizTitle}</span>
-            <span className="text-sm leading-[1.4] text-muted">{copy.programs.quizText}</span>
-          </span>
-          <span className="flex size-9 flex-none items-center justify-center rounded-full bg-surface">
-            <ArrowRightIcon size={16} />
-          </span>
-        </QuizLink>
+        <QuizBanner className="lg:col-span-2" />
         {programs.map((program) => (
           <ProgramCard key={program.slug} program={program} />
         ))}

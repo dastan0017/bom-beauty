@@ -5,7 +5,9 @@ describe('buildThemeVars', () => {
   it('default: rose theme with the sky-blue header and footer from the design', () => {
     const v = buildThemeVars(DEFAULT_APPEARANCE);
     expect(v['--ac']).toBe('#D12F63');
-    expect(v['--bg']).toBe('#FAF7F8');
+    expect(v['--bg']).toBe('#FEF6F8');
+    // The glow fades into the page background, so no edge shows under the hero.
+    expect(v['--hbg']).toContain('rgba(254,246,248,0)');
     expect(v['--hdr']).toBe('#aacdeb');
     expect(v['--ft']).toBe('#aacdeb');
     expect(v['--tt']).toBe('rgba(255,255,255,.42)');

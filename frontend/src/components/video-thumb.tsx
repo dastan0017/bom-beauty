@@ -1,15 +1,18 @@
 import type { ProgramCard } from '@bom/shared';
 import { cn } from '@/lib/cn';
 import { formatDuration } from '@/lib/words';
+import { BbImage } from './bb-image';
 import { PlayIcon, SparkleIcon } from './icons';
 
-/** Vertical video thumbnail with play badge and duration (programs list and quiz results). */
+/** Program thumbnail with play badge and duration (programs list): the cover photo, else the video poster. */
 export function VideoThumb({ program, className }: { program: ProgramCard; className?: string }) {
   const poster = program.video?.poster;
   const duration = formatDuration(program.video?.durationSec);
   return (
     <span className={cn('relative flex-none overflow-hidden rounded-xl bg-[var(--poster)]', className)}>
-      {poster ? (
+      {program.cover ? (
+        <BbImage image={program.cover} sizes="92px" width={184} alt="" />
+      ) : poster ? (
         // eslint-disable-next-line @next/next/no-img-element -- Bunny poster, already sized by the CDN
         <img
           src={poster}

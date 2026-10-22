@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { whenHydrated } from './support/hydration';
 import { addReviews } from './support/reviews';
 
 // WCAG 2.2 AA checks with axe on every page type and on the overlays (order sheet, quiz), plus label-in-name, which
@@ -29,6 +30,7 @@ const PAGES = [
   '/',
   '/catalog',
   '/catalog?category=serums',
+  '/catalog?problem=acne',
   '/catalog/dr-sgn-cica-serum',
   '/programs',
   '/programs/acne',
@@ -58,7 +60,9 @@ test('a11y: home with the reviews slider', async ({ page }) => {
 
 test('a11y: order sheet', async ({ page }) => {
   await page.goto('/catalog');
-  await page.getByRole('button', { name: 'Заказать' }).first().click();
+  await (await whenHydrated(page.getByRole('button', { name: 'В корзину' }).first())).click();
+  await expectNoViolations(page);
+  await page.getByRole('button', { name: /Оформить/ }).click();
   const sheet = page.getByRole('dialog', { name: 'Оформление заказа' });
   await expect(sheet).toBeVisible();
   await sheet.getByRole('button', { name: 'Отправить заказ в WhatsApp' }).click();
@@ -68,19 +72,14 @@ test('a11y: order sheet', async ({ page }) => {
 
 test('a11y: quiz question and result', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('link', { name: 'Подобрать уход за 1 минуту' }).first().click();
-  const quiz = page.getByRole('dialog', { name: 'Выбрать программу за 1 минуту' });
+  await page.getByRole('link', { name: 'Подобрать программу ухода за 1 минуту' }).click();
+  const quiz = page.getByRole('dialog', { name: 'Подобрать программу ухода за 1 минуту' });
   await expect(quiz).toBeVisible();
   await expectNoViolations(page, '[role=dialog]');
-  for (const answer of [
-    'Комбинированная / жирная',
-    'Высыпания / акне',
-    'Да, постоянно',
-    'Готовый набор средств',
-  ]) {
+  for (const answer of ['Снять красноту', 'Кожа краснеет', 'Почти не пользовалась', '45+ лет']) {
     await quiz.getByRole('button', { name: answer }).click();
   }
-  await expect(quiz.getByRole('heading', { level: 2 }).first()).toBeVisible();
+  await expect(quiz.getByRole('heading', { name: 'Отлично!' })).toBeVisible();
   await expectNoViolations(page, '[role=dialog]');
 });
 
@@ -89,7 +88,8 @@ test.describe('keyboard', () => {
 
   test('order sheet: opens from the keyboard, keeps focus inside, Escape returns focus', async ({ page }) => {
     await page.goto('/catalog');
-    const trigger = page.getByRole('button', { name: 'Заказать' }).first();
+    await (await whenHydrated(page.getByRole('button', { name: 'В корзину' }).first())).click();
+    const trigger = page.getByRole('button', { name: /Оформить/ });
     await trigger.focus();
     await page.keyboard.press('Enter');
     const sheet = page.getByRole('dialog', { name: 'Оформление заказа' });
@@ -106,15 +106,15 @@ test.describe('keyboard', () => {
 
   test('quiz: answers with the keyboard and closes with Escape', async ({ page }) => {
     await page.goto('/');
-    const trigger = page.getByRole('link', { name: 'Подобрать уход за 1 минуту' }).first();
+    const trigger = page.getByRole('link', { name: 'Подобрать программу ухода за 1 минуту' });
     await trigger.focus();
     await page.keyboard.press('Enter');
-    const quiz = page.getByRole('dialog', { name: 'Выбрать программу за 1 минуту' });
+    const quiz = page.getByRole('dialog', { name: 'Подобрать программу ухода за 1 минуту' });
     await expect(quiz).toBeVisible();
-    const answer = quiz.getByRole('button', { name: 'Комбинированная / жирная' });
+    const answer = quiz.getByRole('button', { name: 'Избавиться от высыпаний' });
     await answer.focus();
     await page.keyboard.press('Enter');
-    await expect(quiz.getByRole('button', { name: 'Высыпания / акне' })).toBeVisible();
+    await expect(quiz.getByRole('button', { name: 'Появляется сильный жирный блеск' })).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(quiz).toBeHidden();
     await expect(trigger).toBeFocused();

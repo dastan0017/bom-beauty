@@ -12,7 +12,7 @@ import {
 import { z } from 'zod';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { toOrderRow } from './admin-orders.service';
+import { orderLinesInclude, toOrderRow } from './admin-orders.service';
 
 const answersSchema = z.record(z.string(), z.unknown());
 
@@ -96,7 +96,10 @@ export class AdminInsightsService {
              count(*) AS count,
              sum(total_kgs) AS total,
              max(created_at) AS last,
-             mode() WITHIN GROUP (ORDER BY item_title) AS favorite
+             (SELECT mode() WITHIN GROUP (ORDER BY l.title)
+                FROM order_lines l
+                JOIN orders o ON o.id = l.order_id
+               WHERE o.phone = orders.phone AND o.status <> 'cancelled') AS favorite
       FROM orders
       WHERE status <> 'cancelled'
       GROUP BY phone
@@ -134,10 +137,17 @@ export class AdminInsightsService {
         }),
         this.prisma.order.count({ where: { ...inPeriod, status: 'cancelled' } }),
         this.prisma.order.count({ where: { createdAt: { gte: weekAgo }, status: 'cancelled' } }),
-        this.prisma.order.findMany({ orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], take: 6 }),
-        this.prisma.order.groupBy({
+        this.prisma.order.findMany({
+          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+          include: orderLinesInclude,
+          take: 6,
+        }),
+        this.prisma.orderLine.groupBy({
           by: ['programId'],
-          where: { itemType: 'program', createdAt: { gte: weekAgo }, status: { not: 'cancelled' } },
+          where: {
+            type: 'program',
+            order: { createdAt: { gte: weekAgo }, status: { not: 'cancelled' } },
+          },
           _count: { _all: true },
         }),
       ]);

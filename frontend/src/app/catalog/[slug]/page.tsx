@@ -3,8 +3,9 @@ import type { ProductDetail } from '@bom/shared';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, permanentRedirect, redirect } from 'next/navigation';
-import { productOrderItem } from '@/components/catalog/product-card';
+import { cartProduct } from '@/components/catalog/product-card';
 import { ProductBackLink, ProductGallery, ProductOrder } from '@/components/catalog/product-client';
+import { ProductRail } from '@/components/catalog/product-rail';
 import { Price } from '@/components/currency';
 import { ArrowRightIcon, SparkleIcon } from '@/components/icons';
 import { JsonLd } from '@/components/json-ld';
@@ -94,26 +95,20 @@ export default async function ProductPage({ params }: Params) {
               <span className={cn('size-[7px] rounded-full', product.inStock ? 'bg-stock' : 'bg-preorder')} />
               {product.inStock ? copy.common.inStock : copy.common.preorder}
             </span>
-            <ProductOrder item={productOrderItem(product)} />
+            <ProductOrder product={cartProduct(product)} />
           </section>
 
+          <ProductRail
+            className="pt-7 lg:px-0"
+            titleClassName="text-[calc(22px*var(--fhk))] leading-[1.2] lg:text-[calc(26px*var(--fhk))]"
+            title={copy.product.related}
+            products={product.related}
+            link={false}
+            buttonLabel={copy.cart.addRelated}
+          />
+
+          {/* README §6: «Входит в программы» → «Описание» → «Состав» → «Как использовать». */}
           <section className="flex flex-col gap-2.5 px-4 pt-[26px] lg:px-0">
-            {product.description && <TextCard title={copy.product.description} text={product.description} />}
-            {product.howToUse && <TextCard title={copy.product.howToUse} text={product.howToUse} />}
-            {product.inci && (
-              <details className={cn(card, 'group px-[18px] pt-[18px] pb-5')}>
-                <summary className="flex cursor-pointer list-none items-center justify-between text-[17px] font-semibold">
-                  {copy.product.inci}
-                  <ArrowRightIcon
-                    size={16}
-                    className="text-muted transition-transform group-open:rotate-90"
-                  />
-                </summary>
-                <p className="mt-2 text-sm leading-[1.6] text-pretty break-words text-muted">
-                  {product.inci}
-                </p>
-              </details>
-            )}
             {product.programs.length > 0 && (
               <div className={cn(card, 'flex flex-col gap-3 p-[18px]')}>
                 <div className="flex flex-col gap-0.5">
@@ -134,6 +129,9 @@ export default async function ProductPage({ params }: Params) {
                 </div>
               </div>
             )}
+            {product.description && <TextCard title={copy.product.description} text={product.description} />}
+            {product.inci && <TextCard title={copy.product.composition} text={product.inci} />}
+            {product.howToUse && <TextCard title={copy.product.howToUse} text={product.howToUse} />}
           </section>
         </div>
       </div>

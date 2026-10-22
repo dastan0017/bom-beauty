@@ -45,7 +45,7 @@ function contentRefs(key: ContentKey, data: ContentValue<ContentKey>) {
   const products: string[] = [];
   if (key === 'home') {
     const home = data as ContentValue<'home'>;
-    for (const entry of home.entries) if (entry.imageMediaId) media.push(entry.imageMediaId);
+    if (home.catalogImageMediaId) media.push(home.catalogImageMediaId);
     if (home.heroPhotoMediaId) media.push(home.heroPhotoMediaId);
     if (home.about.photoMediaId) media.push(home.about.photoMediaId);
     if (home.greetingVideoId) videos.push(home.greetingVideoId);

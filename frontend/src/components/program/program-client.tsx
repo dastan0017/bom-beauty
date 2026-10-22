@@ -1,8 +1,8 @@
 'use client';
 
 import type { FileRef, ProgramDetail, VideoRef } from '@bom/shared';
-import { buildProtocolRequestMessage, waLink } from '@bom/shared/web';
-import { useState } from 'react';
+import { buildSchemeRequestMessage, waLink } from '@bom/shared/web';
+import { useState, type MouseEvent } from 'react';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
 import { track } from '@/lib/submission';
@@ -129,10 +129,55 @@ export function ProgramOrderBar({ program }: { program: ProgramForOrder }) {
   );
 }
 
-/** Protocol PDF with a fallback link and a WhatsApp request when the file fails (design: proto). */
-export function ProtocolCard({ file, programTitle }: { file: FileRef; programTitle: string }) {
+/**
+ * «Схема ухода» at the end of the program page (README §4): the PDF the owner uploaded, or one generated from the
+ * program's products and steps. When the generated file fails, the card offers to ask Нурайым in WhatsApp.
+ */
+export function SchemeCard({
+  file,
+  programSlug,
+  programTitle,
+}: {
+  file: FileRef | null;
+  programSlug: string;
+  programTitle: string;
+}) {
   const { whatsapp } = useOverlays();
-  const [clicked, setClicked] = useState(false);
+  const [state, setState] = useState<'idle' | 'clicked' | 'failed'>('idle');
+  const generated = `/programs/${programSlug}/scheme`;
+  const ask = (
+    <a
+      href={waLink(whatsapp, buildSchemeRequestMessage(programTitle))}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={() => track('whatsapp_click', { place: 'scheme' })}
+      className="flex min-h-8 items-center text-sm font-semibold text-muted"
+    >
+      {copy.program.schemeAsk}
+    </a>
+  );
+
+  // The generated PDF is fetched first, so a failure can show the WhatsApp fallback instead of a broken download.
+  const downloadGenerated = async (event: MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    track('scheme_download', { program: programTitle, kind: 'generated' });
+    try {
+      const response = await fetch(generated);
+      if (!response.ok) throw new Error(`scheme ${response.status}`);
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = copy.program.scheme.fileName(programTitle);
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      setState('idle');
+    } catch {
+      setState('failed');
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4 rounded-card border border-line bg-surface p-5">
       <div className="flex items-center gap-3.5">
@@ -140,25 +185,26 @@ export function ProtocolCard({ file, programTitle }: { file: FileRef; programTit
           PDF
         </span>
         <div className="flex min-w-0 flex-col gap-[3px]">
-          <span className="text-[17px] leading-[1.3] font-semibold">{copy.program.protocolTitle}</span>
+          <span className="text-[17px] leading-[1.3] font-semibold">{copy.program.schemeTitle}</span>
           <span className="text-sm leading-[1.4] text-muted">
-            {copy.program.protocolMeta(formatBytes(file.bytes))}
+            {file ? copy.program.schemeMeta(formatBytes(file.bytes)) : copy.program.schemeMetaGenerated}
           </span>
         </div>
       </div>
       <a
-        href={file.url}
-        download={file.name}
-        onClick={() => {
-          setClicked(true);
-          track('protocol_download', { program: programTitle });
+        href={file?.url ?? generated}
+        download={file?.name ?? copy.program.scheme.fileName(programTitle)}
+        onClick={(event) => {
+          if (!file) return void downloadGenerated(event);
+          setState('clicked');
+          track('scheme_download', { program: programTitle, kind: 'uploaded' });
         }}
         className="flex min-h-[54px] items-center justify-center gap-2.5 rounded-button border-[1.5px] border-ink bg-surface px-[18px] py-2.5 text-center text-base leading-[1.25] font-semibold text-ink hover:bg-surface-2"
       >
         <DownloadIcon size={18} className="flex-none" />
-        {copy.program.protocolDownload}
+        {copy.program.schemeDownload}
       </a>
-      {clicked && (
+      {state === 'clicked' && file && (
         <div className="-mt-1.5 flex flex-col items-center gap-1">
           <a
             href={file.url}
@@ -166,17 +212,15 @@ export function ProtocolCard({ file, programTitle }: { file: FileRef; programTit
             rel="noopener"
             className="flex min-h-8 items-center text-sm font-semibold text-accent-ink"
           >
-            {copy.program.protocolOpen}
+            {copy.program.schemeOpen}
           </a>
-          <a
-            href={waLink(whatsapp, buildProtocolRequestMessage(programTitle))}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => track('whatsapp_click', { place: 'protocol' })}
-            className="flex min-h-8 items-center text-sm font-semibold text-muted"
-          >
-            {copy.program.protocolAsk}
-          </a>
+          {ask}
+        </div>
+      )}
+      {state === 'failed' && (
+        <div role="alert" className="-mt-1 flex flex-col gap-2">
+          <span className="text-sm leading-[1.45] text-muted">{copy.program.schemeError}</span>
+          {ask}
         </div>
       )}
     </div>

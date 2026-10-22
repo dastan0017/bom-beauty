@@ -39,8 +39,10 @@ test('orders: status change, note, history; leads and customers render', async (
   const created = await request.post(`${API}/orders`, {
     data: {
       clientRef: randomUUID(),
-      item: { type: 'product', slug: 'dr-sgn-cica-serum' },
-      qty: 1,
+      items: [
+        { type: 'product', slug: 'dr-sgn-cica-serum', qty: 1 },
+        { type: 'product', slug: 'dr-sgn-centella-cleansing-foam', qty: 2 },
+      ],
       name,
       phone: '+996 555 00 11 22',
       address: 'Бишкек, ул. Тестовая, 5',
@@ -66,6 +68,7 @@ test('orders: status change, note, history; leads and customers render', async (
   const drawer = page.getByRole('dialog');
   await expect(drawer.getByText('Отправлен → ', { exact: false })).toHaveCount(0);
   await expect(drawer.getByText('Новый → Отправлен')).toBeVisible();
+  await expect(drawer.getByText('Пенка для умывания с центеллой', { exact: true })).toBeVisible();
   await drawer.getByLabel('Заметка').fill('Оплата получена (e2e)');
   await drawer.getByRole('button', { name: 'Сохранить заметку' }).click();
   await expect(drawer.getByText('Изменена заметка')).toBeVisible();

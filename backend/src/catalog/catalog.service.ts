@@ -21,7 +21,9 @@ import {
   videoSelect,
 } from '../common/media-refs';
 import { PrismaService } from '../prisma/prisma.service';
-import { productCardSelect, productOrder, toProductCard } from './catalog.selects';
+import { productCardSelect, productOrder, toProductCard, type ProductCardRow } from './catalog.selects';
+
+const RELATED_MAX = 6;
 
 const programCardSelect = {
   id: true,
@@ -34,6 +36,7 @@ const programCardSelect = {
   quizGoal: true,
   quizSkins: true,
   video: { select: videoSelect },
+  cover: { select: imageMediaSelect },
   items: {
     orderBy: { order: 'asc' },
     select: {
@@ -90,12 +93,28 @@ export class CatalogService {
         images: { orderBy: { order: 'asc' }, select: { alt: true, media: { select: imageMediaSelect } } },
         programItems: {
           where: { program: { published: true } },
-          orderBy: { program: { order: 'asc' } },
-          select: { program: { select: { slug: true, title: true } } },
+          orderBy: [{ program: { order: 'asc' } }, { program: { title: 'asc' } }],
+          select: {
+            program: {
+              select: {
+                slug: true,
+                title: true,
+                items: {
+                  where: { product: { published: true } },
+                  orderBy: { order: 'asc' },
+                  select: { product: { select: productCardSelect } },
+                },
+              },
+            },
+          },
         },
       },
     });
     if (!row) throw notFound();
+    const related = await this.related(
+      row.id,
+      row.programItems.flatMap((item) => item.program.items.map(({ product }) => product)),
+    );
     const images = row.images.flatMap((image) => {
       const ref = toImageRef(image.media, image.alt || row.name);
       return ref ? [ref] : [];
@@ -106,10 +125,34 @@ export class CatalogService {
       howToUse: row.howToUse,
       inci: row.inci,
       images,
-      programs: row.programItems.map((item) => item.program),
+      programs: row.programItems.map(({ program }) => ({ slug: program.slug, title: program.title })),
+      related,
       seo: { title: row.seoTitle, description: row.seoDescription },
       updatedAt: row.updatedAt.toISOString(),
     };
+  }
+
+  /**
+   * «С этим средством ещё берут» (README §6.1): the other products of the programs that contain this one, in program
+   * order, then the «Бестселлеры» and «Выбор клиник Сеула» rails; up to 6, no repeats.
+   */
+  private async related(productId: string, fromPrograms: ProductCardRow[]): Promise<ProductCard[]> {
+    const picked = new Map<string, ProductCardRow>();
+    const add = (product: ProductCardRow) => {
+      if (picked.size < RELATED_MAX && product.id !== productId && !picked.has(product.id))
+        picked.set(product.id, product);
+    };
+    fromPrograms.forEach(add);
+    if (picked.size < RELATED_MAX) {
+      const rails = await this.prisma.product.findMany({
+        where: { published: true, id: { not: productId }, OR: [{ bestseller: true }, { seoulChoice: true }] },
+        orderBy: productOrder,
+        select: productCardSelect,
+      });
+      rails.filter((product) => product.bestseller).forEach(add);
+      rails.filter((product) => product.seoulChoice).forEach(add);
+    }
+    return [...picked.values()].map(toProductCard);
   }
 
   async programs(): Promise<ProgramCard[]> {
@@ -203,6 +246,7 @@ export class CatalogService {
     quizGoal: ProgramCard['quiz']['goal'];
     quizSkins: ProgramCard['quiz']['skins'];
     video: Parameters<typeof toVideoRef>[0];
+    cover: Parameters<typeof toImageRef>[0];
     items: {
       product: {
         slug: string;
@@ -225,6 +269,7 @@ export class CatalogService {
         slug: product.slug,
         image: toImageRef(product.images[0]?.media, product.images[0]?.alt || product.name),
       })),
+      cover: toImageRef(row.cover, row.title),
       video: video ? { durationSec: video.durationSec, poster: video.poster } : null,
       quiz: { goal: row.quizGoal, skins: row.quizSkins },
     };

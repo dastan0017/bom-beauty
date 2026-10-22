@@ -12,14 +12,23 @@ const pageQuery = {
 
 const isoDate = z.iso.date();
 
+export const orderLineSchema = z.object({
+  type: z.enum(ORDER_ITEM_TYPES),
+  /** Snapshot of the product name or program title at the time of the order. */
+  title: z.string(),
+  unitPriceKgs: z.number().int(),
+  qty: z.number().int(),
+  totalKgs: z.number().int(),
+});
+export type OrderLine = z.infer<typeof orderLineSchema>;
+
 export const orderRowSchema = z.object({
   id: z.uuid(),
   number: z.number().int(),
   name: z.string(),
   phone: z.string(),
-  itemTitle: z.string(),
-  itemType: z.enum(ORDER_ITEM_TYPES),
-  qty: z.number().int(),
+  /** In order: one line for a program or a single product, several for a cart. */
+  lines: z.array(orderLineSchema).min(1),
   address: z.string(),
   /** First part of the address ("Бишкек"), for the city column. */
   city: z.string(),
@@ -60,7 +69,6 @@ export const orderHistoryEntrySchema = z.object({
 });
 
 export const orderDetailSchema = orderRowSchema.extend({
-  unitPriceKgs: z.number().int(),
   comment: z.string().nullable(),
   message: z.string(),
   note: z.string(),
@@ -89,7 +97,10 @@ export type LeadListQuery = z.input<typeof leadListQuerySchema>;
 export const leadRowSchema = z.object({
   id: z.uuid(),
   kind: z.enum(LEAD_KINDS),
-  /** Raw answers: quiz `{ skin, goal, exp, fmt }` or wholesale `{ buyer?, country? }`. */
+  /**
+   * Raw answers: quiz `{ goal, skin, exp, age }` (leads before October 2026: `{ skin, goal, exp, fmt }` with the
+   * old values) or wholesale `{ buyer?, country? }`.
+   */
   answers: z.record(z.string(), z.string()),
   recommended: z.array(z.object({ slug: z.string(), title: z.string() })),
   choose: z.boolean(),

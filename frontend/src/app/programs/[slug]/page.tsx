@@ -12,7 +12,7 @@ import {
   ProgramBackLink,
   ProgramOrderBar,
   ProgramVideo,
-  ProtocolCard,
+  SchemeCard,
 } from '@/components/program/program-client';
 import { AccentTitle, card, SectionTitle, StockBadge } from '@/components/ui';
 import { copy } from '@/content/copy';
@@ -53,7 +53,8 @@ export default async function ProgramPage({ params }: Params) {
   const [program, delivery] = await Promise.all([loadProgram(slug), getContent('delivery')]);
   const count = program.items.length;
   const saving = program.sumKgs - program.priceKgs;
-  const forOrder = { ...program, image: program.items[0]?.image ?? null };
+  // Order lines show the program's cover (README §11).
+  const forOrder = { ...program, image: program.cover };
   const facts = delivery?.data.programFacts ?? [];
 
   return (
@@ -190,7 +191,7 @@ export default async function ProgramPage({ params }: Params) {
                 <OrderProgramButton program={forOrder} />
               </div>
             </div>
-            {program.protocol && <ProtocolCard file={program.protocol} programTitle={program.title} />}
+            <SchemeCard file={program.protocol} programSlug={program.slug} programTitle={program.title} />
           </aside>
         </div>
       </div>

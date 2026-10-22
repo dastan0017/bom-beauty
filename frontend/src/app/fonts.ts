@@ -31,5 +31,6 @@ export const notoKr = localFont({
   weight: '500',
   variable: '--font-noto-kr',
   display: 'swap',
-  preload: false,
+  // One glyph (~1 KB), shown above the fold in the hero pill since October 2026.
+  preload: true,
 });
