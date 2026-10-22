@@ -1,10 +1,11 @@
 #!/bin/sh
 # Nightly: custom-format dumps of the app and Umami databases to dst:<bucket>/db/<date>/, kept BACKUP_RETENTION_DAYS.
+# BACKUP_DB_LABEL adds a suffix (db/<date>-<label>/), so the deploy's pre-migration dump never replaces a nightly one.
 JOB=db
 . /usr/local/bin/lib.sh
 
 : "${POSTGRES_HOST:=postgres}" "${POSTGRES_USER:?}" "${POSTGRES_PASSWORD:?}" "${POSTGRES_DB:?}"
-day=$(date +%F)
+day=$(date +%F)${BACKUP_DB_LABEL:+-$BACKUP_DB_LABEL}
 work=$(mktemp -d)
 cleanup() { rm -rf "$work"; }
 

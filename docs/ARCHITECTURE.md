@@ -401,7 +401,8 @@ Third-party images are pinned: `caddy:2.10.2-alpine`, `postgres:16.10-alpine`, `
 `umami:postgresql-v2.19.0`, `uptime-kuma:1.23.16`, `nginx-unprivileged:1.29-alpine`, `node:24.22.0-alpine`,
 `alpine:3.22`. CI (`.github/workflows/ci.yml`): format, lint, typecheck, test (the dev compose services), build,
 OpenAPI drift. Deploy (`deploy.yml`) after CI passes on `main`: GHCR images tagged with the commit SHA, rsync of the
-infra files, `compose pull`, `prisma migrate deploy`, `up -d --wait`, health checks. Backups: nightly `pg_dump` (app +
+infra files, `compose pull`, a database dump when migrations are pending, `prisma migrate deploy`, `up -d --wait`,
+health checks; the old release serves until the migration has succeeded. Backups: nightly `pg_dump` (app +
 umami) and a weekly mirror of both buckets (replaced or deleted files kept under `removed/<date>/`) to a backups bucket
 in another Hetzner location, 30-day retention, Telegram alert on failure; Bunny keeps its own copies. Runbook:
 `docs/DEPLOY.md`; restore: `infra/scripts/restore.md`. Times stored in UTC, shown in `Asia/Bishkek`.
@@ -490,7 +491,7 @@ dev containers SeaweedFS (S3) and Mailpit. Since 2026-10-17 dependencies are add
 | D24 | The KR flag in the hero trust row is a local SVG (`frontend/public/flags/kr.svg`), not the design's external link                                                                                                                                                                                                                    | The site CSP allows only own images and media hosts; no third-party request on load  |
 | D25 | The catalog cart bar's «Оформить» chip uses a dark tint (`black/10`) instead of the design's `rgba(255,255,255,.2)`                                                                                                                                                                                                                  | White on the light tint is 3.7:1; WCAG 1.4.3 needs 4.5:1                             |
 | D26 | The M8 migration applies the revised demo data (renames, flags, Состав texts, comparison copy, program order) only where the values are still the original seed, so owner edits survive                                                                                                                                              | Production already has owner data                                                    |
-| D27 | The M8 migration is not additive (order columns move into `order_lines`, quiz enums are rebuilt), the one exception to the forward-compatible migration rule in DEPLOY §4; deploy after a backup, roll back by restoring it                                                                                                          | Keeping both shapes would mean dual writes and old enum values for one release       |
+| D27 | The M8 migration is not additive (order columns move into `order_lines`, quiz enums are rebuilt), the one exception to the forward-compatible migration rule in DEPLOY §4; the deploy dumps the database before migrating; roll back by restoring that dump                                                                          | Keeping both shapes would mean dual writes and old enum values for one release       |
 
 ## 16. Risks to verify early
 

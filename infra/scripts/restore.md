@@ -1,8 +1,10 @@
 # Restore
 
 Backups live in the backup bucket (`BACKUP_S3_BUCKET`, another Hetzner location), written by the `backup` service
-(`infra/backup`): `db/<date>/bom.dump` and `db/<date>/umami.dump` nightly (pg_dump custom format), `buckets/<bucket>/`
-weekly mirrors, and `removed/<date>/<bucket>/` for files deleted or replaced during the week before. All kept 30 days.
+(`infra/backup`): `db/<date>/bom.dump` and `db/<date>/umami.dump` nightly (pg_dump custom format),
+`db/<date>-pre-migrate-<sha>/` taken by the deploy right before it applies new migrations (restore one of these to undo
+a release whose migration went wrong), `buckets/<bucket>/` weekly mirrors, and `removed/<date>/<bucket>/` for files
+deleted or replaced during the week before. All kept 30 days.
 
 Run everything from `/opt/bom` on the server. The backup image has `pg_restore`, `psql` and `rclone`; its entrypoint
 loads the remotes `src:` (site storage) and `dst:` (backups) from `.env`.

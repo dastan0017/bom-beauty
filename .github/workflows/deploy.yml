@@ -1,5 +1,6 @@
 # Production deploy (docs/DEPLOY.md): after CI passes on main, build the images, push them to GHCR, then on the
-# server: sync the infra files, pull, migrate, restart, health check. Manual runs redeploy any commit of main.
+# server: sync the infra files, pull, back up when migrations are pending, migrate, restart, health check. Manual runs
+# redeploy any commit of main.
 #
 # Repository variables: SITE_URL, API_URL, MEDIA_URL, ADMIN_URL, UPLOAD_ORIGIN, DEPLOY_HOST, DEPLOY_USER.
 # Repository secrets: DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS, GHCR_READ_TOKEN (read:packages, used by the server).
@@ -88,6 +89,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     environment: production
+    env:
+      DEPLOY_TARGET: ${{ vars.DEPLOY_USER }}@${{ vars.DEPLOY_HOST }}
+      TAG: ${{ needs.images.outputs.tag }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -109,22 +113,47 @@ jobs:
             "${{ vars.DEPLOY_USER }}@${{ vars.DEPLOY_HOST }}:/opt/bom/"
           rsync -az --chmod=D755,F755 infra/postgres/ "${{ vars.DEPLOY_USER }}@${{ vars.DEPLOY_HOST }}:/opt/bom/postgres/"
 
-      - name: Pull, migrate, restart
+      # Order matters: the running release keeps serving while the new images are pulled and the database is migrated,
+      # and is replaced only in "Restart services". A failed backup or migration stops here with the old release up.
+      - name: Pull images
         env:
-          TAG: ${{ needs.images.outputs.tag }}
           GHCR_READ_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
         run: |
-          ssh "${{ vars.DEPLOY_USER }}@${{ vars.DEPLOY_HOST }}" \
-            TAG="$TAG" GHCR_READ_TOKEN="$GHCR_READ_TOKEN" GHCR_USER="${{ github.repository_owner }}" 'bash -s' <<'SCRIPT'
+          ssh "$DEPLOY_TARGET" TAG="$TAG" GHCR_READ_TOKEN="$GHCR_READ_TOKEN" GHCR_USER="${{ github.repository_owner }}" \
+            'bash -s' <<'SCRIPT'
           set -euo pipefail
           cd /opt/bom
           echo "$GHCR_READ_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin >/dev/null
+          IMAGE_TAG="$TAG" docker compose -f docker-compose.prod.yml pull --quiet
+          SCRIPT
+
+      - name: Migrate database (backup first when migrations are pending)
+        run: |
+          ssh "$DEPLOY_TARGET" TAG="$TAG" 'bash -s' <<'SCRIPT'
+          set -euo pipefail
+          cd /opt/bom
           export IMAGE_TAG="$TAG"
           compose() { docker compose -f docker-compose.prod.yml "$@"; }
-          compose pull --quiet
           compose up -d --wait postgres redis
-          # </dev/null: `compose run` would otherwise read the rest of this script from stdin and swallow it.
+          # </dev/null on every `compose run`: it would otherwise read the rest of this script from stdin.
+          if compose run --rm --no-deps -T api node_modules/.bin/prisma migrate status </dev/null; then
+            echo "Database schema is up to date: nothing to migrate."
+            exit 0
+          fi
+          # Pending (or failed) migrations: dump the database with the new backup image into its own folder,
+          # db/<date>-pre-migrate-<sha>/, so it never replaces the nightly dump. Restore: infra/scripts/restore.md.
+          echo "Backing up the database before migrating"
+          compose run --rm --no-deps -T -e BACKUP_DB_LABEL="pre-migrate-${TAG:0:7}" backup backup-db.sh </dev/null
           compose run --rm --no-deps -T api node_modules/.bin/prisma migrate deploy </dev/null
+          SCRIPT
+
+      - name: Restart services
+        run: |
+          ssh "$DEPLOY_TARGET" TAG="$TAG" 'bash -s' <<'SCRIPT'
+          set -euo pipefail
+          cd /opt/bom
+          export IMAGE_TAG="$TAG"
+          compose() { docker compose -f docker-compose.prod.yml "$@"; }
           compose up -d --remove-orphans --wait
           # The Caddyfile is a bind mount: apply a changed one without restarting the proxy.
           compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --force </dev/null

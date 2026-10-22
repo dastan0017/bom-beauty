@@ -141,8 +141,8 @@ Repository → Settings:
 ## 3. First deploy
 
 1. Push `main` (or run **Deploy** manually). CI must pass; the workflow builds the four images, uploads the infra files,
-   pulls, runs `prisma migrate deploy` and starts the stack. It fails if `/health/ready`, the site or the admin do not
-   answer.
+   pulls, backs up the database when migrations are pending, runs `prisma migrate deploy` and starts the stack. It
+   fails if `/health/ready`, the site or the admin do not answer.
 2. Load the starting catalog and texts from the design (idempotent; never touches rows the owner has changed):
    ```sh
    cd /opt/bom && docker compose -f docker-compose.prod.yml run --rm api node dist/seed/seed.js
@@ -175,7 +175,15 @@ Repository → Settings:
 ## 4. Operations
 
 **Deploy**: every push to `main` that passes CI. Images are tagged with the commit SHA; `/opt/bom/.deployed` records the
-running one.
+running one. On the server the order is fixed, and the running release keeps serving until the last step:
+
+1. **Pull images** for the new commit.
+2. **Migrate database**: `prisma migrate status`; when migrations are pending, first a database dump to
+   `db/<date>-pre-migrate-<sha>/` in the backup bucket (it never replaces a nightly dump), then `prisma migrate deploy`.
+   A failed backup or migration stops the deploy here, with the old release still up.
+3. **Restart services** on the new images (`up -d --wait`), reload Caddy, then the health checks.
+
+To undo a release whose migration damaged data, restore its `pre-migrate` dump (`infra/scripts/restore.md`).
 
 **Image storage**: the four GHCR packages (`bom-api`, `bom-web`, `bom-admin`, `bom-backup`) are public, so they do not
 count against GitHub Packages storage (the code in them is not secret; secrets live only in the server's `.env`). The
@@ -191,12 +199,12 @@ still runs on the new schema. If data was damaged, restore the database (`infra/
 - **M8, client revisions (2026-10-22, migration `20261022120000_client_revisions`)**. The one migration that is not
   additive: orders move into `order_lines` and the quiz enums are rebuilt, so images from before M8 cannot run on the
   new schema.
-  1. Back up first: `gh workflow run ops.yml -f task=backup-db` and wait for it to pass.
-  2. Push or run **Deploy** as usual; the migration keeps every existing order as one line and applies the revised
-     demo texts only where the owner has not changed them.
-  3. Run the seed once (`gh workflow run ops.yml -f task=seed`) to add the three new programs (Чёрные точки и поры,
-     Тусклая кожа и сияние, Восстановление барьера). It never touches existing rows.
-  4. Rolling back past M8 means restoring the backup from step 1; orders placed after the deploy are then in Telegram
+  1. Push or run **Deploy** as usual: it dumps the database before migrating (above). The migration keeps every
+     existing order as one line and applies the revised demo texts only where the owner has not changed them.
+  2. Run the seed once (`gh workflow run ops.yml -f task=seed`) to add the three new programs (Чёрные точки и поры,
+     Тусклая кожа и сияние, Восстановление барьера). It never touches existing rows. It is not part of the deploy,
+     because it would also bring back demo rows the owner deleted.
+  3. Rolling back past M8 means restoring the `pre-migrate` dump; orders placed after the deploy are then in Telegram
      and WhatsApp only.
 
 **Logs**: `docker compose -f docker-compose.prod.yml logs -f --tail=200 api worker web`. The API logs JSON with request

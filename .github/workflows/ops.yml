@@ -89,10 +89,11 @@ jobs:
             backup-buckets)
               compose exec -T backup su backup -s /bin/sh -c backup-buckets.sh </dev/null ;;
             restore-drill)
-              # infra/scripts/restore.md (database): newest dump into bom_restore, compare row counts, drop it.
+              # infra/scripts/restore.md (database): newest nightly dump into bom_restore, compare row counts, drop it.
+              # Pre-migration dumps from deploys are skipped: their schema is older than the live one.
               compose run --rm -T --entrypoint sh backup -c '
                 JOB=restore-drill; . /usr/local/bin/lib.sh
-                day=$(rclone lsf "dst:$BACKUP_S3_BUCKET/db/" --dirs-only | sort | tail -1 | tr -d /)
+                day=$(rclone lsf "dst:$BACKUP_S3_BUCKET/db/" --dirs-only | grep -v pre-migrate | sort | tail -1 | tr -d /)
                 echo "dump: db/$day/$POSTGRES_DB.dump"
                 rclone copy "dst:$BACKUP_S3_BUCKET/db/$day/$POSTGRES_DB.dump" /tmp/r --s3-no-check-bucket
                 export PGPASSWORD="$POSTGRES_PASSWORD"
