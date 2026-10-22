@@ -28,9 +28,7 @@ async function swipe(page: Page, target: Locator, dx: number): Promise<void> {
     speed: 1200,
   });
   await cdp.detach();
-  await expect
-    .poll(() => target.evaluate((node) => node.scrollLeft % node.clientWidth))
-    .toBeLessThan(1);
+  await expect.poll(() => target.evaluate((node) => node.scrollLeft % node.clientWidth)).toBeLessThan(1);
 }
 
 test('review lightbox: swipe and arrows move between reviews', async ({ page }, testInfo) => {
