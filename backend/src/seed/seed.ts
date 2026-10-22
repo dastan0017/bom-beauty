@@ -15,6 +15,7 @@ import {
 } from '@bom/shared';
 import { loadDevEnv } from '../config/load-env';
 import { PrismaClient } from '../generated/prisma/client';
+import { refreshSite } from './refresh-site';
 import {
   BRANDS,
   CATEGORIES,
@@ -293,6 +294,7 @@ async function main(): Promise<void> {
       ...(email && password ? { owner: { email, password, name: name ?? 'Владелец' } } : {}),
     });
     console.log('Seed complete');
+    console.log(await refreshSite(process.env));
   } finally {
     await prisma.$disconnect();
   }

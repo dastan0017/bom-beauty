@@ -202,8 +202,9 @@ still runs on the new schema. If data was damaged, restore the database (`infra/
   1. Push or run **Deploy** as usual: it dumps the database before migrating (above). The migration keeps every
      existing order as one line and applies the revised demo texts only where the owner has not changed them.
   2. Run the seed once (`gh workflow run ops.yml -f task=seed`) to add the three new programs (Чёрные точки и поры,
-     Тусклая кожа и сияние, Восстановление барьера). It never touches existing rows. It is not part of the deploy,
-     because it would also bring back demo rows the owner deleted.
+     Тусклая кожа и сияние, Восстановление барьера). It never touches existing rows and ends by refreshing the
+     site's cache, so new rows show at once. It is not part of the deploy, because it would also bring back demo rows
+     the owner deleted.
   3. Rolling back past M8 means restoring the `pre-migrate` dump; orders placed after the deploy are then in Telegram
      and WhatsApp only.
 

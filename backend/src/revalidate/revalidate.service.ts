@@ -3,19 +3,7 @@ import type { Env } from '../config/env';
 import { ENV } from '../config/env.module';
 import { JobsService } from '../jobs/jobs.service';
 
-/** Cache tags of the site (frontend/src/lib/api.ts). */
-export const SITE_TAGS = {
-  settings: 'settings',
-  categories: 'categories',
-  products: 'products',
-  product: (slug: string) => `product:${slug}`,
-  programs: 'programs',
-  program: (slug: string) => `program:${slug}`,
-  content: 'content',
-  contentKey: (key: string) => `content:${key}`,
-  reviews: 'reviews',
-  redirects: 'redirects',
-} as const;
+export { SITE_TAGS } from './site-tags';
 
 /** Tells the site to drop cached API responses after an admin change, via the `web.revalidate` queue. */
 @Injectable()
