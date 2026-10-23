@@ -173,5 +173,6 @@ Spec: `docs/finik/SPEC.md` (§0 final decisions win); implementation prompt `doc
       integration); message builders; shared texts; e2e for program, cart and link payments with axe, admin payments
 - [x] Docs: ARCHITECTURE (§1, §2, §6, §7.9, §8, §14, D28–D37, risks), DATA-MODEL, API, HANDOFF, DEPLOY, `.env.example`
 - [x] Gate + `feat: online payment with Finik (M9)`
-- [ ] Go-live (DEPLOY §2.4, §3): our key pair registered in Finik's cabinet, `FINIK_*` on the server, 1 сом check paid
-      with a real banking app, owner texts updated (HANDOFF §3), then «Принимать онлайн-оплату на сайте» on
+- [x] Go-live (2026-10-23): `FINIK_*` on the server, 1 сом check and the first real orders paid through Finik's webhook,
+      Telegram bot `@bom_beauty_orders_bot` posting to the shop's group, «Принимать онлайн-оплату на сайте» on.
+      Follow-ups (owner): Visa acceptance from Finik, payment wording in the texts (HANDOFF §3), delivery days abroad
