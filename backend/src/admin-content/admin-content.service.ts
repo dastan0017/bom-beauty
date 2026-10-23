@@ -20,6 +20,7 @@ import { ENV } from '../config/env.module';
 import { ContentService } from '../content/content.service';
 import type { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { RevalidateService, SITE_TAGS } from '../revalidate/revalidate.service';
 import { SettingsService } from '../settings/settings.service';
 import { UsersService } from '../users/users.service';
@@ -69,6 +70,7 @@ export class AdminContentService {
     private readonly content: ContentService,
     private readonly settings: SettingsService,
     private readonly users: UsersService,
+    private readonly notifications: NotificationsService,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
@@ -156,6 +158,19 @@ export class AdminContentService {
       ) {
         throw new ApiException('validation_failed', HttpStatus.BAD_REQUEST, 'Файл не найден', {
           'value.ogMediaId': 'media.not_found',
+        });
+      }
+    }
+    if (key === 'notifications') {
+      // A chat the bot cannot reach would lose every order message without a sound: refuse it on save.
+      const n = parsed.data as z.infer<(typeof SETTING_SCHEMAS)['notifications']>;
+      const problem =
+        n.telegramEnabled && n.telegramChatId
+          ? await this.notifications.telegramChatProblem(n.telegramChatId)
+          : null;
+      if (problem) {
+        throw new ApiException('validation_failed', HttpStatus.BAD_REQUEST, 'Бот не видит этот чат', {
+          'value.telegramChatId': problem,
         });
       }
     }

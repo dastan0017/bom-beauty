@@ -137,7 +137,7 @@ describe('online payment texts', () => {
       { type: 'product' as const, title: 'Cica-сыворотка', qty: 2, totalKgs: 3800 },
     ];
     expect(buildOrderItemsText({ lines })).toBe(
-      `• Программа «Акне и постакне» · ${formatKgs(5900)}\n• Cica-сыворотка × 2 · ${formatKgs(3800)}`,
+      `• Программа «Акне и постакне» × 1 · ${formatKgs(5900)}\n• Cica-сыворотка × 2 · ${formatKgs(3800)}`,
     );
     expect(buildOrderItemsText({ lines, adjustmentKgs: 300, adjustmentNote: ' Доставка ' })).toMatch(
       new RegExp(`\\n• Доставка: \\+${formatKgs(300)}$`),

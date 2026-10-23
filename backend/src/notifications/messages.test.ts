@@ -14,8 +14,8 @@ const order: PaymentOrderForMessage = {
   id: 'order-1',
   number: 1042,
   lines: [
-    { type: 'product', title: 'Cica-сыворотка', qty: 2 },
-    { type: 'product', title: 'Флюид SPF 50+', qty: 1 },
+    { type: 'product', title: 'Cica-сыворотка', qty: 2, totalKgs: 3800 },
+    { type: 'product', title: 'Флюид SPF 50+', qty: 1, totalKgs: 1300 },
   ],
   totalKgs: 5100,
   adjustmentKgs: 0,
@@ -37,7 +37,9 @@ describe('payment messages', () => {
     const message = whatsappOrderMessage(order, customer, HTTPS_ADMIN);
     expect(message.subject).toBe('Новый заказ №1042');
     expect(message.html.split('\n')[0]).toBe('<b>🛍 Заказ №1042 · через WhatsApp · не оплачен</b>');
-    expect(message.html).toContain(`• Cica-сыворотка × 2\n• Флюид SPF 50+\nИтого: ${formatKgs(5100)}`);
+    expect(message.html).toContain(
+      `• Cica-сыворотка × 2 · ${formatKgs(3800)}\n• Флюид SPF 50+ × 1 · ${formatKgs(1300)}\nИтого: ${formatKgs(5100)}`,
+    );
     expect(message.html).toContain('Айгерим &lt;b&gt; · +996 555 12 34 56');
     expect(message.html).toContain(
       '<blockquote><b>Клиент получит в WhatsApp:</b>\nЗдравствуйте, Айгерим! Ссылка: https://bom-beauty.com/pay/t &lt;ok&gt;</blockquote>',

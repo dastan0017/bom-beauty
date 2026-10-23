@@ -97,6 +97,26 @@ export class NotificationsService {
     if (n.emailEnabled && n.email && this.env.SMTP_URL) await this.jobs.addSafely('notify.email', target);
   }
 
+  /**
+   * Before the owner saves a Telegram chat: can the bot reach it? Only Telegram's clear "no" counts (a @username, a
+   * group id without its minus, a group the bot is not in). Without a token, or when Telegram does not answer, the
+   * setting is saved as before.
+   */
+  async telegramChatProblem(chatId: string): Promise<'telegram.chat.not_found' | null> {
+    if (!this.env.TELEGRAM_BOT_TOKEN) return null;
+    try {
+      const response = await fetch(`https://api.telegram.org/bot${this.env.TELEGRAM_BOT_TOKEN}/getChat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: chatId }),
+        signal: AbortSignal.timeout(5_000),
+      });
+      return response.status === 400 || response.status === 403 ? 'telegram.chat.not_found' : null;
+    } catch {
+      return null;
+    }
+  }
+
   /** "Отправить тест" in Настройки → Уведомления: both channels, right now. */
   async test(): Promise<NotificationTestResult> {
     const n = await this.settings.get('notifications');

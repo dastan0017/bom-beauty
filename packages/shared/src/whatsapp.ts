@@ -126,15 +126,22 @@ export interface OrderItemsInput {
   adjustmentNote?: string | null;
 }
 
+/** One order line with its quantity (always, even 1) and line total in сом: «Cica-сыворотка × 2 · 3 800 сом». */
+export function orderLineText(line: {
+  type: OrderItemType;
+  title: string;
+  qty: number;
+  totalKgs: number;
+}): string {
+  return `${orderItemLabel(line)} × ${line.qty} · ${formatKgs(line.totalKgs)}`;
+}
+
 /**
  * `{состав}`: one line per item with quantity and price in сом, then the owner's adjustment (delivery, discount):
- * «• Программа «Акне и постакне» · 5 900 сом», «• Cica-сыворотка × 2 · 3 800 сом», «• Доставка: +300 сом».
+ * «• Программа «Акне и постакне» × 1 · 5 900 сом», «• Cica-сыворотка × 2 · 3 800 сом», «• Доставка: +300 сом».
  */
 export function buildOrderItemsText(order: OrderItemsInput): string {
-  const items = order.lines.map(
-    (line) =>
-      `• ${orderItemLabel(line)}${line.qty > 1 ? ` × ${line.qty}` : ''} · ${formatKgs(line.totalKgs)}`,
-  );
+  const items = order.lines.map((line) => `• ${orderLineText(line)}`);
   const adjustment = order.adjustmentKgs ?? 0;
   if (adjustment) {
     const sign = adjustment > 0 ? '+' : '−';

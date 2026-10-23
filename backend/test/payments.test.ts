@@ -214,6 +214,8 @@ describe('online payment (Finik beta, stubbed)', () => {
     owner = await loginAs(ctx);
     await createManager(ctx);
     manager = await loginAs(ctx, MANAGER);
+    // Saving the chat asks Telegram whether the bot can reach it: answered by the stub, never the real API.
+    stubOutgoing();
     const notifications = await request(ctx.url('/v1/admin/settings/notifications'), {
       method: 'PUT',
       headers: owner.write,
@@ -228,6 +230,7 @@ describe('online payment (Finik beta, stubbed)', () => {
       },
     });
     expect(notifications.status).toBe(200);
+    vi.restoreAllMocks();
   });
   beforeEach(() => {
     stubOutgoing();

@@ -547,7 +547,7 @@ export const copy = {
     notifications: {
       telegram: 'Уведомления в Telegram',
       telegramChat: 'ID чата в Telegram',
-      telegramHint: 'Бот пришлёт каждый новый заказ в этот чат',
+      telegramHint: 'Числовой ID чата. У группы он начинается с минуса, например -4012345678',
       email: 'Уведомления на почту',
       emailAddress: 'Почта',
       emailHint: 'Запасной канал, если Telegram недоступен',
@@ -715,5 +715,7 @@ export const copy = {
     'order.adjustment.range': 'Слишком большая сумма',
     'order.adjustment.note.max': 'Пояснение не длиннее 200 символов',
     'order.adjustment.amount': 'Сумма к оплате должна быть больше нуля',
+    'telegram.chat.not_found':
+      'Бот не видит этот чат. У группы ID начинается с минуса, и бот должен быть добавлен в группу',
   } as Record<string, string>,
 } as const;

@@ -2,7 +2,7 @@ import {
   formatKgs,
   formatPhoneDisplay,
   LEAD_KIND_LABELS,
-  orderItemLabel,
+  orderLineText,
   QUIZ_QUESTIONS,
   quizAnswerLabel,
   WHOLESALE_BUYER_LABELS,
@@ -21,7 +21,7 @@ export const escapeHtml = (text: string): string =>
 export interface OrderForMessage {
   id: string;
   number: number;
-  lines: { type: 'product' | 'program'; title: string; qty: number }[];
+  lines: { type: 'product' | 'program'; title: string; qty: number; totalKgs: number }[];
   totalKgs: number;
   name: string;
   phone: string;
@@ -34,11 +34,10 @@ export function orderMessage(
   order: OrderForMessage,
   adminOrigin: string,
 ): { html: string; text: string; subject: string } {
-  const items = order.lines.map((line) => `${orderItemLabel(line)}${line.qty > 1 ? ` × ${line.qty}` : ''}`);
+  // Every line with its quantity and line total, so the shop sees exactly what was ordered.
   const lines = [
-    ...(items.length === 1
-      ? [`${items[0]} · ${formatKgs(order.totalKgs)}`]
-      : [...items.map((item) => `• ${item}`), `Итого: ${formatKgs(order.totalKgs)}`]),
+    ...order.lines.map((line) => `• ${orderLineText(line)}`),
+    `Итого: ${formatKgs(order.totalKgs)}`,
     `${order.name} · ${formatPhoneDisplay(order.phone)}`,
     order.address,
     ...(order.comment ? [`Комментарий: ${order.comment}`] : []),
@@ -120,7 +119,7 @@ export interface OutgoingMessage {
 export interface PaymentOrderForMessage {
   id: string;
   number: number;
-  lines: { type: 'product' | 'program'; title: string; qty: number }[];
+  lines: { type: 'product' | 'program'; title: string; qty: number; totalKgs: number }[];
   totalKgs: number;
   adjustmentKgs: number;
   adjustmentNote: string | null;
@@ -141,7 +140,7 @@ const signed = (kgs: number): string => `${kgs > 0 ? '+' : '−'}${formatKgs(Mat
 
 /** Lines, total (and the owner's adjustment), customer, address, comment: shared by every order message. */
 function orderBlock(order: PaymentOrderForMessage): string[] {
-  const items = order.lines.map((line) => `• ${orderItemLabel(line)}${line.qty > 1 ? ` × ${line.qty}` : ''}`);
+  const items = order.lines.map((line) => `• ${orderLineText(line)}`);
   const amount = order.totalKgs + order.adjustmentKgs;
   return [
     ...items,
