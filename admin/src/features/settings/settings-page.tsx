@@ -645,14 +645,22 @@ function ConnectionPanel({ status, failed }: { status: FinikStatus | undefined; 
           {t.check}
         </Button>
       </div>
-      {check.data && <CheckResult check={check.data} />}
+      {check.data && <CheckResult check={check.data} mock={status?.environment === 'mock'} />}
     </Panel>
   );
 }
 
-function CheckResult({ check }: { check: PaymentCheck }) {
+/** In mock mode the check runs against the local stand-in, which proves nothing about Finik: the texts say so. */
+function CheckResult({ check, mock }: { check: PaymentCheck; mock: boolean }) {
   const t = copy.settings.payments;
   if (check.status === 'succeeded') {
+    if (mock) {
+      return (
+        <p className="text-[15px] font-semibold" role="status">
+          {t.checkPaidMock}
+        </p>
+      );
+    }
     return (
       <p className="text-[15px] font-semibold text-green" role="status">
         {t.checkPaid}
@@ -675,7 +683,7 @@ function CheckResult({ check }: { check: PaymentCheck }) {
   }
   return (
     <div className="flex flex-col gap-2" role="status">
-      <p className="text-[15px] leading-normal">{t.checkPending}</p>
+      <p className="text-[15px] leading-normal">{mock ? t.checkPendingMock : t.checkPending}</p>
       <div className="flex flex-wrap items-center gap-4">
         {check.url && (
           <a

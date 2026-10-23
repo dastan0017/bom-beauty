@@ -457,7 +457,7 @@ model PaymentEvent {
   dedupeKey String   @unique @map("dedupe_key")
   /// As Finik sent it, e.g. "SUCCEEDED".
   status    String
-  /// applied · duplicate_payment · amount_mismatch · paid_cancelled · paid_deleted · check_paid · failed · unknown_payment · ignored
+  /// applied · duplicate_payment · amount_mismatch · paid_cancelled · paid_deleted · check_paid · foreign_account · unverified_account · failed · unknown_payment · ignored
   outcome   String
   data      Json
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)

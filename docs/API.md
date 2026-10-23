@@ -235,13 +235,19 @@ created and Finik is asked for a link for the server total. Online orders send n
 - `POST /pay/:token` reuses a live link for the current amount (at least 2 minutes left) or creates a new attempt;
   `409 conflict` when the order is paid, refunded or cancelled; `502 payment_failed` when Finik refuses.
 - `POST /webhooks/finik` is read from the raw body (no DTO: the signature covers the bytes as sent). Checks, in order:
-  JSON object, `signature` + `x-api-timestamp` headers, RSA-SHA256 over Finik's canonical string for the configured
-  `FINIK_WEBHOOK_URL` host and path (then the request's own), timestamp within 5 minutes. The event is stored once in
-  `payment_events` (dedupe on Finik's operation `id`) and applied under row locks. Outcomes: `applied` (order paid,
-  `paid` notification), `duplicate_payment` (second payment), `amount_mismatch` (paid amount differs from the link or
-  the order's current amount), `paid_cancelled` (paid, but the order is cancelled), `paid_deleted`, `check_paid` (the
-  admin's 1 сом check), `failed`, `unknown_payment`, `ignored`; the review cases notify the owner. Always `200` once
-  verified, so Finik stops retrying.
+  JSON object, `signature` + `x-api-timestamp` headers, RSA-SHA256 over Finik's canonical string (method, the
+  configured `FINIK_WEBHOOK_URL` host and path, then the request's own, the `x-api-*` headers and the top-level-sorted
+  body), timestamp within 5 minutes (Finik signs each delivery when it sends it, retries included). Only then the
+  business checks: a known payment, the money paid into **our** Finik account (`data.accountId`, the echo of the
+  account the payment was created for, else a top-level `accountId`), a success status, and the amount equal to the
+  link and to the order's current amount. The event is stored once in `payment_events` (dedupe on Finik's operation
+  `id`, a unique key) and applied under row locks. Outcomes: `applied` (order paid, `paid` notification),
+  `duplicate_payment` (second payment), `amount_mismatch` (paid amount differs from the link or the order's current
+  amount), `paid_cancelled` (paid, but the order is cancelled), `paid_deleted`, `check_paid` (the admin's 1 сом
+  check), `foreign_account` / `unverified_account` (another or no Finik account: never applied), `failed`,
+  `unknown_payment` (our account, but no payment the site knows), `ignored`. Review cases and `unknown_payment` notify
+  the owner; nothing is marked paid without all checks. Always `200` once verified, so Finik stops retrying; any
+  database error answers `500` and Finik retries.
 
 ### POST /leads/quiz and POST /leads/wholesale
 
@@ -338,7 +344,8 @@ program create, update, publish toggle and delete also enqueue `indexnow.submit`
 | `indexnow.submit`  | program/product create, update, publish, delete        | `{ paths }`            | 3                     | production with `INDEXNOW_KEY`, 60 s delay                                         |
 
 `NotifyTarget`: `{ entity: 'order', id, event?: 'created' | 'unpaid' }` · `{ entity: 'lead', id }` ·
-`{ entity: 'payment', id, event: 'paid' | 'review' | 'check_paid', reason?: 'amount' | 'double' | 'cancelled' | 'deleted' }`.
+`{ entity: 'payment', id, event: 'paid' | 'review' | 'check_paid', reason?: 'amount' | 'double' | 'cancelled' | 'deleted' | 'account' }` ·
+`{ entity: 'paymentEvent', id, event: 'unknown' }` (money for our account that matches no payment).
 
 Mock Finik (`FINIK_ENV=mock` only, excluded from OpenAPI): `GET /dev/finik/pay/:id` renders a fake payment page;
 `POST /dev/finik/pay/:id` signs a Finik-shaped success webhook with the process's mock key, posts it to

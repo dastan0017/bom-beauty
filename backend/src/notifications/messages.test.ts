@@ -4,6 +4,7 @@ import {
   checkPaidMessage,
   paidMessage,
   reviewMessage,
+  unknownPaymentMessage,
   unpaidMessage,
   whatsappOrderMessage,
   type PaymentOrderForMessage,
@@ -103,20 +104,35 @@ describe('payment messages', () => {
     expect(deleted.subject).toBe('Проверьте оплату');
     expect(deleted.text).toContain('Заказ удалён, а оплата пришла.');
     expect(deleted.buttons).toEqual([]);
-    for (const reason of ['double', 'cancelled'] as const) {
+    for (const reason of ['double', 'cancelled', 'account'] as const) {
       const message = reviewMessage(
         { reason, number: 1042, orderId: 'order-1', paidKgs: null, expectedKgs: 1 },
         HTTPS_ADMIN,
       );
-      expect(message.text).toContain('Сумма платежа: неизвестная сумма');
+      // Without a known amount the line is left out rather than guessed.
+      expect(message.text).not.toContain('Сумма платежа');
       expect(message.text).toContain('Finik');
     }
   });
 
-  it('confirms the connection check', () => {
+  it('confirms the connection check, and never claims Finik was checked in mock mode', () => {
     const message = checkPaidMessage(HTTPS_ADMIN);
     expect(message.html).toBe(
       '<b>✅ Проверка Finik прошла</b>\nПлатёж 1 сом получен: онлайн-оплата работает.',
+    );
+    expect(message.buttons).toEqual([]);
+    const mock = checkPaidMessage(HTTPS_ADMIN, true);
+    expect(mock.text).toContain('тестовом режиме');
+    expect(mock.text).toContain('Настоящий Finik не проверялся');
+  });
+
+  it('describes money that matches no payment', () => {
+    const message = unknownPaymentMessage(
+      { amountKgs: 5900, description: 'Заказ №1093', operationId: 'op-1_DEBIT' },
+      HTTPS_ADMIN,
+    );
+    expect(message.text).toContain(
+      `Сумма: ${formatKgs(5900)}\nНазначение: Заказ №1093\nОперация Finik: op-1_DEBIT`,
     );
     expect(message.buttons).toEqual([]);
   });

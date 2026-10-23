@@ -89,7 +89,11 @@ export const finikWebhookSchema = z.object({
   transactionDate: number,
   receiptNumber: text,
   transactionType: text,
+  /** Merchant account; some payloads carry it at the top level. */
+  accountId: text,
   fields: z.object({ paymentId: text }).optional().catch(undefined),
+  /** Echo of the `Data` we sent when creating the payment: the account it pays into and our description. */
+  data: z.object({ accountId: text, description: text }).optional().catch(undefined),
   service: z.object({ id: text }).optional().catch(undefined),
   item: z.object({ id: text }).optional().catch(undefined),
 });
@@ -102,6 +106,10 @@ export function webhookOutcome(status: string | undefined): 'paid' | 'failed' | 
   if (value === 'failed') return 'failed';
   return 'other';
 }
+
+/** The Finik account the payment went to: the echo of our `Data.accountId`, else a top-level `accountId`. */
+export const webhookAccount = (event: FinikWebhook): string | undefined =>
+  event.data?.accountId ?? event.accountId;
 
 /** Whitelisted, non-personal copy of the payload for `payment_events.data`. */
 export function webhookRecord(event: FinikWebhook): Record<string, string | number> {
@@ -117,6 +125,8 @@ export function webhookRecord(event: FinikWebhook): Record<string, string | numb
     ['serviceId', event.service?.id],
     ['itemId', event.item?.id],
     ['paymentId', event.fields?.paymentId],
+    ['accountId', webhookAccount(event)],
+    ['description', event.data?.description],
   ];
   return Object.fromEntries(
     entries.filter((entry): entry is [string, string | number] => entry[1] !== undefined),

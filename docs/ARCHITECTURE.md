@@ -361,9 +361,11 @@ cancelled or deleted order) and the admin's 1 сом check. Online orders send n
    until the webhook lands (spinner 30 s, then the pay button stays available while polling continues up to 15 min).
 3. **Webhook:** `POST /v1/webhooks/finik` is the only proof of payment. The raw body's signature is checked with
    Finik's public key (host and path of `FINIK_WEBHOOK_URL` first, then the request's), the timestamp must be within 5
-   minutes, the event is stored once (`payment_events`, keyed by Finik's operation id) and applied in one transaction
-   with row locks: the attempt becomes `succeeded`, the order `paid` (AuditLog, source Finik) when the money equals the
-   attempt and the order's current amount; otherwise the owner gets a review alert and nothing is marked paid.
+   minutes (Finik signs every delivery when it sends it), the event is stored once (`payment_events`, keyed by Finik's
+   operation id) and applied in one transaction with row locks: the attempt becomes `succeeded`, the order `paid`
+   (AuditLog, source Finik) only when the payment is ours, the money went to our Finik account (`data.accountId`) and
+   equals the attempt and the order's current amount; otherwise the owner gets a review alert and nothing is marked
+   paid. Money for our account that matches no payment (after a restore, say) also alerts the owner.
 4. **Expiry:** `payments.expire` runs every 5 minutes: links past their end (plus 10 min grace) become `expired`; an
    online order with no live link turns `unpaid` and the owner gets one «не оплачен» message. A late webhook still pays.
 5. **WhatsApp orders:** the admin drawer and the Telegram message carry the order's payment link; the owner can add a
@@ -387,9 +389,11 @@ per-IP limit; admin calls count per session with a higher limit, since uploads c
 
 **Online payment:** amounts always come from the database, never from the browser; the pay page is reached only by
 its random token and returns no personal data; payment links are reused only for the same amount; the Finik webhook
-needs a valid RSA signature over the raw body, a fresh timestamp and a known payment, is deduplicated by Finik's
-operation id and is applied under row locks, so racing deliveries or an admin edit see each other's result. Admin
-amount changes are refused once an order is paid.
+needs a valid RSA signature over the raw body, a fresh timestamp, a known payment and our Finik account (another
+merchant's payment reusing one of our PaymentIds is never applied), is deduplicated by Finik's operation id and is
+applied under row locks, so racing deliveries or an admin edit see each other's result. Admin amount changes are
+refused once an order is paid. Switching online payment off stops new payments only; webhooks for links already
+issued are still applied.
 
 ### 8.2 Admin
 

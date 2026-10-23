@@ -392,7 +392,8 @@ model PaymentEvent {
   dedupeKey String   @unique                        // webhook id, else transactionId, else sha256 of the raw body
   status    String                                  // as Finik sent it ("SUCCEEDED")
   outcome   String                                  // applied · duplicate_payment · amount_mismatch · paid_cancelled ·
-                                                    // paid_deleted · check_paid · failed · unknown_payment · ignored
+                                                    // paid_deleted · check_paid · foreign_account · unverified_account ·
+                                                    // failed · unknown_payment · ignored
   data      Json
   createdAt DateTime @default(now())
 

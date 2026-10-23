@@ -451,12 +451,116 @@ describe('online payment (Finik beta, stubbed)', () => {
     expect(enqueue).not.toHaveBeenCalled();
   });
 
-  it('records a webhook for an unknown payment and answers 200', async () => {
-    const event = paidEvent(randomUUID(), 500);
+  it('records money for our account that matches no payment, and tells the owner', async () => {
+    const event = paidEvent(randomUUID(), 500, {
+      data: { accountId: ACCOUNT_ID, description: 'Заказ №9999', name_en: 'Bom Beauty' },
+    });
     expect((await deliver(event)).status).toBe(200);
     const stored = await ctx.prisma.paymentEvent.findUniqueOrThrow({ where: { dedupeKey: event.id } });
     expect(stored).toMatchObject({ paymentId: null, outcome: 'unknown_payment', status: 'SUCCEEDED' });
-    expect(enqueue).not.toHaveBeenCalled();
+    expect(notified({ entity: 'paymentEvent', id: stored.id, event: 'unknown' })).toBe(1);
+    const message = await telegramWith('❗ Пришла оплата, которую сайт не нашёл');
+    expect(message.text).toContain(`Сумма: ${kgs(500)}`);
+    expect(message.text).toContain('Назначение: Заказ №9999');
+  });
+
+  it('never applies a payment made into another Finik account', async () => {
+    // Someone with their own Finik merchant account reuses our PaymentId: Finik signs it, but the money is theirs.
+    const { order, attempt } = await onlineOrder();
+    const foreign = paidEvent(attempt.id, 3800, {
+      data: { accountId: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee', description: 'Заказ', name_en: 'Other' },
+    });
+    expect((await deliver(foreign)).status).toBe(200);
+    expect((await ctx.prisma.order.findUniqueOrThrow({ where: { id: order.id } })).paymentStatus).toBe(
+      'pending',
+    );
+    expect((await ctx.prisma.payment.findUniqueOrThrow({ where: { id: attempt.id } })).status).toBe(
+      'pending',
+    );
+    expect(await outcomes(attempt.id)).toEqual(['foreign_account']);
+    expect(notified({ entity: 'payment', id: attempt.id, event: 'review', reason: 'account' })).toBe(1);
+    await telegramWith('Счёт получателя в уведомлении Finik не совпал с вашим');
+
+    // Without any account in the payload it is not applied either; the owner checks it.
+    const missing = paidEvent(attempt.id, 3800, { data: undefined });
+    await deliver(missing);
+    expect(await outcomes(attempt.id)).toEqual(['foreign_account', 'unverified_account']);
+    expect((await ctx.prisma.order.findUniqueOrThrow({ where: { id: order.id } })).paymentStatus).toBe(
+      'pending',
+    );
+
+    // Another account and a payment we do not know: not ours at all, recorded quietly.
+    const stranger = paidEvent(randomUUID(), 100, {
+      data: { accountId: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee', description: 'x', name_en: 'Other' },
+    });
+    await deliver(stranger);
+    const stored = await ctx.prisma.paymentEvent.findUniqueOrThrow({ where: { dedupeKey: stranger.id } });
+    expect(stored).toMatchObject({ paymentId: null, outcome: 'foreign_account' });
+    expect(enqueue.mock.calls.some(([target]) => target.entity === 'paymentEvent')).toBe(false);
+
+    // The genuine payment still goes through.
+    await deliver(paidEvent(attempt.id, 3800));
+    expect((await ctx.prisma.order.findUniqueOrThrow({ where: { id: order.id } })).paymentStatus).toBe(
+      'paid',
+    );
+  });
+
+  it('applies a webhook once when Finik delivers it twice at the same moment', async () => {
+    const { order, attempt } = await onlineOrder();
+    const event = paidEvent(attempt.id, 3800);
+    const [first, second] = await Promise.all([deliver(event), deliver(event)]);
+    expect([first.status, second.status]).toEqual([200, 200]);
+    expect(await outcomes(attempt.id)).toEqual(['applied']);
+    expect(notified({ entity: 'payment', id: attempt.id, event: 'paid' })).toBe(1);
+    expect(
+      await ctx.prisma.auditLog.count({ where: { entity: 'order', entityId: order.id, action: 'payment' } }),
+    ).toBe(1);
+  });
+
+  it('keeps confirming payments after the owner switched online payment off', async () => {
+    const { order, attempt } = await onlineOrder();
+    await setPayments({ finikEnabled: false });
+    try {
+      // New payments stop at once; a link already paid on Finik's side still counts.
+      const start = await request<ErrorResponse>(ctx.url(`/v1/pay/${order.payToken}`), { method: 'POST' });
+      expect(start.body.error.code).toBe('payment_unavailable');
+      expect((await deliver(paidEvent(attempt.id, 3800))).status).toBe(200);
+      expect((await ctx.prisma.order.findUniqueOrThrow({ where: { id: order.id } })).paymentStatus).toBe(
+        'paid',
+      );
+    } finally {
+      await setPayments({ finikEnabled: true });
+    }
+  });
+
+  it('keeps the payment when its notice cannot be queued', async () => {
+    const { order, attempt } = await onlineOrder();
+    enqueue.mockRejectedValue(new Error('queue down'));
+    expect((await deliver(paidEvent(attempt.id, 3800))).status).toBe(200);
+    expect((await ctx.prisma.order.findUniqueOrThrow({ where: { id: order.id } })).paymentStatus).toBe(
+      'paid',
+    );
+    expect(await outcomes(attempt.id)).toEqual(['applied']);
+  });
+
+  it('a Finik timeout leaves the order payable, and a late payment of that attempt still counts', async () => {
+    finikAnswer = () => {
+      throw Object.assign(new Error('aborted'), { name: 'TimeoutError' });
+    };
+    const { res, order, attempt } = await onlineOrder();
+    expect(res.body.payment).toEqual({ url: null, page: `${ctx.env.WEB_ORIGIN}/pay/${order.payToken}` });
+    expect(order.paymentStatus).toBe('unpaid');
+    expect(attempt).toMatchObject({ status: 'failed', error: 'timeout' });
+    expect((await request<PayPage>(ctx.url(`/v1/pay/${order.payToken}`))).body).toMatchObject({
+      status: 'unpaid',
+      canPay: true,
+    });
+    // Finik may have created the payment before the timeout; if it is ever paid, the money is not lost.
+    await deliver(paidEvent(attempt.id, 3800));
+    expect((await ctx.prisma.order.findUniqueOrThrow({ where: { id: order.id } })).paymentStatus).toBe(
+      'paid',
+    );
+    expect(await outcomes(attempt.id)).toEqual(['applied']);
   });
 
   it('does not settle an order when the paid amount differs', async () => {

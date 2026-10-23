@@ -22,6 +22,7 @@ import {
   orderMessage,
   paidMessage,
   reviewMessage,
+  unknownPaymentMessage,
   unpaidMessage,
   whatsappOrderMessage,
   type CustomerText,
@@ -146,7 +147,8 @@ export class NotificationsService {
       return { ...orderMessage(toMessageOrder(order), admin), buttons: [] };
     }
 
-    if (target.event === 'check_paid') return checkPaidMessage(admin);
+    if (target.entity === 'paymentEvent') return this.unknownPaymentNotice(target.id);
+    if (target.event === 'check_paid') return checkPaidMessage(admin, this.finik.environment === 'mock');
     const payment = await this.prisma.payment.findUnique({
       where: { id: target.id },
       select: {
@@ -204,6 +206,21 @@ export class NotificationsService {
           : '💬 Отправить ссылку на оплату'
         : '💬 Написать о доставке';
     return { whatsappText, button };
+  }
+
+  /** A webhook for our account that matches no payment: what the stored event knows (no personal data in it). */
+  private async unknownPaymentNotice(id: string): Promise<OutgoingMessage | null> {
+    const event = await this.prisma.paymentEvent.findUnique({ where: { id }, select: { data: true } });
+    if (!event) return null;
+    const data = (event.data ?? {}) as Record<string, unknown>;
+    return unknownPaymentMessage(
+      {
+        amountKgs: typeof data.amount === 'number' ? data.amount : null,
+        description: typeof data.description === 'string' ? data.description : null,
+        operationId: typeof data.id === 'string' ? data.id : null,
+      },
+      this.env.ADMIN_ORIGIN,
+    );
   }
 
   private async paymentsOn(): Promise<boolean> {

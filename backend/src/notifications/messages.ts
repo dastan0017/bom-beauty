@@ -251,6 +251,8 @@ const REVIEW_TEXT = {
   double: () => 'Заказ уже был оплачен, это второй платёж. Лишнее можно вернуть в кабинете Finik.',
   cancelled: () => 'Заказ отменён, а оплата пришла. Верните деньги в кабинете Finik или восстановите заказ.',
   deleted: () => 'Заказ удалён, а оплата пришла.',
+  account: () =>
+    'Счёт получателя в уведомлении Finik не совпал с вашим, поэтому сайт не засчитал оплату сам. Проверьте её в кабинете Finik: если деньги пришли, отметьте заказ оплаченным.',
 } as const;
 
 /** A payment that needs the owner's eyes (docs/finik/SPEC.md §5.7). */
@@ -269,18 +271,49 @@ export function reviewMessage(
   return compose({
     subject: title,
     header: `❗ ${title}`,
-    body: [REVIEW_TEXT[input.reason](paid, formatKgs(input.expectedKgs)), `Сумма платежа: ${paid}`],
+    body: [
+      REVIEW_TEXT[input.reason](paid, formatKgs(input.expectedKgs)),
+      ...(input.paidKgs === null ? [] : [`Сумма платежа: ${paid}`]),
+    ],
     orderId: input.reason === 'deleted' ? null : input.orderId,
     adminOrigin,
   });
 }
 
-/** The 1 сом check from «Настройки → Оплата» was paid: webhooks reach us. */
-export function checkPaidMessage(adminOrigin: string): OutgoingMessage {
+/**
+ * The 1 сом check from «Настройки → Оплата» was paid: webhooks reach us. In mock mode it went through the local stand-in,
+ * which proves nothing about Finik, and the message says so.
+ */
+export function checkPaidMessage(adminOrigin: string, mock = false): OutgoingMessage {
+  return mock
+    ? compose({
+        subject: 'Проверка прошла в тестовом режиме',
+        header: '✅ Проверка прошла в тестовом режиме',
+        body: ['Платёж прошёл через заглушку на сервере. Настоящий Finik не проверялся.'],
+        adminOrigin,
+      })
+    : compose({
+        subject: 'Проверка Finik прошла',
+        header: '✅ Проверка Finik прошла',
+        body: ['Платёж 1 сом получен: онлайн-оплата работает.'],
+        adminOrigin,
+      });
+}
+
+/** Money paid into our Finik account for a payment the site does not know (for example after restoring a backup). */
+export function unknownPaymentMessage(
+  input: { amountKgs: number | null; description: string | null; operationId: string | null },
+  adminOrigin: string,
+): OutgoingMessage {
   return compose({
-    subject: 'Проверка Finik прошла',
-    header: '✅ Проверка Finik прошла',
-    body: ['Платёж 1 сом получен: онлайн-оплата работает.'],
+    subject: 'Оплата без заказа на сайте',
+    header: '❗ Пришла оплата, которую сайт не нашёл',
+    body: [
+      ...(input.amountKgs === null ? [] : [`Сумма: ${formatKgs(input.amountKgs)}`]),
+      ...(input.description ? [`Назначение: ${input.description}`] : []),
+      ...(input.operationId ? [`Операция Finik: ${input.operationId}`] : []),
+      'Проверьте её в кабинете Finik и отметьте заказ оплаченным вручную.',
+    ],
     adminOrigin,
   });
 }

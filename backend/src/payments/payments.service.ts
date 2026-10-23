@@ -29,6 +29,7 @@ import { FINIK_CONFIG, isFinikConfigured, maskAccountId, type FinikConfig } from
 import {
   finikWebhookSchema,
   verifyFinikWebhook,
+  webhookAccount,
   webhookOutcome,
   webhookRecord,
   type FinikWebhook,
@@ -295,7 +296,12 @@ export class PaymentsService {
       if (isUniqueViolation(error)) return; // a concurrent delivery of the same event was recorded first
       throw error;
     }
-    for (const notice of notices) await this.notifications.enqueue(notice).catch(() => undefined);
+    // The payment is stored; a notice that cannot be queued is logged, never undoes it.
+    for (const notice of notices) {
+      await this.notifications
+        .enqueue(notice)
+        .catch((error: unknown) => this.logger.error(`webhook notice not queued: ${String(error)}`));
+    }
   }
 
   private async apply(
@@ -307,6 +313,7 @@ export class PaymentsService {
     const record = (outcome: string, paymentId: string | null) =>
       tx.paymentEvent.create({
         data: { paymentId, dedupeKey, status: event.status ?? '', outcome, data: webhookRecord(event) },
+        select: { id: true },
       });
     const paymentId = [event.fields?.paymentId, event.transactionId].find(
       (value): value is string => !!value && UUID.test(value),
@@ -314,15 +321,34 @@ export class PaymentsService {
     const found = paymentId
       ? await tx.payment.findUnique({ where: { id: paymentId }, select: { id: true, orderId: true } })
       : null;
+    // A valid signature only proves Finik sent it. The money must have gone to our account: Finik echoes the account
+    // the payment was created for. Another merchant's payment carrying one of our PaymentIds is never applied.
+    const account = webhookAccount(event);
+    const ours = account !== undefined && account === this.config.accountId;
+
     if (!found) {
-      await record('unknown_payment', null);
+      if (account !== undefined && !ours) {
+        await record('foreign_account', null);
+        this.logger.warn(`webhook for another Finik account (status ${event.status ?? '-'})`);
+        return [];
+      }
+      const stored = await record('unknown_payment', null);
       this.logger.warn(`webhook for an unknown payment (status ${event.status ?? '-'})`);
-      return [];
+      // Money for our account that the site cannot match (say, after restoring an older backup): the owner checks it.
+      return kind === 'paid' ? [{ entity: 'paymentEvent', id: stored.id, event: 'unknown' }] : [];
     }
     if (kind === 'other') {
       await record('ignored', found.id);
       this.logger.log(`webhook ${found.id}: status ${event.status ?? '-'} ignored`);
       return [];
+    }
+    if (!ours) {
+      // One of our payments, but not paid into our account (or the account is missing): never applied automatically.
+      await record(account === undefined ? 'unverified_account' : 'foreign_account', found.id);
+      this.logger.warn(
+        `webhook ${found.id}: Finik account ${account === undefined ? 'missing' : 'not ours'}`,
+      );
+      return kind === 'paid' ? [{ entity: 'payment', id: found.id, event: 'review', reason: 'account' }] : [];
     }
 
     // One delivery at a time per payment and per order: the second of two racing webhooks sees the first's result.
@@ -462,7 +488,7 @@ export class PaymentsService {
       if (notifyUnpaid) {
         await this.notifications
           .enqueue({ entity: 'order', id: order.id, event: 'unpaid' })
-          .catch(() => undefined);
+          .catch((error: unknown) => this.logger.error(`unpaid notice not queued: ${String(error)}`));
       }
     }
     if (expired || unpaid)
