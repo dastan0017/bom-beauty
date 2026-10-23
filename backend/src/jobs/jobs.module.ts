@@ -10,6 +10,7 @@ import {
   MaintenanceProcessor,
   MediaProcessor,
   NotifyProcessor,
+  PaymentsProcessor,
   VideoProcessor,
   WebProcessor,
 } from './processors';
@@ -28,7 +29,15 @@ export function redisConnection(url: string) {
   };
 }
 
-const PROCESSORS = [MediaProcessor, VideoProcessor, NotifyProcessor, WebProcessor, MaintenanceProcessor];
+// PaymentsProcessor uses PaymentsService from the global PaymentsCoreModule.
+const PROCESSORS = [
+  MediaProcessor,
+  VideoProcessor,
+  NotifyProcessor,
+  WebProcessor,
+  MaintenanceProcessor,
+  PaymentsProcessor,
+];
 const PROCESSOR_SERVICES = [MediaPipelineService, VideosService, RevalidateSender, MaintenanceService];
 
 /**

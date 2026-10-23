@@ -23,7 +23,7 @@ export interface TestContext {
 export async function createTestApp(overrides: Record<string, string> = {}): Promise<TestContext> {
   const env = testEnv(overrides);
   const moduleRef = await Test.createTestingModule({ imports: [AppModule.forRoot(env)] }).compile();
-  const app = moduleRef.createNestApplication<NestExpressApplication>({ logger: false });
+  const app = moduleRef.createNestApplication<NestExpressApplication>({ logger: false, rawBody: true });
   configureApp(app, env);
   await app.listen(0);
   const base = await app.getUrl();

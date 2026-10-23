@@ -1,23 +1,27 @@
 # Architecture
 
-Status: v3, 2026-10-22. Reconciled with the imported design (`design/`), the decisions taken on 2026-10-17 and the
-client revisions of October 2026 (`design/updates-2026-10/README.md`, M8; section 15). Companion docs: `docs/DATA-MODEL.md`, `docs/API.md`, `docs/TASKS.md`.
+Status: v4, 2026-10-23. Reconciled with the imported design (`design/`), the decisions taken on 2026-10-17, the
+client revisions of October 2026 (`design/updates-2026-10/README.md`, M8) and online payment through Finik (M9,
+`docs/finik/SPEC.md`; section 15). Companion docs: `docs/DATA-MODEL.md`, `docs/API.md`, `docs/TASKS.md`.
 
 ## 1. What the system does
 
 Bom Beauty sells professional Korean cosmeceuticals in Kyrgyzstan and the CIS. Sales close in WhatsApp and payment is
-100% prepayment by bank details sent in WhatsApp. The site's job:
+100% prepayment: by bank details sent in WhatsApp or, once the owner switches it on, online through Finik (QR code or
+a Kyrgyz banking app, §7.9). The site's job:
 
 1. present ready-made **care programs** (5 products, a video from Нурайым, a care scheme PDF) and the **catalog** of
    single products, with prices in сом or the visitor's currency;
 2. collect products in a **cart** (or order a program directly) and turn it into a short order form (name, phone,
-   address) that opens a prefilled WhatsApp chat **and** records the order in the admin;
+   address) that opens a prefilled WhatsApp chat **and** records the order in the admin, or, with online payment on,
+   records the order and sends the customer to Finik's payment page;
 3. run the 4-question quiz "Подобрать программу ухода за 1 минуту" that recommends programs and hands the answers to
    WhatsApp;
 4. sell to professionals on the "Оптовикам" page (price request through WhatsApp, brand catalog PDF);
 5. let Нурайым manage orders, programs, products, the wholesale page, reviews, texts and the site's colours and currencies.
 
-No online payment, no customer accounts. The cart lives in the visitor's browser only.
+No customer accounts. The cart lives in the visitor's browser only. Every order has its own payment page
+(`/pay/<token>`), which the owner can send in WhatsApp.
 
 ## 2. System overview
 
@@ -36,6 +40,7 @@ No online payment, no customer accounts. The cart lives in the visitor's browser
                                                               │
                     Hetzner Object Storage: public (processed images, PDFs) · private (uploads, originals) · backups
                     Bunny Stream: program, greeting and wholesale videos (upload from admin via TUS, HLS + MP4 playback)
+                    Finik (acquiring): payment links created by the API, hosted payment page, signed webhooks back
 ```
 
 - One VPS with Docker Compose behind Caddy; Cloudflare proxies every hostname.
@@ -44,6 +49,8 @@ No online payment, no customer accounts. The cart lives in the visitor's browser
   never served a stale CDN copy.
 - Videos never touch our servers: the admin uploads straight to Bunny Stream with a signed TUS session (Cloudflare's
   100 MB request limit would block 200 MB uploads through our API).
+- Card data never touches our servers either: the API asks Finik for a payment link (signed request), the customer pays
+  on Finik's own page, and Finik posts a signed webhook to `api.bom-beauty.com/v1/webhooks/finik` (§7.9).
 
 ## 3. Hosts, ports, origins
 
@@ -87,21 +94,21 @@ Each app owns its Playwright specs in `<app>/e2e/`.
 
 ## 5. packages/shared
 
-| Module        | Contents                                                                                                                                                                                                                                      |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `enums.ts`    | `OrderStatus`, `OrderItemType`, `LeadKind`, `UserRole`, `QuizGoal`, `SkinType`, `QuizExperience`, `QuizAge`, `RoutinePeriod`, `ThemeKey`, `CurrencyCode`. Mirrors Prisma enums (a test keeps them equal).                                     |
-| `labels.ts`   | Russian labels for domain values (`new: Новый`, `sent: Отправлен`, `cancelled: Отменён`, skin types, goals, badges, wholesale buyer kinds and countries); `displayBadge` («Новинка» wins), `orderSummary` / `orderKindLabel` for order lines. |
-| `money.ts`    | `formatKgs(5900) → "5 900 сом"`; grouping with U+00A0 by hand (no `Intl`, so server and browser render identically).                                                                                                                          |
-| `currency.ts` | `CURRENCIES` (KGS base; USD, EUR quoted as сом per unit; RUB, KZT, UZS, KRW quoted as units per сом; rounding steps 1/10/1/10/1000/100), `convertFromKgs`, `formatMoney`. Port of the design's `CURS`/`fmt`.                                  |
-| `theme.ts`    | Theme presets `rose` (default), `sky`, `indigo` and `buildThemeVars({ theme, headerColor, accentColor })` → CSS custom properties. Port of the design's `TH`, `BLUEHDR`, `hdrOnly`, `siteVars`; also `contrastWarnings()` for the admin.      |
-| `quiz.ts`     | The 4 questions (goal, skin, experience, age), `rankPrograms(programs, answers)` (port of `quizScore`/`quizRank` with related goals), `quizLeadAnswers` (labels for new and pre-October leads). Used by the site and the API.                 |
-| `whatsapp.ts` | Message builders for order (one bullet per line, «Итого» from 2 lines), quiz (with the offered programs), wholesale and care scheme request (texts verbatim from the design), `waLink(phone, text)`.                                          |
-| `phone.ts`    | `normalizePhone(input, 'KG')` → E.164 via `libphonenumber-js`; `formatPhoneDisplay`.                                                                                                                                                          |
-| `plural.ts`   | `средство/средства/средств`, `товар/товара/товаров`, `шаг/шага/шагов`, `программа/программы/программ`.                                                                                                                                        |
-| `limits.ts`   | `LINE_QTY_MAX` (20 per order line), `ORDER_LINES_MAX` (30 lines per order), shared by the cart, the schemas and the API.                                                                                                                      |
-| `slug.ts`     | Cyrillic transliteration + slugify for auto slugs.                                                                                                                                                                                            |
-| `schemas/`    | zod: public order and lead create, catalog responses, admin DTOs, Setting and ContentBlock values per key. Message **codes**, not texts.                                                                                                      |
-| `api/`        | `schema.d.ts` generated by `openapi-typescript` from `backend/openapi.json` + a small typed `fetch` wrapper.                                                                                                                                  |
+| Module        | Contents                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enums.ts`    | `OrderStatus`, `OrderItemType`, `LeadKind`, `UserRole`, `QuizGoal`, `SkinType`, `QuizExperience`, `QuizAge`, `RoutinePeriod`, `ThemeKey`, `CurrencyCode`, `PaymentMethod`, `OrderPaymentStatus`, `PaymentStatus`, `PaymentPurpose`, `PaymentChannel`. Mirrors Prisma enums (a test keeps them equal).                                                                                                                       |
+| `labels.ts`   | Russian labels for domain values (`new: Новый`, `sent: Отправлен`, `cancelled: Отменён`, skin types, goals, badges, wholesale buyer kinds and countries); `displayBadge` («Новинка» wins), `orderSummary` / `orderKindLabel` for order lines.                                                                                                                                                                               |
+| `money.ts`    | `formatKgs(5900) → "5 900 сом"`; grouping with U+00A0 by hand (no `Intl`, so server and browser render identically).                                                                                                                                                                                                                                                                                                        |
+| `currency.ts` | `CURRENCIES` (KGS base; USD, EUR quoted as сом per unit; RUB, KZT, UZS, KRW quoted as units per сом; rounding steps 1/10/1/10/1000/100), `convertFromKgs`, `formatMoney`. Port of the design's `CURS`/`fmt`.                                                                                                                                                                                                                |
+| `theme.ts`    | Theme presets `rose` (default), `sky`, `indigo` and `buildThemeVars({ theme, headerColor, accentColor })` → CSS custom properties. Port of the design's `TH`, `BLUEHDR`, `hdrOnly`, `siteVars`; also `contrastWarnings()` for the admin.                                                                                                                                                                                    |
+| `quiz.ts`     | The 4 questions (goal, skin, experience, age), `rankPrograms(programs, answers)` (port of `quizScore`/`quizRank` with related goals), `quizLeadAnswers` (labels for new and pre-October leads). Used by the site and the API.                                                                                                                                                                                               |
+| `whatsapp.ts` | Message builders for order (one bullet per line, «Итого» from 2 lines), quiz (with the offered programs), wholesale and care scheme request (texts verbatim from the design), `waLink(phone, text)`; online payment: the default WhatsApp templates the owner can edit (`{имя}`, `{заказ}`, `{сумма}`, `{адрес}`, `{ссылка}`), `renderWhatsappTemplate`, `paidTemplateFor` (+996 = Kyrgyzstan) and the pay page's messages. |
+| `phone.ts`    | `normalizePhone(input, 'KG')` → E.164 via `libphonenumber-js`; `formatPhoneDisplay`.                                                                                                                                                                                                                                                                                                                                        |
+| `plural.ts`   | `средство/средства/средств`, `товар/товара/товаров`, `шаг/шага/шагов`, `программа/программы/программ`.                                                                                                                                                                                                                                                                                                                      |
+| `limits.ts`   | `LINE_QTY_MAX` (20 per order line), `ORDER_LINES_MAX` (30 lines per order), shared by the cart, the schemas and the API.                                                                                                                                                                                                                                                                                                    |
+| `slug.ts`     | Cyrillic transliteration + slugify for auto slugs.                                                                                                                                                                                                                                                                                                                                                                          |
+| `schemas/`    | zod: public order and lead create, catalog responses, admin DTOs, Setting and ContentBlock values per key, payments (pay page, attempts, Finik status). Message **codes**, not texts.                                                                                                                                                                                                                                       |
+| `api/`        | `schema.d.ts` generated by `openapi-typescript` from `backend/openapi.json` + a small typed `fetch` wrapper.                                                                                                                                                                                                                                                                                                                |
 
 Built with `tsup` to ESM + CJS + `.d.ts` (Nest is CJS, Next and Vite are ESM); `pnpm dev` runs it in watch mode.
 `pnpm gen:api` writes `backend/openapi.json` and regenerates `schema.d.ts`; both are committed and CI fails on drift.
@@ -124,7 +131,8 @@ Built with `tsup` to ESM + CJS + `.d.ts` (Nest is CJS, Next and Vite are ESM); `
 | `products` `categories` `programs` `reviews` `content` `settings` `redirects` | admin CRUD; every mutation writes AuditLog and enqueues revalidation                 |
 | `media`                                                                       | admin image/PDF uploads (presign → complete → processing)                            |
 | `videos`                                                                      | Bunny Stream: create video + TUS signature, status sync, webhook, delete             |
-| `orders`                                                                      | public create; admin list/detail/status/note/export; customers aggregation           |
+| `orders`                                                                      | public create; admin list/detail/status/note/payment/adjustment/export; customers    |
+| `payments`                                                                    | Finik: signer, client, webhook, attempts, pay page, link expiry, 1 сом check, mock   |
 | `leads`                                                                       | public create (quiz, wholesale); admin list                                          |
 | `dashboard`                                                                   | Обзор numbers per period                                                             |
 | `notifications`                                                               | Telegram + SMTP senders, test endpoint                                               |
@@ -150,6 +158,7 @@ Routes (design screens in brackets):
 | `/catalog/[slug]`         | Product [isProduct]: gallery, badge, price, «С этим средством ещё берут» rail, "Входит в программы", Описание, Состав, Как использовать, sticky bar with the cart's other items and "Заказать (вместе) · …"                                                                                                                                 |
 | `/wholesale`              | Оптовикам [isWholesale]: hero, about, brands and products, benefits, steps, delivery terms by country, contact block                                                                                                                                                                                                                        |
 | `/delivery`               | Delivery, payment and FAQ (not in the design; same visual language)                                                                                                                                                                                                                                                                         |
+| `/pay/[token]`            | The order's payment page (not in the design): lines, the owner's adjustment, amount due, «Оплатить» (Finik), the state after Finik (polls until the webhook lands), «Написать Нурайым». `noindex`, never cached, disallowed in robots                                                                                                       |
 | `/privacy`, `/offer`      | Legal texts (markdown from the admin)                                                                                                                                                                                                                                                                                                       |
 | `not-found`, `error`      | Custom pages                                                                                                                                                                                                                                                                                                                                |
 
@@ -162,8 +171,9 @@ product pages). Bars publish their height as `--sticky-space`, which the footer 
 
 **Cart:** `CartProvider` keeps `[{ slug, qty }]` in `localStorage` (`bb-cart`), products only, 1–20 each, synced across
 tabs. The layout passes the published catalog (name, brand, volume, price, image), so lines always show current data
-and products taken off the site drop out. The cart empties after a cart order is sent; a direct program order leaves it
-as it was.
+and products taken off the site drop out. The cart empties after a cart order is sent to WhatsApp, or once a cart order
+paid online is confirmed (`bb-pending-payment` remembers it until then, §7.9); a direct program order leaves it as it
+was.
 
 **Desktop (≥ 1024 px):** the prototype is phone-only; desktop follows the older desktop references in the design project
 (`BomHomeDesktop`, `BomSetDesktop`): 1100 px container, 3-column grids, program page with the vertical video in a left
@@ -188,7 +198,9 @@ column and the price card on the right. Copy always comes from the mobile protot
   one-frame swap, which keeps the HTML identical for everyone.
 
 **Progressive enhancement:** catalog and content pages render fully without JS; category chips are links; the order
-buttons fall back to a plain `wa.me` link with a default message; the quiz CTA falls back to `/programs`.
+buttons fall back to a plain `wa.me` link with a default message; the quiz CTA falls back to `/programs`. Online payment
+needs JS (the order is awaited before the redirect to Finik); the pay page renders its state on the server and keeps
+«Написать Нурайым» as a plain link.
 
 **Images:** `<BbImage>` renders a plain `<picture>` (AVIF + WebP `srcset` from the pre-built variants, WebP `<img>`
 fallback) with intrinsic dimensions and the blur placeholder as a background; originals are never served. Not
@@ -209,28 +221,30 @@ one-glyph Noto Sans KR subset for "봄" in the footer and the hero pill. The car
 loaded with `next/font/local` in the site and `@font-face` in the admin.
 
 **Analytics:** Umami on every page (cookie-free) with custom events for WhatsApp clicks that don't create records (header
-icon, "Написать Нурайым", protocol request). Meta Pixel only when enabled in settings. UTM and referrer captured on
-landing into `sessionStorage` and attached to orders and leads.
+icon, "Написать Нурайым", protocol request) and for online payment (`payment_start`, `payment_error`, `payment_paid`).
+Pay pages are personal links: Umami records them as `/pay` without the token (`data-before-send`), and the Meta Pixel
+never loads there. Meta Pixel only when enabled in settings. UTM and referrer captured on landing into
+`sessionStorage` and attached to orders and leads.
 
 ### 6.3 admin (Vite + React 19)
 
 Screens follow `design/BomAdmin.dc.html`: sidebar at ≥ 1024 px, top bar with scrolling tabs below. Additions where the
 design is silent are marked _(gap)_.
 
-| Nav        | Route                        | Content                                                                                                                                                                                                                                                                 |
-| ---------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| —          | `/login`                     | Email + password, "Запомнить меня" _(gap)_                                                                                                                                                                                                                              |
-| Обзор      | `/`                          | Greeting, period (Сегодня / 7 дней / 30 дней), 4 stat cards, recent orders, orders by program                                                                                                                                                                           |
-| Заказы     | `/orders`                    | Tabs Все / Новые / Отправлены / Отменены with counts, search, table with status select and WhatsApp button; row opens a detail drawer with the full message, comment, UTM and a private note _(gap)_; CSV export _(gap)_                                                |
-| Заявки     | `/leads`                     | Quiz and wholesale hand-offs: answers, recommended programs, time _(gap)_                                                                                                                                                                                               |
-| Программы  | `/programs`, `/programs/:id` | List with video/scheme/publish status; editor (basics, "Кому подходит", ordered products from the catalog, «Фото для главной» 5:4, video, «Схема ухода» PDF, price with savings, quiz goal and skins, publish and stock toggles) plus slug, headline and course _(gap)_ |
-| Товары     | `/products`, `/products/:id` | Category management, table with stock toggle; editor (name, brand, category, volume, price, short text, description, Состав, how to use, 3 photos, stock, badge, «На главной странице» switches) plus slug, short name for steps, publish toggle and SEO _(gap)_        |
-| Оптовикам  | `/wholesale`                 | Contacts, hero, about quote and stats, featured products, benefits, stock note and delivery table, brand catalog PDF, video                                                                                                                                             |
-| Клиенты    | `/customers`                 | Aggregated from orders by phone: name, city, orders, total, last order, most ordered item, WhatsApp                                                                                                                                                                     |
-| Отзывы     | `/reviews`                   | Upload screenshots (multi, drag and drop), order, hide/show, delete; demo screenshots hide automatically once real ones exist                                                                                                                                           |
-| Тексты     | `/content/:key`              | Home texts (hero, comparison with title + text per point, «Каталог» card photo, about, reviews), delivery facts and FAQ, privacy, offer _(gap)_                                                                                                                         |
-| Оформление | `/appearance`                | Theme preset, header colour, accent colour with contrast warnings, currencies with rates and toggles, live phone preview                                                                                                                                                |
-| Настройки  | `/settings/:section`         | Shop contacts and legal line, notifications (Telegram, email, test), SEO and analytics, users, audit log, "Выйти на всех устройствах" _(gap)_                                                                                                                           |
+| Nav        | Route                        | Content                                                                                                                                                                                                                                                                                             |
+| ---------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| —          | `/login`                     | Email + password, "Запомнить меня" _(gap)_                                                                                                                                                                                                                                                          |
+| Обзор      | `/`                          | Greeting, period (Сегодня / 7 дней / 30 дней), 4 stat cards, recent orders, orders by program                                                                                                                                                                                                       |
+| Заказы     | `/orders`                    | Tabs Все / Новые / Отправлены / Отменены with counts, search, table with status select, payment chip and WhatsApp button; row opens a detail drawer with the full message, comment, UTM, «Оплата» (status, link to send, adjustment, Finik attempts) and a private note _(gap)_; CSV export _(gap)_ |
+| Заявки     | `/leads`                     | Quiz and wholesale hand-offs: answers, recommended programs, time _(gap)_                                                                                                                                                                                                                           |
+| Программы  | `/programs`, `/programs/:id` | List with video/scheme/publish status; editor (basics, "Кому подходит", ordered products from the catalog, «Фото для главной» 5:4, video, «Схема ухода» PDF, price with savings, quiz goal and skins, publish and stock toggles) plus slug, headline and course _(gap)_                             |
+| Товары     | `/products`, `/products/:id` | Category management, table with stock toggle; editor (name, brand, category, volume, price, short text, description, Состав, how to use, 3 photos, stock, badge, «На главной странице» switches) plus slug, short name for steps, publish toggle and SEO _(gap)_                                    |
+| Оптовикам  | `/wholesale`                 | Contacts, hero, about quote and stats, featured products, benefits, stock note and delivery table, brand catalog PDF, video                                                                                                                                                                         |
+| Клиенты    | `/customers`                 | Aggregated from orders by phone: name, city, orders, total, last order, most ordered item, WhatsApp                                                                                                                                                                                                 |
+| Отзывы     | `/reviews`                   | Upload screenshots (multi, drag and drop), order, hide/show, delete; demo screenshots hide automatically once real ones exist                                                                                                                                                                       |
+| Тексты     | `/content/:key`              | Home texts (hero, comparison with title + text per point, «Каталог» card photo, about, reviews), delivery facts and FAQ, privacy, offer _(gap)_                                                                                                                                                     |
+| Оформление | `/appearance`                | Theme preset, header colour, accent colour with contrast warnings, currencies with rates and toggles, live phone preview                                                                                                                                                                            |
+| Настройки  | `/settings/:section`         | Shop contacts and legal line, notifications (Telegram, email, test), «Оплата» (Finik connection and 1 сом check, site switch, default method, link lifetime, Visa wording, WhatsApp templates), SEO and analytics, users, audit log, "Выйти на всех устройствах" _(gap)_                            |
 
 TanStack Query for server state; the orders counter in the nav polls every 15 s and refetches on window focus. Every
 mutation shows a toast. shadcn/ui primitives are restyled to the design (Onest, ink `#14142B` buttons, `#E4E6EB` borders,
@@ -256,6 +270,9 @@ mutation shows a toast. shadcn/ui primitives are restyled to the design (Onest, 
 5. The sheet shows "Заказ отправлен" with the message bubble and "WhatsApp не открылся? Открыть ещё раз".
 6. In the admin the order shows up in Заказы and Обзор within 15 s; Нурайым confirms in WhatsApp, then sets Отправлен or
    Отменён.
+
+With online payment on, the sheet adds a two-option control «Онлайн» / «WhatsApp» above the total (preselected from
+settings). «WhatsApp» is exactly the flow above (`paymentMethod: 'whatsapp'`); «Онлайн» is §7.9.
 
 ### 7.2 Quiz
 
@@ -324,6 +341,39 @@ link to `https://admin.bom-beauty.com/orders/{id}`. Leads notify only if enabled
 off, `notify.email` sends the same over SMTP. Customer input is HTML-escaped. Settings has a test button that reports each
 channel (sent, off, not configured, failed).
 
+With online payment on, messages about a customer end with the WhatsApp text the owner can send, quoted
+(`<blockquote>`), and an inline `wa.me` button that opens it prefilled for the customer's number (plus «Открыть в
+админке» when the admin URL is https; Telegram refuses other button URLs). One message per situation: a WhatsApp order
+(with its payment link), any order paid (delivery text: Kyrgyzstan or abroad by the phone's country code), an online
+order left unpaid after its link expired (the link again), review alerts (another amount, a second payment, a
+cancelled or deleted order) and the admin's 1 сом check. Online orders send nothing at creation.
+
+### 7.9 Online payment (Finik)
+
+1. **Order:** «Онлайн» in the sheet validates as usual, then awaits `POST /v1/orders` with `paymentMethod: 'finik'` (25
+   s timeout, the same `clientRef` on a retry). The API stores the order (`payment_status = pending`), creates a
+   `payments` row and asks Finik for a payment link for the server total (`POST /v1/payment`, RSA-SHA256 signed,
+   `FINIK_QR`, `endDate` = now + the owner's link lifetime). The answer carries Finik's URL and the order's own page;
+   the browser saves `bb-pending-payment` and goes to Finik (or to `/pay/<token>` when Finik refused).
+2. **Pay page:** `/pay/<token>` (random token with 122 bits from a v4 UUID, never the order id) shows the lines, any adjustment and the
+   amount due. «Оплатить» calls `POST /v1/pay/:token`: a live link for the same amount is reused, otherwise a new
+   attempt is created. Finik's `RedirectUrl` is `/pay/<token>?from=finik`, where the page polls `GET /v1/pay/:token`
+   until the webhook lands (spinner 30 s, then the pay button stays available while polling continues up to 15 min).
+3. **Webhook:** `POST /v1/webhooks/finik` is the only proof of payment. The raw body's signature is checked with
+   Finik's public key (host and path of `FINIK_WEBHOOK_URL` first, then the request's), the timestamp must be within 5
+   minutes, the event is stored once (`payment_events`, keyed by Finik's operation id) and applied in one transaction
+   with row locks: the attempt becomes `succeeded`, the order `paid` (AuditLog, source Finik) when the money equals the
+   attempt and the order's current amount; otherwise the owner gets a review alert and nothing is marked paid.
+4. **Expiry:** `payments.expire` runs every 5 minutes: links past their end (plus 10 min grace) become `expired`; an
+   online order with no live link turns `unpaid` and the owner gets one «не оплачен» message. A late webhook still pays.
+5. **WhatsApp orders:** the admin drawer and the Telegram message carry the order's payment link; the owner can add a
+   signed adjustment (delivery, discount) while it is unpaid, which the pay page shows as its own line. A link issued
+   for the old amount never settles the new one.
+6. **Admin:** payment chip in the list, «Оплата» in the drawer (status select: Не оплачен / Оплачен / Возврат, with
+   confirmations), «Настройки → Оплата» with the connection and a 1 сом live check.
+7. **Development:** `FINIK_ENV=mock` (refused in production) serves a fake Finik page from the API that posts a webhook
+   signed with a per-process key pair, over real HTTP, through the same verification code.
+
 ## 8. Security
 
 ### 8.1 Public endpoints
@@ -334,6 +384,12 @@ normalised to E.164; IPs stored only as salted hashes; optional Turnstile on ord
 5 s timeout, fails open so a Cloudflare outage never blocks orders). The site's server-side reads all come from one
 internal address, so they send `X-Internal-Secret` (the shared web↔API secret, `REVALIDATE_SECRET`) and skip the
 per-IP limit; admin calls count per session with a higher limit, since uploads come in bursts (API.md §3).
+
+**Online payment:** amounts always come from the database, never from the browser; the pay page is reached only by
+its random token and returns no personal data; payment links are reused only for the same amount; the Finik webhook
+needs a valid RSA signature over the raw body, a fresh timestamp and a known payment, is deduplicated by Finik's
+operation id and is applied under row locks, so racing deliveries or an admin edit see each other's result. Admin
+amount changes are refused once an order is paid.
 
 ### 8.2 Admin
 
@@ -362,7 +418,10 @@ Cloudflare Full (strict) with an Origin CA certificate in Caddy; Hetzner firewal
 ### 8.4 Secrets and logs
 
 Secrets only in env (server `infra/.env`, GitHub Actions secrets). pino redacts phone, name, address, cookies, auth
-headers and signed URLs. Sentry optional (backend).
+headers and signed URLs. Sentry optional (backend). Finik: our RSA private key lives only in the server env
+(`FINIK_PRIVATE_KEY_BASE64`), never in the repo; the Finik client logs payment ids, statuses and the payment page's
+host, never the API key, the signature, the request body or the payment URL; stored webhook payloads keep a whitelist
+of fields (no payer names).
 
 ## 9. Privacy
 
@@ -460,6 +519,9 @@ dev containers SeaweedFS (S3) and Mailpit. Since 2026-10-17 dependencies are add
 - M6: `@axe-core/playwright` (dev, frontend and admin: WCAG 2.2 AA checks in the e2e suites).
 - M8: `pdf-lib` + `@pdf-lib/fontkit` (frontend: the care scheme PDF with embedded Onest, so text stays real and
   selectable; pure JS, no headless browser).
+- M9: no new dependency. Finik's request signing and webhook verification are our own code on `node:crypto`
+  (`backend/src/payments/finik/finik-signer.ts`, checked against Finik's published samples). Rejected:
+  `@mancho.devs/authorizer` (Finik's sample signer), because it `console.log`s the API key and request bodies.
 
 ## 15. Decisions and deviations
 
@@ -492,14 +554,27 @@ dev containers SeaweedFS (S3) and Mailpit. Since 2026-10-17 dependencies are add
 | D25 | The catalog cart bar's «Оформить» chip uses a dark tint (`black/10`) instead of the design's `rgba(255,255,255,.2)`                                                                                                                                                                                                                  | White on the light tint is 3.7:1; WCAG 1.4.3 needs 4.5:1                             |
 | D26 | The M8 migration applies the revised demo data (renames, flags, Состав texts, comparison copy, program order) only where the values are still the original seed, so owner edits survive                                                                                                                                              | Production already has owner data                                                    |
 | D27 | The M8 migration is not additive (order columns move into `order_lines`, quiz enums are rebuilt), the one exception to the forward-compatible migration rule in DEPLOY §4; the deploy dumps the database before migrating; roll back by restoring that dump                                                                          | Keeping both shapes would mean dual writes and old enum values for one release       |
+| D28 | Online payment through Finik's Web SDK (hosted page, `FINIK_QR`, сом only) **next to** the WhatsApp flow; the owner switches it on in «Настройки → Оплата»; off by default and hidden while the server has no Finik keys                                                                                                             | Kyrgyz banking apps pay by QR; customers abroad still need WhatsApp and bank details |
+| D29 | Finik's signed webhook is the only proof of payment; the redirect back lands on `/pay/<token>`, which polls our API (Finik has no status API for acquiring)                                                                                                                                                                          | Finik: "the webhook is the source of truth"; anyone can open a redirect URL          |
+| D30 | Own RSA-SHA256 signer on `node:crypto`, not `@mancho.devs/authorizer`                                                                                                                                                                                                                                                                | The package logs the API key and bodies; ours is checked against Finik's samples     |
+| D31 | Payment state lives beside fulfilment: `orders.payment_status` (unpaid, pending, paid, refunded) next to `status`; attempts in `payments`, verified webhooks in `payment_events`, deduplicated by Finik's operation id                                                                                                               | An order can be paid and not yet sent                                                |
+| D32 | The order is stored before any payment; every attempt is a new `payments` row whose id is Finik's `PaymentId`; a paid webhook settles the order only when the money equals the attempt **and** the order's current amount; a second payment is flagged                                                                               | Retries never reuse a link for another amount; no webhook arrives for an unknown row |
+| D33 | Online orders notify the owner when paid, and once if still unpaid after the link expired; not at creation. Telegram messages carry the customer's WhatsApp text with a send button                                                                                                                                                  | One message per situation; the owner sends with one tap                              |
+| D34 | The amount is the order's server total in сом plus the owner's signed adjustment; the display currency stays display-only; the pay button and the pay page name the сом amount (`formatKgs`, not `<Price>`)                                                                                                                          | FINIK_QR charges сом only; the button must say what will be charged                  |
+| D35 | `FINIK_ENV=mock` (development and tests only, refused in production) replaces Finik with a local page that sends a correctly signed webhook                                                                                                                                                                                          | `pnpm dev`, the browser check and e2e need the whole flow without Finik credentials  |
+| D36 | With online payment on, the site's payment wording gets online variants (programs «Как это работает» step 3, catalog note, order sheet); off, the design's text stays verbatim                                                                                                                                                       | The design is silent on online payment (D1)                                          |
+| D37 | One payment page per order (`/pay/<token>`, random token on the order) replaces a page per attempt; the owner's WhatsApp texts are templates in settings with placeholders                                                                                                                                                           | One link the owner can always send, whatever happened to earlier attempts            |
 
 ## 16. Risks to verify early
 
-| Risk                                                                     | Check                                                                               | Fallback                                |
-| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- | --------------------------------------- |
-| Hetzner Object Storage: browser presigned POST with policy + bucket CORS | M5 spike passed on SeaweedFS (policy, CORS); a real Hetzner bucket is checked at M7 | presigned PUT + `HeadObject` size check |
-| Prisma 7 CJS output inside a Nest 11 build                               | M1                                                                                  | Prisma 6.x classic generator            |
-| Native HLS support across target browsers                                | M5 on real devices                                                                  | MP4 fallback is always present          |
-| Bunny webhook reliability                                                | M5                                                                                  | `video.sync` polling until ready        |
-| Cloudflare proxying `media.` to the bucket host                          | M7                                                                                  | Caddy proxy (default)                   |
-| Theme colours chosen by the owner breaking contrast                      | Admin shows the design's warnings; site clamps nothing                              | Owner picks a darker accent             |
+| Risk                                                                     | Check                                                                               | Fallback                                                                   |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Hetzner Object Storage: browser presigned POST with policy + bucket CORS | M5 spike passed on SeaweedFS (policy, CORS); a real Hetzner bucket is checked at M7 | presigned PUT + `HeadObject` size check                                    |
+| Prisma 7 CJS output inside a Nest 11 build                               | M1                                                                                  | Prisma 6.x classic generator                                               |
+| Native HLS support across target browsers                                | M5 on real devices                                                                  | MP4 fallback is always present                                             |
+| Bunny webhook reliability                                                | M5                                                                                  | `video.sync` polling until ready                                           |
+| Cloudflare proxying `media.` to the bucket host                          | M7                                                                                  | Caddy proxy (default)                                                      |
+| Theme colours chosen by the owner breaking contrast                      | Admin shows the design's warnings; site clamps nothing                              | Owner picks a darker accent                                                |
+| Finik's webhook blocked or delayed by Cloudflare (WAF, bot rules)        | Go-live 1 сом check in «Настройки → Оплата» (DEPLOY §3)                             | Skip rule for `/v1/webhooks/finik`; the owner marks the order paid by hand |
+| A lost webhook (Finik has no status API for acquiring)                   | Finik retries for about a day; the unpaid message tells the owner                   | Check in Finik's cabinet, mark paid by hand                                |
+| One fixed-amount link paid twice                                         | Webhook flags a second payment (review alert)                                       | Refund in Finik's cabinet, «Возврат» in the admin                          |

@@ -109,7 +109,11 @@ export function CartProvider({ products, children }: { products: CartProduct[]; 
     [update],
   );
 
-  const clear = useCallback(() => update(() => []), [update]);
+  // Storage first: a clear on page load (a paid online order) must win over the restore effect above.
+  const clear = useCallback(() => {
+    writeStored([]);
+    setStored([]);
+  }, []);
 
   const value = useMemo<CartValue>(() => {
     const bySlug = new Map(products.map((product) => [product.slug, product]));

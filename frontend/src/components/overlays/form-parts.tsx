@@ -1,6 +1,7 @@
 'use client';
 
 import { LINE_QTY_MAX } from '@bom/shared/web';
+import type { ReactNode } from 'react';
 import type { UseFormRegisterReturn } from 'react-hook-form';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
@@ -66,7 +67,16 @@ export function Honeypot({ registration }: { registration: UseFormRegisterReturn
   );
 }
 
-export function SubmitButton({ sending, label }: { sending: boolean; label: string }) {
+/** The sheets' main button; the WhatsApp icon unless `icon` says otherwise (null: none, for online payment). */
+export function SubmitButton({
+  sending,
+  label,
+  icon = <WhatsAppIcon size={20} />,
+}: {
+  sending: boolean;
+  label: string;
+  icon?: ReactNode;
+}) {
   return (
     <button
       type="submit"
@@ -77,7 +87,7 @@ export function SubmitButton({ sending, label }: { sending: boolean; label: stri
         sending && 'opacity-70',
       )}
     >
-      <WhatsAppIcon size={20} />
+      {icon}
       <span className="whitespace-nowrap">{label}</span>
     </button>
   );

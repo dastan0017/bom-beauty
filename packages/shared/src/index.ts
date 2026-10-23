@@ -12,6 +12,7 @@ export * from './slug';
 export * from './text';
 export * from './schemas/common';
 export * from './schemas/orders';
+export * from './schemas/payments';
 export * from './schemas/leads';
 export * from './schemas/auth';
 export * from './schemas/catalog';

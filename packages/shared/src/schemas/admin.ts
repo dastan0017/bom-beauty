@@ -1,6 +1,13 @@
 import { z } from '../zod';
-import { LEAD_KINDS, ORDER_ITEM_TYPES, ORDER_STATUSES } from '../enums';
+import {
+  LEAD_KINDS,
+  ORDER_ITEM_TYPES,
+  ORDER_PAYMENT_STATUSES,
+  ORDER_STATUSES,
+  PAYMENT_METHODS,
+} from '../enums';
 import { utmSchema } from './common';
+import { orderPaymentSchema } from './payments';
 
 // Admin endpoints for orders, leads, customers and the overview (docs/API.md §6).
 
@@ -34,6 +41,8 @@ export const orderRowSchema = z.object({
   city: z.string(),
   totalKgs: z.number().int(),
   status: z.enum(ORDER_STATUSES),
+  paymentMethod: z.enum(PAYMENT_METHODS),
+  paymentStatus: z.enum(ORDER_PAYMENT_STATUSES),
   createdAt: z.iso.datetime(),
 });
 export type OrderRow = z.infer<typeof orderRowSchema>;
@@ -66,6 +75,14 @@ export const orderHistoryEntrySchema = z.object({
   from: z.enum(ORDER_STATUSES).nullable(),
   to: z.enum(ORDER_STATUSES).nullable(),
   userName: z.string().nullable(),
+  /** Set for `payment` entries: who changed the payment state (Finik's webhook or a person). */
+  payment: z
+    .object({
+      from: z.enum(ORDER_PAYMENT_STATUSES).nullable(),
+      to: z.enum(ORDER_PAYMENT_STATUSES),
+      source: z.enum(['finik', 'manual']),
+    })
+    .nullable(),
 });
 
 export const orderDetailSchema = orderRowSchema.extend({
@@ -80,15 +97,29 @@ export const orderDetailSchema = orderRowSchema.extend({
   utm: utmSchema.nullable(),
   statusChangedAt: z.iso.datetime(),
   history: z.array(orderHistoryEntrySchema),
+  payment: orderPaymentSchema,
 });
 export type OrderDetail = z.infer<typeof orderDetailSchema>;
+
+/** Payment states a person may set; `pending` belongs to the payment flow. */
+export const MANUAL_PAYMENT_STATUSES = ['unpaid', 'paid', 'refunded'] as const;
 
 export const updateOrderSchema = z
   .object({
     status: z.enum(ORDER_STATUSES).optional(),
     note: z.string().trim().max(2000, 'order.note.max').optional(),
+    /** Bank transfers from WhatsApp orders, refunds made in Finik's cabinet. */
+    paymentStatus: z.enum(MANUAL_PAYMENT_STATUSES).optional(),
+    /** Signed amount added to the order total while it is unpaid: delivery, a discount, an added item. */
+    adjustmentKgs: z
+      .number()
+      .int('order.adjustment.int')
+      .min(-1_000_000, 'order.adjustment.range')
+      .max(1_000_000, 'order.adjustment.range')
+      .optional(),
+    adjustmentNote: z.string().trim().max(200, 'order.adjustment.note.max').optional(),
   })
-  .refine((value) => value.status !== undefined || value.note !== undefined, 'order.update.empty');
+  .refine((value) => Object.values(value).some((v) => v !== undefined), 'order.update.empty');
 export type UpdateOrder = z.infer<typeof updateOrderSchema>;
 
 export const leadListQuerySchema = z.object({ kind: z.enum(LEAD_KINDS).optional(), ...pageQuery });

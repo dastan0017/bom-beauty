@@ -24,7 +24,11 @@ async function bootstrap(): Promise<void> {
     return;
   }
 
-  const app = await NestFactory.create<NestExpressApplication>(AppModule.forRoot(env), { bufferLogs: true });
+  // rawBody: Finik's webhook signature is checked on the bytes it sent (docs/finik/SPEC.md §5.7).
+  const app = await NestFactory.create<NestExpressApplication>(AppModule.forRoot(env), {
+    bufferLogs: true,
+    rawBody: true,
+  });
   app.useLogger(app.get(Logger));
   configureApp(app, env);
   if (env.NODE_ENV !== 'production') SwaggerModule.setup('docs', app, buildOpenApiDocument(app));

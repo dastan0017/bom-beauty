@@ -17,6 +17,7 @@ import { HealthController } from './health/health.controller';
 import { LeadsModule } from './leads/leads.module';
 import { loggerModule } from './logger/logger.module';
 import { OrdersModule } from './orders/orders.module';
+import { PaymentsCoreModule, PaymentsModule } from './payments/payments.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedirectsModule } from './redirects/redirects.controller';
 import { RedisModule } from './redis/redis.module';
@@ -52,12 +53,14 @@ export class AppModule {
         RevalidateModule,
         NotificationsModule,
         SettingsModule,
+        PaymentsCoreModule,
         AuthModule,
         CatalogModule,
         ContentModule,
         ReviewsModule,
         RedirectsModule,
         OrdersModule,
+        PaymentsModule.forRoot(env),
         LeadsModule,
         AdminModule,
         AdminCatalogModule,

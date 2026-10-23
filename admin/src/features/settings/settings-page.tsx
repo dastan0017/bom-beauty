@@ -1,19 +1,23 @@
 import {
+  DEFAULT_WHATSAPP_TEMPLATES,
   normalizePhone,
   relativeDateTime,
   USER_ROLE_LABELS,
   USER_ROLES,
   type AdminMedia,
   type AdminUser,
+  type FinikStatus,
   type NotificationTestResult,
+  type PaymentCheck,
   type SettingKey,
   type SettingValue,
   type UserRole,
 } from '@bom/shared';
 import { useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
-import { NavLink, Navigate, useParams } from 'react-router';
+import { NavLink, Navigate, useParams, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { useMedia } from '@/api/media';
+import { useFinikStatus, usePaymentCheck, useStartFinikCheck } from '@/api/payments';
 import { useNotificationTest, useSaveSetting, useSettings, type AdminSettings } from '@/api/settings';
 import { useAudit, useUserActions, useUsers } from '@/api/users';
 import { Button, Card, inputClass, Spinner, TableHead, TableMessage, TableRow } from '@/components/ui';
@@ -32,7 +36,7 @@ import { Text } from '@/features/products/product-editor';
 import { errorText, fieldErrors } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
-const TABS = ['shop', 'seo', 'notifications', 'users', 'security', 'audit'] as const;
+const TABS = ['shop', 'seo', 'notifications', 'payments', 'users', 'security', 'audit'] as const;
 type Tab = (typeof TABS)[number];
 
 /** Настройки (gap: the design has no settings screen; same visual language). Owner only. */
@@ -41,7 +45,8 @@ export function SettingsPage() {
   const settings = useSettings();
   if (!TABS.includes(tab as Tab)) return <Navigate to="/settings/shop" replace />;
   const current = tab as Tab;
-  const needsSettings = current === 'shop' || current === 'seo' || current === 'notifications';
+  const needsSettings =
+    current === 'shop' || current === 'seo' || current === 'notifications' || current === 'payments';
 
   return (
     <>
@@ -77,6 +82,7 @@ export function SettingsPage() {
           {current === 'shop' && settings.data && <ShopForm settings={settings.data} />}
           {current === 'seo' && settings.data && <SeoForm settings={settings.data} />}
           {current === 'notifications' && settings.data && <NotificationsForm settings={settings.data} />}
+          {current === 'payments' && settings.data && <PaymentsForm settings={settings.data} />}
           {current === 'users' && <UsersTab />}
           {current === 'security' && <SecurityTab />}
           {current === 'audit' && <AuditTab />}
@@ -96,6 +102,7 @@ function useSettingsForm<K extends SettingKey>(keysToSave: readonly K[], setting
     seo: useSaveSetting('seo'),
     analytics: useSaveSetting('analytics'),
     antispam: useSaveSetting('antispam'),
+    payments: useSaveSetting('payments'),
   };
   const initial = Object.fromEntries(keysToSave.map((key) => [key, settings[key]])) as {
     [P in K]: SettingValue<P>;
@@ -463,11 +470,13 @@ function SwitchLine({
   hint,
   checked,
   onChange,
+  disabled,
 }: {
   label: string;
   hint?: string;
   checked: boolean;
   onChange: (v: boolean) => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex items-start justify-between gap-4">
@@ -475,7 +484,214 @@ function SwitchLine({
         <span className="text-[15px] font-semibold">{label}</span>
         {hint && <span className="text-[13px] leading-normal text-muted">{hint}</span>}
       </div>
-      <Toggle checked={checked} onChange={onChange} label={label} />
+      <Toggle checked={checked} onChange={onChange} label={label} disabled={disabled} />
+    </div>
+  );
+}
+
+const TEMPLATE_KEYS = ['link', 'paidLocal', 'paidAbroad'] as const;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** «Оплата» (docs/finik/SPEC.md §7.2): connection, the switch for the site, link lifetime and the WhatsApp texts. */
+function PaymentsForm({ settings }: { settings: AdminSettings }) {
+  const { form, set, submit, errors, saved, dirty, saving } = useSettingsForm(['payments'], settings);
+  const payments = form.payments;
+  const status = useFinikStatus();
+  const configured = status.data?.configured ?? false;
+  const t = copy.settings.payments;
+  return (
+    <>
+      <EditorHeader
+        level={2}
+        title={copy.settings.tabs.payments}
+        saved={saved}
+        saving={saving}
+        dirty={dirty}
+        onSave={() => void submit()}
+      />
+      <div className="mt-[26px] flex max-w-[760px] flex-col gap-4">
+        <ConnectionPanel status={status.data} failed={status.isError} />
+        <Panel>
+          <SwitchLine
+            label={t.enabled}
+            hint={configured || status.isPending ? t.enabledHint : t.enabledOff}
+            checked={payments.finikEnabled}
+            // Switching off always works; switching on needs Finik's keys on the server.
+            disabled={!payments.finikEnabled && !configured}
+            onChange={(finikEnabled) => set('payments', { finikEnabled })}
+          />
+          <div className="grid gap-3.5 sm:grid-cols-2">
+            <Text label={t.defaultMethod}>
+              <select
+                value={payments.defaultMethod}
+                onChange={(e) =>
+                  set('payments', { defaultMethod: e.target.value === 'finik' ? 'finik' : 'whatsapp' })
+                }
+                className={selectClass}
+              >
+                <option value="finik">{t.methods.finik}</option>
+                <option value="whatsapp">{t.methods.whatsapp}</option>
+              </select>
+            </Text>
+            <Text label={t.ttl} hint={t.ttlHint} error={errors['payments.linkTtlMinutes']}>
+              <input
+                type="number"
+                min={10}
+                max={1440}
+                step={1}
+                value={Number.isNaN(payments.linkTtlMinutes) ? '' : payments.linkTtlMinutes}
+                onChange={(e) => set('payments', { linkTtlMinutes: e.target.valueAsNumber })}
+                className={inputClass}
+              />
+            </Text>
+          </div>
+          <SwitchLine
+            label={t.visa}
+            hint={t.visaHint}
+            checked={payments.visa}
+            onChange={(visa) => set('payments', { visa })}
+          />
+          <SwitchLine
+            label={t.notifyUnpaid}
+            hint={t.notifyUnpaidHint}
+            checked={payments.notifyUnpaid}
+            onChange={(notifyUnpaid) => set('payments', { notifyUnpaid })}
+          />
+        </Panel>
+        <Panel title={t.templates} hint={t.templatesHint}>
+          {TEMPLATE_KEYS.map((key) => (
+            <div key={key} className="flex flex-col gap-1">
+              <Text label={t.template[key]} error={errors[`payments.templates.${key}`]}>
+                <textarea
+                  value={payments.templates[key]}
+                  rows={3}
+                  maxLength={1000}
+                  onChange={(e) =>
+                    set('payments', { templates: { ...payments.templates, [key]: e.target.value } })
+                  }
+                  className={textareaClass}
+                />
+              </Text>
+              {payments.templates[key] !== DEFAULT_WHATSAPP_TEMPLATES[key] && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    set('payments', {
+                      templates: { ...payments.templates, [key]: DEFAULT_WHATSAPP_TEMPLATES[key] },
+                    })
+                  }
+                  className="h-9 self-start text-[13px] font-semibold text-muted underline underline-offset-2 hover:text-ink"
+                >
+                  {t.reset}
+                </button>
+              )}
+            </div>
+          ))}
+        </Panel>
+      </div>
+    </>
+  );
+}
+
+/** What the server is connected to, and the 1 сом check: create → pay on Finik → the webhook confirms it. */
+function ConnectionPanel({ status, failed }: { status: FinikStatus | undefined; failed: boolean }) {
+  const t = copy.settings.payments;
+  const [params] = useSearchParams();
+  const returned = params.get('check');
+  // Back from the check payment page (`?check=<id>`): keep watching that check.
+  const [checkId, setCheckId] = useState<string | null>(returned && UUID.test(returned) ? returned : null);
+  const start = useStartFinikCheck();
+  const check = usePaymentCheck(checkId);
+
+  const run = () =>
+    start.mutate(undefined, {
+      onSuccess: (result) => setCheckId(result.id),
+      onError: (error) => toast.error(errorText(error)),
+    });
+
+  const mode = status?.environment ? t.environment[status.environment] : t.notConfigured;
+  return (
+    <Panel title={t.connection}>
+      {failed ? (
+        <span className="text-[15px] text-muted">{copy.errors.load}</span>
+      ) : !status ? (
+        <Spinner />
+      ) : (
+        <dl className="grid gap-x-6 gap-y-1.5 text-[15px] sm:grid-cols-[200px_1fr]">
+          <dt className="text-muted">{t.mode}</dt>
+          <dd className={cn('font-semibold', status.environment === 'prod' && 'text-green')}>{mode}</dd>
+          {status.accountId && (
+            <>
+              <dt className="text-muted">{t.account}</dt>
+              <dd>{status.accountId}</dd>
+            </>
+          )}
+          {status.webhookUrl && (
+            <>
+              <dt className="text-muted">{t.webhook}</dt>
+              <dd className="break-all">{status.webhookUrl}</dd>
+            </>
+          )}
+        </dl>
+      )}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line-2 pt-3.5">
+        <span className="max-w-[440px] text-[13px] leading-normal text-muted">{t.checkHint}</span>
+        <Button
+          variant="outline"
+          onClick={run}
+          disabled={!status?.configured || start.isPending || check.data?.status === 'pending'}
+        >
+          {start.isPending && <Spinner />}
+          {t.check}
+        </Button>
+      </div>
+      {check.data && <CheckResult check={check.data} />}
+    </Panel>
+  );
+}
+
+function CheckResult({ check }: { check: PaymentCheck }) {
+  const t = copy.settings.payments;
+  if (check.status === 'succeeded') {
+    return (
+      <p className="text-[15px] font-semibold text-green" role="status">
+        {t.checkPaid}
+      </p>
+    );
+  }
+  if (check.status === 'failed') {
+    return (
+      <p className="text-[15px] break-words text-red" role="status">
+        {t.checkFailed(check.error ?? '')}
+      </p>
+    );
+  }
+  if (check.status === 'expired') {
+    return (
+      <p className="text-[15px] text-muted" role="status">
+        {t.checkExpired}
+      </p>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-2" role="status">
+      <p className="text-[15px] leading-normal">{t.checkPending}</p>
+      <div className="flex flex-wrap items-center gap-4">
+        {check.url && (
+          <a
+            href={check.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-10 items-center rounded-control bg-ink px-4 text-sm font-semibold text-white hover:bg-ink-hover"
+          >
+            {t.checkOpen}
+          </a>
+        )}
+        <span className="inline-flex items-center gap-2 text-sm text-muted">
+          <Spinner />
+          {t.checkWaiting}
+        </span>
+      </div>
     </div>
   );
 }

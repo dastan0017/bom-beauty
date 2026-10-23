@@ -119,11 +119,12 @@ export async function seed(
   }
 
   for (const key of SETTING_KEYS) {
-    await prisma.setting.upsert({
-      where: { key },
-      update: {},
-      create: { key, value: SETTING_DEFAULTS[key] },
-    });
+    // Dev shows online payment (mock Finik) with WhatsApp preselected, so the WhatsApp flows stay the default.
+    const value =
+      options.demo && key === 'payments'
+        ? { ...SETTING_DEFAULTS.payments, finikEnabled: true, defaultMethod: 'whatsapp' }
+        : SETTING_DEFAULTS[key];
+    await prisma.setting.upsert({ where: { key }, update: {}, create: { key, value } });
   }
 
   const content: { [K in ContentKey]: ContentValue<K> } = {
@@ -228,6 +229,10 @@ async function seedDemo(prisma: PrismaClient): Promise<void> {
     }
   }
 
+  if ((await prisma.order.count({ where: { paymentMethod: 'finik' } })) === 0) {
+    await seedDemoOnlineOrders(prisma);
+  }
+
   if ((await prisma.lead.count()) === 0) {
     const published = await prisma.program.findMany({
       where: { published: true },
@@ -263,6 +268,113 @@ async function seedDemo(prisma: PrismaClient): Promise<void> {
         createdAt: bishkekTime(1, '15:20'),
       },
     });
+  }
+}
+
+/** Dev-only: one online order paid through (mock) Finik and one left unpaid, for the admin's payment views. */
+async function seedDemoOnlineOrders(prisma: PrismaClient): Promise<void> {
+  const programs = await prisma.program.findMany({
+    where: { slug: { in: ['acne', 'glow'] } },
+    select: { id: true, slug: true, title: true, priceKgs: true },
+  });
+  const demos = [
+    {
+      slug: 'acne',
+      name: 'Алия К.',
+      phone: '+996 555 12 34 56',
+      city: 'Бишкек',
+      daysAgo: 0,
+      time: '09:40',
+      paid: true,
+    },
+    {
+      slug: 'glow',
+      name: 'Динара С.',
+      phone: '+7 701 123 45 67',
+      city: 'Алматы',
+      daysAgo: 1,
+      time: '18:10',
+      paid: false,
+    },
+  ];
+  for (const demo of demos) {
+    const program = programs.find((p) => p.slug === demo.slug);
+    if (!program) continue;
+    const createdAt = bishkekTime(demo.daysAgo, demo.time);
+    const paidAt = new Date(createdAt.getTime() + 2 * 60_000);
+    const address = `${demo.city}, ул. Демо, 1`;
+    const order = await prisma.order.create({
+      data: {
+        status: 'new',
+        lines: {
+          create: [
+            {
+              position: 0,
+              type: 'program',
+              programId: program.id,
+              title: program.title,
+              unitPriceKgs: program.priceKgs,
+              qty: 1,
+              totalKgs: program.priceKgs,
+            },
+          ],
+        },
+        totalKgs: program.priceKgs,
+        name: demo.name,
+        phone: normalizePhone(demo.phone) ?? demo.phone,
+        address,
+        message: buildOrderMessage(
+          {
+            lines: [{ type: 'program', title: program.title, qty: 1, total: formatKgs(program.priceKgs) }],
+            total: formatKgs(program.priceKgs),
+            name: demo.name,
+            phone: demo.phone,
+            address,
+          },
+          { closing: 'online' },
+        ),
+        pageUrl: 'http://localhost:3100/',
+        clientRef: randomUUID(),
+        createdAt,
+        statusChangedAt: createdAt,
+        paymentMethod: 'finik',
+        paymentStatus: demo.paid ? 'paid' : 'unpaid',
+        paidAt: demo.paid ? paidAt : null,
+        unpaidNotifiedAt: demo.paid ? null : new Date(createdAt.getTime() + 75 * 60_000),
+      },
+      select: { id: true },
+    });
+    await prisma.payment.create({
+      data: {
+        orderId: order.id,
+        purpose: 'order',
+        environment: 'mock',
+        status: demo.paid ? 'succeeded' : 'expired',
+        amountKgs: program.priceKgs,
+        expiresAt: new Date(createdAt.getTime() + 60 * 60_000),
+        createdAt,
+        ...(demo.paid
+          ? {
+              paidAt,
+              paidAmountTyiyn: program.priceKgs * 100,
+              channel: 'qr',
+              transactionId: randomUUID(),
+              operationId: `demo_${randomUUID()}_DEBIT`,
+            }
+          : {}),
+      },
+    });
+    if (demo.paid) {
+      await prisma.auditLog.create({
+        data: {
+          entity: 'order',
+          entityId: order.id,
+          action: 'payment',
+          diff: { from: 'pending', to: 'paid', source: 'finik' },
+          createdAt: paidAt,
+        },
+      });
+    }
   }
 }
 

@@ -2,9 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { formatKgs } from './money';
 import {
   buildOrderMessage,
+  buildOrderQuestionMessage,
+  buildPaidMessage,
+  buildPaymentHelpMessage,
   buildQuizMessage,
   buildSchemeRequestMessage,
   buildWholesaleMessage,
+  DEFAULT_WHATSAPP_TEMPLATES,
+  paidTemplateFor,
+  renderWhatsappTemplate,
   waLink,
 } from './whatsapp';
 
@@ -100,5 +106,65 @@ describe('WhatsApp messages', () => {
     expect(waLink('+996 706 304 803', 'Привет')).toBe(
       'https://wa.me/996706304803?text=%D0%9F%D1%80%D0%B8%D0%B2%D0%B5%D1%82',
     );
+  });
+});
+
+describe('online payment texts', () => {
+  const order = {
+    lines: [{ type: 'program' as const, title: 'Акне и постакне', qty: 1, total: formatKgs(5900) }],
+    total: formatKgs(5900),
+    name: 'Айгерим',
+    phone: '+996 555 12 34 56',
+    address: 'Бишкек, ул. Токтогула 1',
+  };
+
+  it('records an online order with its own closing line', () => {
+    const text = buildOrderMessage(order, { closing: 'online' });
+    expect(text.endsWith('\n\nОплата онлайн через Finik.')).toBe(true);
+    expect(text).not.toContain('реквизиты');
+  });
+
+  it('adds the site order number for the WhatsApp fallback', () => {
+    const text = buildOrderMessage(order, { number: 1042 });
+    expect(text).toContain('Адрес: Бишкек, ул. Токтогула 1\nНомер заказа на сайте: №1042\n\nПришлите');
+  });
+
+  it('fills every placeholder of the owner templates', () => {
+    const values = {
+      name: ' Бекзат ',
+      number: 1043,
+      total: formatKgs(5100),
+      address: 'Ош, ул. Ленина 10',
+      link: 'https://bom-beauty.com/pay/k7Qm2x',
+    };
+    expect(renderWhatsappTemplate(DEFAULT_WHATSAPP_TEMPLATES.link, values)).toBe(
+      'Здравствуйте, Бекзат! Ваш заказ №1043 на 5 100 сом. Оплатить можно по ссылке: https://bom-beauty.com/pay/k7Qm2x',
+    );
+    expect(renderWhatsappTemplate(DEFAULT_WHATSAPP_TEMPLATES.paidLocal, values)).toContain(
+      'Доставим по адресу: Ош, ул. Ленина 10.',
+    );
+    expect(renderWhatsappTemplate('{имя}, {заказ}, {неизвестно}', values)).toBe('Бекзат, 1043, {неизвестно}');
+  });
+
+  it('picks the delivery template from the phone country', () => {
+    expect(paidTemplateFor('+996555123456')).toBe('paidLocal');
+    expect(paidTemplateFor('+77011234567')).toBe('paidAbroad');
+    expect(paidTemplateFor('+998901234567')).toBe('paidAbroad');
+  });
+
+  it('prepares the customer messages of the payment page', () => {
+    expect(buildPaidMessage({ number: 1042, total: formatKgs(5900) })).toBe(
+      'Здравствуйте! Заказ №1042 на сайте оплачен: 5 900 сом.',
+    );
+    expect(buildPaymentHelpMessage({ number: 1042 })).toBe(
+      'Здравствуйте! По заказу №1042 на сайте оплата не подтвердилась. Проверьте, пожалуйста.',
+    );
+    expect(buildOrderQuestionMessage({ number: 1042 })).toBe(
+      'Здравствуйте! У меня вопрос по заказу №1042 на сайте.',
+    );
+  });
+
+  it('never uses an em-dash in our own texts', () => {
+    for (const text of Object.values(DEFAULT_WHATSAPP_TEMPLATES)) expect(text).not.toContain('—');
   });
 });

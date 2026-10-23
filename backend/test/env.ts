@@ -32,6 +32,13 @@ export function testEnv(overrides: Record<string, string> = {}): Env {
     BUNNY_LIBRARY_ID: '',
     BUNNY_API_KEY: '',
     BUNNY_CDN_HOST: '',
+    // The root .env may hold real Finik keys: tests never use them. Payment tests set their own (generated) keys.
+    FINIK_ENV: '',
+    FINIK_API_KEY: '',
+    FINIK_ACCOUNT_ID: '',
+    FINIK_PRIVATE_KEY_BASE64: '',
+    FINIK_PUBLIC_KEY_BASE64: '',
+    FINIK_WEBHOOK_URL: '',
     ...overrides,
   });
 }

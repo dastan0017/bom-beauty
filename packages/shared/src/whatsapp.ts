@@ -39,8 +39,15 @@ export interface OrderMessageInput {
   comment?: string;
 }
 
+export interface OrderMessageOptions {
+  /** `online`: the stored record of an order paid online (it is never sent to WhatsApp). */
+  closing?: 'details' | 'online';
+  /** Adds "Номер заказа на сайте: №1042", for the WhatsApp fallback after a failed online payment. */
+  number?: number;
+}
+
 /** One bullet per line ("× qty" only above 1), "Итого" for two or more lines (README §7.5). */
-export function buildOrderMessage(order: OrderMessageInput): string {
+export function buildOrderMessage(order: OrderMessageInput, options: OrderMessageOptions = {}): string {
   const lines = [
     'Здравствуйте! Хочу заказать:',
     ...order.lines.map(
@@ -55,8 +62,72 @@ export function buildOrderMessage(order: OrderMessageInput): string {
   const comment = order.comment?.trim();
   if (comment) lines.push(`Комментарий: ${comment}`);
   if (order.totalKgs) lines.push(`Сумма в сомах: ${order.totalKgs}`);
-  lines.push('', 'Пришлите, пожалуйста, реквизиты для оплаты.');
+  if (options.number) lines.push(`Номер заказа на сайте: №${options.number}`);
+  lines.push(
+    '',
+    options.closing === 'online'
+      ? 'Оплата онлайн через Finik.'
+      : 'Пришлите, пожалуйста, реквизиты для оплаты.',
+  );
   return lines.join('\n');
+}
+
+// Texts the owner sends to customers from the Telegram bot (docs/finik/SPEC.md §0). Ours, so no em-dashes. The owner
+// can rewrite them in «Настройки → Оплата»; these are the defaults. Delivery times abroad are hers to fill in.
+
+/** Placeholders the owner can use in her templates. */
+export const WHATSAPP_PLACEHOLDERS = ['{имя}', '{заказ}', '{сумма}', '{адрес}', '{ссылка}'] as const;
+
+export const DEFAULT_WHATSAPP_TEMPLATES = {
+  /** Payment link for an unpaid order. */
+  link: 'Здравствуйте, {имя}! Ваш заказ №{заказ} на {сумма}. Оплатить можно по ссылке: {ссылка}',
+  /** Paid, delivery within Kyrgyzstan (phone +996). */
+  paidLocal:
+    'Здравствуйте, {имя}! Оплату за заказ №{заказ} получили, спасибо 🌸 Доставим по адресу: {адрес}. Когда вам удобно принять заказ?',
+  /** Paid, delivery abroad (any other phone). */
+  paidAbroad:
+    'Здравствуйте, {имя}! Оплату за заказ №{заказ} получили, спасибо 🌸 Отправим заказ в течение [...] дней, трек-номер пришлём сюда.',
+} as const;
+export type WhatsappTemplateKey = keyof typeof DEFAULT_WHATSAPP_TEMPLATES;
+
+export interface WhatsappTemplateValues {
+  name: string;
+  number: number;
+  /** Formatted amount, "5 900 сом". */
+  total: string;
+  address: string;
+  link?: string;
+}
+
+/** Fills the placeholders; anything else in the template stays as the owner wrote it. */
+export function renderWhatsappTemplate(template: string, values: WhatsappTemplateValues): string {
+  return template
+    .replaceAll('{имя}', values.name.trim())
+    .replaceAll('{заказ}', String(values.number))
+    .replaceAll('{сумма}', values.total)
+    .replaceAll('{адрес}', values.address.trim())
+    .replaceAll('{ссылка}', values.link ?? '')
+    .trim();
+}
+
+/** Which "paid" template fits the customer: a Kyrgyz number means delivery within Kyrgyzstan. */
+export function paidTemplateFor(phoneE164: string): 'paidLocal' | 'paidAbroad' {
+  return phoneE164.startsWith('+996') ? 'paidLocal' : 'paidAbroad';
+}
+
+/** «Написать Нурайым» on the payment page once the order is paid. */
+export function buildPaidMessage(order: { number: number; total: string }): string {
+  return `Здравствуйте! Заказ №${order.number} на сайте оплачен: ${order.total}.`;
+}
+
+/** «Написать Нурайым» on the payment page when the payment has not been confirmed. */
+export function buildPaymentHelpMessage(order: { number: number }): string {
+  return `Здравствуйте! По заказу №${order.number} на сайте оплата не подтвердилась. Проверьте, пожалуйста.`;
+}
+
+/** «Написать Нурайым» on the payment page of an order that is not waiting for a payment check. */
+export function buildOrderQuestionMessage(order: { number: number }): string {
+  return `Здравствуйте! У меня вопрос по заказу №${order.number} на сайте.`;
 }
 
 export function buildWholesaleMessage(choice: {

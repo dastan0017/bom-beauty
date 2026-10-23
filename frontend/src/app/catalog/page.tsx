@@ -10,7 +10,7 @@ import { CatalogBottomBar } from '@/components/sticky-bar';
 import { AccentTitle, card, container, PageIntro, PageTitle } from '@/components/ui';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
-import { getCategories, getProducts, getProgramsSafe } from '@/lib/data';
+import { getCategories, getProducts, getProgramsSafe, getSettings } from '@/lib/data';
 import { breadcrumbsLd } from '@/lib/seo';
 
 type Props = { searchParams: Promise<{ category?: string | string[]; problem?: string | string[] }> };
@@ -42,10 +42,11 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 export default async function CatalogPage({ searchParams }: Props) {
   const params = await searchParams;
   const category = single(params.category);
-  const [categories, products, programs] = await Promise.all([
+  const [categories, products, programs, settings] = await Promise.all([
     getCategories(),
     getProducts(category),
     getProgramsSafe(),
+    getSettings(),
   ]);
   const active = categories.find((c) => c.slug === category);
   const problem = programs.find((program) => program.slug === single(params.problem));
@@ -71,7 +72,9 @@ export default async function CatalogPage({ searchParams }: Props) {
           <AccentTitle text={`${copy.catalog.titleBefore}*${copy.catalog.titleAccent}*`} />
         </PageTitle>
         <p className="mt-3.5 self-stretch text-[17px] leading-[1.4] font-semibold">{copy.catalog.lead}</p>
-        <p className="mt-1 self-stretch text-base leading-normal text-muted">{copy.catalog.note}</p>
+        <p className="mt-1 self-stretch text-base leading-normal text-muted">
+          {settings.payments.finik ? copy.catalog.noteOnline : copy.catalog.note}
+        </p>
       </PageIntro>
 
       {programs.length > 0 && (

@@ -8,6 +8,10 @@ export default defineConfig({
   fullyParallel: false,
   retries: 0,
   reporter: 'list',
+  // The dev server renders every request on demand; with both device projects running at once, a client navigation's
+  // RSC request can take 3–4 s (seen in traces), so 5 s assertions on the new URL were flaky. A broken navigation
+  // still fails, only later.
+  expect: { timeout: 10_000 },
   use: {
     baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:3100',
     locale: 'ru-RU',

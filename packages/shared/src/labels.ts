@@ -2,7 +2,11 @@ import { itemsWord } from './plural';
 import type {
   LeadKind,
   OrderItemType,
+  OrderPaymentStatus,
   OrderStatus,
+  PaymentChannel,
+  PaymentMethod,
+  PaymentStatus,
   QuizGoal,
   RoutinePeriod,
   SkinType,
@@ -22,6 +26,33 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 export const ORDER_ITEM_TYPE_LABELS: Record<OrderItemType, string> = {
   product: 'Товар',
   program: 'Программа',
+};
+
+// Payment labels are ours (the design has no online payment), so no em-dashes.
+
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  whatsapp: 'WhatsApp',
+  finik: 'Онлайн (Finik)',
+};
+
+export const ORDER_PAYMENT_STATUS_LABELS: Record<OrderPaymentStatus, string> = {
+  unpaid: 'Не оплачен',
+  pending: 'Ждёт оплаты',
+  paid: 'Оплачен',
+  refunded: 'Возврат',
+};
+
+export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
+  created: 'Создаётся',
+  pending: 'Ссылка выдана',
+  succeeded: 'Оплачен',
+  failed: 'Ошибка',
+  expired: 'Истекла',
+};
+
+export const PAYMENT_CHANNEL_LABELS: Record<PaymentChannel, string> = {
+  qr: 'QR-код',
+  visa: 'Visa',
 };
 
 /** "Cica-сыворотка × 2" for one order line. */

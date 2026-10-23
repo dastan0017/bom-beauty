@@ -71,6 +71,10 @@ export const ERROR_CODES = [
   'too_large',
   'rate_limited',
   'internal',
+  /** 409: online payment is off or Finik is not configured on the server. */
+  'payment_unavailable',
+  /** 502: Finik refused the payment or did not answer. */
+  'payment_failed',
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];
 

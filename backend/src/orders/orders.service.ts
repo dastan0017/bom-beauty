@@ -6,7 +6,9 @@ import { hashIp } from '../common/client-ip';
 import { ApiException, invalidField } from '../common/errors';
 import { fakeId, isBot, isDuplicateClientRef, utmJson } from '../common/submission';
 import { NotificationsService } from '../notifications/notifications.service';
+import { PaymentsService } from '../payments/payments.service';
 import { TurnstileService } from '../common/turnstile.service';
+import type { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 interface RequestMeta {
@@ -16,21 +18,41 @@ interface RequestMeta {
 
 const NOT_AVAILABLE = 'Этой позиции больше нет на сайте';
 
+const storedSelect = {
+  id: true,
+  number: true,
+  payToken: true,
+  paymentMethod: true,
+  totalKgs: true,
+  adjustmentKgs: true,
+} satisfies Prisma.OrderSelect;
+type StoredOrder = Prisma.OrderGetPayload<{ select: typeof storedSelect }>;
+
+const payable = (order: StoredOrder) => ({
+  id: order.id,
+  number: order.number,
+  payToken: order.payToken,
+  amountKgs: order.totalKgs + order.adjustmentKgs,
+});
+
 @Injectable()
 export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly turnstile: TurnstileService,
     private readonly notifications: NotificationsService,
+    private readonly payments: PaymentsService,
     @Inject(ENV) private readonly env: Env,
   ) {}
 
   async create(input: CreateOrder, meta: RequestMeta): Promise<CreateOrderResponse> {
-    if (isBot(input.website)) return { id: fakeId(), number: 0 };
+    if (isBot(input.website)) return { id: fakeId(), number: 0, payment: null };
 
     const existing = await this.findByClientRef(input.clientRef);
-    if (existing) return existing;
+    if (existing) return this.response(existing);
 
+    // Online payment must be on before anything is stored, so the site can fall back to WhatsApp cleanly.
+    if (input.paymentMethod === 'finik') await this.payments.assertAvailable();
     await this.turnstile.assertHuman(input.turnstileToken, meta.ip);
 
     const phone = normalizePhone(input.phone);
@@ -70,8 +92,9 @@ export class OrdersService {
       };
     });
 
+    let order: StoredOrder;
     try {
-      const order = await this.prisma.order.create({
+      order = await this.prisma.order.create({
         data: {
           lines: { create: lines },
           totalKgs: lines.reduce((sum, line) => sum + line.totalKgs, 0),
@@ -89,22 +112,36 @@ export class OrdersService {
           clientRef: input.clientRef,
           ipHash: hashIp(meta.ip, this.env.IP_HASH_SALT),
           userAgent: meta.userAgent?.slice(0, 300) ?? null,
+          paymentMethod: input.paymentMethod,
+          paymentStatus: input.paymentMethod === 'finik' ? 'pending' : 'unpaid',
         },
-        select: { id: true, number: true },
+        select: storedSelect,
       });
-      await this.notifications.enqueue({ entity: 'order', id: order.id }).catch(() => undefined);
-      return order;
     } catch (error) {
       // Two retries of the same submission raced; return the one that won.
       if (isDuplicateClientRef(error)) {
         const winner = await this.findByClientRef(input.clientRef);
-        if (winner) return winner;
+        if (winner) return this.response(winner);
       }
       throw error;
     }
+
+    if (order.paymentMethod === 'finik') {
+      // The owner hears about an online order once it is paid (or left unpaid), not now (docs/finik/SPEC.md §0).
+      const payment = await this.payments.startForOrder(payable(order));
+      return { id: order.id, number: order.number, payment };
+    }
+    await this.notifications.enqueue({ entity: 'order', id: order.id }).catch(() => undefined);
+    return { id: order.id, number: order.number, payment: null };
   }
 
-  private findByClientRef(clientRef: string): Promise<CreateOrderResponse | null> {
-    return this.prisma.order.findUnique({ where: { clientRef }, select: { id: true, number: true } });
+  /** A repeated submission: the same answer, with the live payment link if there is one (never a new one). */
+  private async response(order: StoredOrder): Promise<CreateOrderResponse> {
+    const payment = order.paymentMethod === 'finik' ? await this.payments.replayStart(payable(order)) : null;
+    return { id: order.id, number: order.number, payment };
+  }
+
+  private findByClientRef(clientRef: string): Promise<StoredOrder | null> {
+    return this.prisma.order.findUnique({ where: { clientRef }, select: storedSelect });
   }
 }

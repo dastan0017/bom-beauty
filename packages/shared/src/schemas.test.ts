@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { splitAccent } from './text';
 import { createOrderSchema, orderLinesOf } from './schemas/orders';
 import { homeContentSchema } from './schemas/content';
+import { settingKeyParamsSchema } from './schemas/admin-catalog';
 import { SETTING_DEFAULTS, SETTING_KEYS, SETTING_SCHEMAS } from './schemas/settings';
 
 const valid = {
@@ -71,11 +72,32 @@ describe('createOrderSchema', () => {
       { type: 'product', slug: 'gel', qty: 1 },
     ]);
   });
+
+  it('defaults to a WhatsApp order, so old outbox entries keep their meaning', () => {
+    expect(createOrderSchema.parse(valid).paymentMethod).toBe('whatsapp');
+    expect(createOrderSchema.parse({ ...valid, paymentMethod: 'finik' }).paymentMethod).toBe('finik');
+    expect(codes({ ...valid, paymentMethod: 'cash' })).toHaveProperty('paymentMethod');
+  });
 });
 
 describe('settings defaults', () => {
   it.each(SETTING_KEYS)('default "%s" passes its schema', (key) => {
     expect(SETTING_SCHEMAS[key].safeParse(SETTING_DEFAULTS[key]).success).toBe(true);
+  });
+
+  it('accepts every setting key in the admin route', () => {
+    expect([...settingKeyParamsSchema.shape.key.options].sort()).toEqual([...SETTING_KEYS].sort());
+  });
+
+  it('keeps online payment off and requires the link placeholder', () => {
+    expect(SETTING_DEFAULTS.payments.finikEnabled).toBe(false);
+    const broken = {
+      ...SETTING_DEFAULTS.payments,
+      templates: { ...SETTING_DEFAULTS.payments.templates, link: 'Оплатите заказ' },
+    };
+    const result = SETTING_SCHEMAS.payments.safeParse(broken);
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe('payments.template.link');
   });
 });
 

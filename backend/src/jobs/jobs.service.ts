@@ -12,6 +12,7 @@ const DEFAULTS: Record<JobName, JobsOptions> = {
   'indexnow.submit': { attempts: 3, backoff: { type: 'exponential', delay: 60_000 } },
   'uploads.cleanup': { attempts: 1 },
   'sessions.cleanup': { attempts: 1 },
+  'payments.expire': { attempts: 1 },
 };
 
 /** Enqueues background jobs; processors run in the worker (`--worker`) or in the API with RUN_WORKER_IN_API. */
@@ -26,8 +27,9 @@ export class JobsService {
     @InjectQueue(QUEUES.notify) notify: Queue,
     @InjectQueue(QUEUES.web) web: Queue,
     @InjectQueue(QUEUES.maintenance) maintenance: Queue,
+    @InjectQueue(QUEUES.payments) payments: Queue,
   ) {
-    this.queues = { media, video, notify, web, maintenance };
+    this.queues = { media, video, notify, web, maintenance, payments };
   }
 
   async add<N extends JobName>(name: N, data: JobPayloads[N], options: JobsOptions = {}): Promise<void> {
@@ -67,6 +69,12 @@ export class JobsService {
       'sessions.cleanup',
       { pattern: '40 4 * * *', tz: 'Asia/Bishkek' },
       { name: 'sessions.cleanup', data: {}, opts: { removeOnComplete: 100, removeOnFail: 100 } },
+    );
+    // Online payments whose link expired: mark them, tell the owner once (docs/finik/SPEC.md §5.8).
+    await this.queues.payments?.upsertJobScheduler(
+      'payments.expire',
+      { pattern: '*/5 * * * *', tz: 'Asia/Bishkek' },
+      { name: 'payments.expire', data: {}, opts: { removeOnComplete: 100, removeOnFail: 100 } },
     );
   }
 }

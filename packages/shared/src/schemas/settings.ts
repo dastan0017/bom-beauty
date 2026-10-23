@@ -1,10 +1,10 @@
 import { z } from '../zod';
 import { FOREIGN_CURRENCY_CODES, type ForeignCurrencyCode, CURRENCIES } from '../currency';
-import { CURRENCY_CODES, THEME_KEYS } from '../enums';
+import { CURRENCY_CODES, PAYMENT_METHODS, THEME_KEYS } from '../enums';
 import { normalizePhone } from '../phone';
 import { DEFAULT_APPEARANCE } from '../theme';
 import { imageRefSchema } from './common';
-import { DEFAULT_SHOP_WHATSAPP } from '../whatsapp';
+import { DEFAULT_SHOP_WHATSAPP, DEFAULT_WHATSAPP_TEMPLATES } from '../whatsapp';
 
 // Setting values (docs/DATA-MODEL.md §3). Stored values are merged over these defaults on read.
 
@@ -62,6 +62,29 @@ export const analyticsSettingSchema = z.object({
 
 export const antispamSettingSchema = z.object({ turnstileEnabled: z.boolean() });
 
+const template = z.string().trim().min(1, 'payments.template.required').max(1000, 'payments.template.max');
+
+/** Online payment through Finik (docs/finik/SPEC.md §0, §4.3). Keys and the account live in env, not here. */
+export const paymentsSettingSchema = z.object({
+  /** Show online payment on the site and put payment links into the bot's messages. */
+  finikEnabled: z.boolean(),
+  /** Preselected in the order form. */
+  defaultMethod: z.enum(PAYMENT_METHODS),
+  /** How long a Finik payment link stays valid (its `endDate`). */
+  linkTtlMinutes: z.number().int().min(10, 'payments.ttl.range').max(1440, 'payments.ttl.range'),
+  /** Finik accepts Visa cards for this account: the site then says «или карта Visa». */
+  visa: z.boolean(),
+  /** Telegram message when an online order stays unpaid after its link expired. */
+  notifyUnpaid: z.boolean(),
+  /** WhatsApp texts the bot prepares for the owner; placeholders in WHATSAPP_PLACEHOLDERS. */
+  templates: z.object({
+    link: template.refine((value) => value.includes('{ссылка}'), 'payments.template.link'),
+    paidLocal: template,
+    paidAbroad: template,
+  }),
+});
+export type PaymentsSetting = z.infer<typeof paymentsSettingSchema>;
+
 export const SETTING_SCHEMAS = {
   shop: shopSettingSchema,
   appearance: appearanceSchema,
@@ -70,6 +93,7 @@ export const SETTING_SCHEMAS = {
   seo: seoSettingSchema,
   analytics: analyticsSettingSchema,
   antispam: antispamSettingSchema,
+  payments: paymentsSettingSchema,
 } as const;
 export type SettingKey = keyof typeof SETTING_SCHEMAS;
 export type SettingValue<K extends SettingKey> = z.infer<(typeof SETTING_SCHEMAS)[K]>;
@@ -106,6 +130,14 @@ export const SETTING_DEFAULTS: { [K in SettingKey]: SettingValue<K> } = {
   },
   analytics: { umamiWebsiteId: null, metaPixelId: null, metaPixelEnabled: false },
   antispam: { turnstileEnabled: false },
+  payments: {
+    finikEnabled: false,
+    defaultMethod: 'finik',
+    linkTtlMinutes: 60,
+    visa: false,
+    notifyUnpaid: true,
+    templates: { ...DEFAULT_WHATSAPP_TEMPLATES },
+  },
 };
 
 export const publicSettingsSchema = z.object({
@@ -116,5 +148,11 @@ export const publicSettingsSchema = z.object({
   seo: seoSettingSchema.omit({ ogMediaId: true }).extend({ ogImage: imageRefSchema.nullable() }),
   analytics: z.object({ umamiWebsiteId: z.string().nullable(), metaPixelId: z.string().nullable() }),
   turnstileSiteKey: z.string().nullable(),
+  /** `finik` is true only when the owner switched online payment on and the server has Finik's keys. */
+  payments: z.object({
+    finik: z.boolean(),
+    defaultMethod: z.enum(PAYMENT_METHODS),
+    visa: z.boolean(),
+  }),
 });
 export type PublicSettings = z.infer<typeof publicSettingsSchema>;

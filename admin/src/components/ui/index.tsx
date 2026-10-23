@@ -1,4 +1,9 @@
-import { ORDER_STATUS_LABELS, type OrderStatus } from '@bom/shared';
+import {
+  ORDER_PAYMENT_STATUS_LABELS,
+  ORDER_STATUS_LABELS,
+  type OrderPaymentStatus,
+  type OrderStatus,
+} from '@bom/shared';
 import {
   Children,
   cloneElement,
@@ -182,6 +187,28 @@ export function StatusSelect({
       <ChevronDownIcon
         className={cn('pointer-events-none absolute top-2.5 right-3', STATUS_STYLE[status].split(' ')[1])}
       />
+    </span>
+  );
+}
+
+/** Payment status colours: paid green (D18), waiting amber, the rest grey. */
+export const PAYMENT_STYLE: Record<OrderPaymentStatus, string> = {
+  paid: 'bg-green-soft text-green',
+  pending: 'bg-amber-soft text-amber-ink',
+  unpaid: 'bg-subtle text-muted',
+  refunded: 'bg-subtle text-muted',
+};
+
+/** Small payment chip of the orders list. */
+export function PaymentChip({ status }: { status: OrderPaymentStatus }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex h-6 items-center self-start rounded-full px-2 text-xs font-semibold whitespace-nowrap',
+        PAYMENT_STYLE[status],
+      )}
+    >
+      {ORDER_PAYMENT_STATUS_LABELS[status]}
     </span>
   );
 }

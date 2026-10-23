@@ -147,3 +147,31 @@ Spec: `design/updates-2026-10/README.md`; design files in `design/` replaced wit
 - [x] Tests: quiz parity, order lines and legacy body, related products, CSV; e2e for cart order, extras, direct program
       order, problem filter, scheme PDF, new quiz
 - [x] Gate + `feat: client revisions (cart, quiz, home rails, care scheme PDF)`
+
+## M9 Online payment (Finik)
+
+Spec: `docs/finik/SPEC.md` (§0 final decisions win); implementation prompt `docs/finik/PROMPT.md`.
+
+- [x] Shared: payment enums and labels, `paymentMethod` on orders, pay page / attempt / Finik status schemas, the
+      `payments` setting with the owner's WhatsApp templates, error codes `payment_unavailable` and `payment_failed`
+- [x] Data: payment fields on `orders` (method, status, paid at, pay token, adjustment), `payments`, `payment_events`;
+      additive migration with CHECKs; existing orders read as WhatsApp / «Не оплачен»
+- [x] Finik: own RSA-SHA256 signer (Finik's two published samples as test vectors), client (`/v1/payment`, 302 or 201,
+      10 s timeout, nothing secret logged), webhook verification on the raw body, `FINIK_ENV=mock` with a fake page
+- [x] API: online `POST /orders`, `GET`/`POST /pay/:token`, `POST /webhooks/finik` (dedupe, row locks, amount check
+      against the link and the order's current amount), `payments.expire` every 5 minutes, admin payment status and
+      adjustment (row-locked), Finik status and the 1 сом check, CSV columns
+- [x] Telegram: one message per situation with the customer's WhatsApp text quoted and a `wa.me` button; review alerts
+- [x] Site: «Онлайн» / «WhatsApp» in the order sheet, phone hint, «Оплатить 5 900 сом», 409 → WhatsApp fallback,
+      network retry with the same `clientRef`, back-from-Finik screen, unpaid-order banner; `/pay/[token]` page
+      (states, polling, «Написать Нурайым»); cart emptied once paid; online wording (D36); pay token kept out of
+      analytics; robots
+- [x] Admin: payment chip in the list, «Оплата» in the drawer (status with confirmations, link to send, adjustment,
+      attempts, history), «Настройки → Оплата» (connection, 1 сом check, switch, default method, link lifetime, Visa,
+      unpaid messages, templates)
+- [x] Tests: signer vectors, client, env, webhook outcomes, pay page, expiry, admin, mock end to end (backend
+      integration); message builders; shared texts; e2e for program, cart and link payments with axe, admin payments
+- [x] Docs: ARCHITECTURE (§1, §2, §6, §7.9, §8, §14, D28–D37, risks), DATA-MODEL, API, HANDOFF, DEPLOY, `.env.example`
+- [x] Gate + `feat: online payment with Finik (M9)`
+- [ ] Go-live (DEPLOY §2.4, §3): our key pair registered in Finik's cabinet, `FINIK_*` on the server, 1 сом check paid
+      with a real banking app, owner texts updated (HANDOFF §3), then «Принимать онлайн-оплату на сайте» on

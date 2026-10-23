@@ -37,6 +37,8 @@ const FALLBACK_SETTINGS: PublicSettings = {
   seo: { ...SETTING_DEFAULTS.seo, ogImage: null },
   analytics: { umamiWebsiteId: null, metaPixelId: null },
   turnstileSiteKey: null,
+  // Without the API nobody can pay online anyway: the sheet stays the WhatsApp one.
+  payments: { finik: false, defaultMethod: 'whatsapp', visa: false },
 };
 
 export const getSettings = cache(async (): Promise<PublicSettings> => {

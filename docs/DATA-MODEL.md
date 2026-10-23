@@ -1,8 +1,9 @@
 # Data model
 
-Status: v3, 2026-10-22, aligned with the design and the October 2026 revisions (M8: order lines, quiz enums, product
-rail flags, program cover). The Prisma schema below is the M1 target; changes during implementation
-update this file in the same commit.
+Status: v4, 2026-10-23, aligned with the design, the October 2026 revisions (M8: order lines, quiz enums, product
+rail flags, program cover) and online payment (M9: payment fields on orders, `payments`, `payment_events`, the
+`payments` setting). The Prisma schema below is the M1 target; changes during implementation update this file in the
+same commit.
 
 Conventions:
 
@@ -27,6 +28,10 @@ enum VideoStatus   { created uploading processing ready failed }
 enum RoutinePeriod { am pm }
 enum QuizGoal      { acne pigment age calm glow }
 enum SkinType      { oily combo dry sens normal }
+enum PaymentMethod      { whatsapp finik }
+enum OrderPaymentStatus { unpaid pending paid refunded }
+enum PaymentStatus      { created pending succeeded failed expired }
+enum PaymentPurpose     { order check }
 ```
 
 | Value set             | Labels (in `packages/shared/src/labels.ts`)                                                                                                                                                                                                                                    |
@@ -40,6 +45,10 @@ enum SkinType      { oily combo dry sens normal }
 | Wholesale countries   | kg: Кыргызстан · kz: Казахстан · uz: Узбекистан · ru: Россия                                                                                                                                                                                                                   |
 | Quiz experience       | pro · some · new (labels in `quiz.ts`, verbatim from the design)                                                                                                                                                                                                               |
 | Quiz age              | u25: До 25 лет · 25: 25–35 лет · 35: 35–45 лет · 45: 45+ лет                                                                                                                                                                                                                   |
+| PaymentMethod         | whatsapp: WhatsApp · finik: Онлайн (Finik)                                                                                                                                                                                                                                     |
+| OrderPaymentStatus    | unpaid: Не оплачен · pending: Ждёт оплаты · paid: Оплачен · refunded: Возврат                                                                                                                                                                                                  |
+| PaymentStatus         | created: Создаётся · pending: Ссылка выдана · succeeded: Оплачен · failed: Ошибка · expired: Истекла                                                                                                                                                                           |
+| Payment channel       | qr: QR-код · visa: Visa (a string column, from the webhook's `service.id`)                                                                                                                                                                                                     |
 
 M8 migration: `barrier` goals became `calm` when the program targets sensitive skin, otherwise `glow`. Leads saved before
 M8 keep their old answers (`skin, goal, exp, fmt`); `quizLeadAnswers` labels both versions.
@@ -327,11 +336,68 @@ model Order {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
+  // Online payment (M9): payment state sits beside the fulfilment status above.
+  paymentMethod    PaymentMethod      @default(whatsapp)
+  paymentStatus    OrderPaymentStatus @default(unpaid)
+  paidAt           DateTime?
+  unpaidNotifiedAt DateTime?                       // the "не оплачен" Telegram message went out (once)
+  payToken         String             @unique @default(dbgenerated("replace(gen_random_uuid()::text, '-', '')"))
+                                                    // /pay/<token>: 122 random bits, never derived from the id
+  adjustmentKgs    Int                @default(0)  // owner's signed correction while unpaid; due = totalKgs + adjustmentKgs
+  adjustmentNote   String?                          // "Доставка", "Скидка"
+  payments         Payment[]
+
   @@index([status, createdAt])
   @@index([createdAt])
   @@index([phone])
+  @@index([paymentStatus, createdAt])
   @@map("orders")
   // Raw SQL CHECK: total_kgs >= 0.
+}
+
+/// One attempt to collect money through Finik; `id` is sent to Finik as PaymentId.
+model Payment {
+  id              String         @id @default(uuid(7)) @db.Uuid
+  orderId         String?        @db.Uuid           // null for the admin's check, or after the order was deleted
+  order           Order?         @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  purpose         PaymentPurpose @default(order)    // check = the 1 сом connection test
+  provider        String         @default("finik")
+  environment     String                            // mock | beta | prod at creation
+  status          PaymentStatus  @default(created)
+  amountKgs       Int                               // what Finik was asked to charge (server total + adjustment)
+  paymentUrl      String?                           // Finik's page: a bearer link, never logged
+  expiresAt       DateTime                          // Finik's endDate
+  error           String?                           // why Finik refused ("Finik 403: Forbidden", "timeout")
+  transactionId   String?                           // from the webhook; not unique
+  operationId     String?                           // webhook `id`, Finik's operation id
+  receiptNumber   String?
+  paidAmountTyiyn Int?                              // webhook amount × 100
+  channel         String?                           // qr | visa
+  paidAt          DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  events          PaymentEvent[]
+
+  @@index([orderId, createdAt])
+  @@index([status, expiresAt])
+  @@map("payments")
+  // Raw SQL CHECKs: amount_kgs > 0, paid_amount_tyiyn >= 0, environment in (mock, beta, prod), channel in (qr, visa).
+}
+
+/// Every verified Finik webhook, once. Whitelisted fields only, no personal data.
+model PaymentEvent {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  paymentId String?  @db.Uuid
+  payment   Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  dedupeKey String   @unique                        // webhook id, else transactionId, else sha256 of the raw body
+  status    String                                  // as Finik sent it ("SUCCEEDED")
+  outcome   String                                  // applied · duplicate_payment · amount_mismatch · paid_cancelled ·
+                                                    // paid_deleted · check_paid · failed · unknown_payment · ignored
+  data      Json
+  createdAt DateTime @default(now())
+
+  @@index([paymentId])
+  @@map("payment_events")
 }
 
 model OrderLine {
@@ -378,9 +444,10 @@ model Lead {
 model AuditLog {
   id        String   @id @default(uuid(7)) @db.Uuid
   userId    String?  @db.Uuid
-  entity    String                                  // "product", "program", "order", "setting:appearance", "user", "session"
+  entity    String                                  // "product", "program", "order", "setting:appearance", "user", "session", "payment"
   entityId  String
-  action    String                                  // create · update · delete · status · login · logout · revoke_sessions · export
+  action    String                                  // create · update · delete · status · login · logout · revoke_sessions · export ·
+                                                    // payment ({ from, to, source: finik | manual }) · adjustment ({ from, to }) · check
   diff      Json     @default("{}")                 // { field: [before, after] }; long texts as { changed: true }
   ip        String?
   createdAt DateTime @default(now())
@@ -396,15 +463,16 @@ line `title`).
 
 ## 3. Settings keys (`Setting.value`)
 
-| Key             | Shape                                                                                                                                                                          | Public |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
-| `shop`          | `{ name: "Bom Beauty", whatsapp: E.164, instagramShop: "bom_beauty.kr", instagramOwner: "nurai.krsel", ownerName: "Нурайым Бекиева", legalLine: "ИП Бекиева Н.", footerNote }` | yes    |
-| `appearance`    | `{ theme: "rose" \| "sky" \| "indigo", headerColor: hex, accentColor: hex }`, default `{ rose, #aacdeb, #d12f63 }`                                                             | yes    |
-| `currencies`    | `{ USD: { enabled, rate }, RUB, EUR, KZT, UZS, KRW }`; defaults from the design (87.4, 0.93, 102, 6, 140, 16)                                                                  | yes    |
-| `notifications` | `{ telegramEnabled, telegramChatId?, emailEnabled, email?, notifyLeads }`                                                                                                      | no     |
-| `seo`           | `{ defaultTitle, defaultDescription, ogMediaId?, googleVerification?, yandexVerification? }`                                                                                   | yes    |
-| `analytics`     | `{ umamiWebsiteId?, metaPixelId?, metaPixelEnabled }`                                                                                                                          | partly |
-| `antispam`      | `{ turnstileEnabled }` (keys in env)                                                                                                                                           | flag   |
+| Key             | Shape                                                                                                                                                                                                                                                                          | Public |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
+| `shop`          | `{ name: "Bom Beauty", whatsapp: E.164, instagramShop: "bom_beauty.kr", instagramOwner: "nurai.krsel", ownerName: "Нурайым Бекиева", legalLine: "ИП Бекиева Н.", footerNote }`                                                                                                 | yes    |
+| `appearance`    | `{ theme: "rose" \| "sky" \| "indigo", headerColor: hex, accentColor: hex }`, default `{ rose, #aacdeb, #d12f63 }`                                                                                                                                                             | yes    |
+| `currencies`    | `{ USD: { enabled, rate }, RUB, EUR, KZT, UZS, KRW }`; defaults from the design (87.4, 0.93, 102, 6, 140, 16)                                                                                                                                                                  | yes    |
+| `notifications` | `{ telegramEnabled, telegramChatId?, emailEnabled, email?, notifyLeads }`                                                                                                                                                                                                      | no     |
+| `seo`           | `{ defaultTitle, defaultDescription, ogMediaId?, googleVerification?, yandexVerification? }`                                                                                                                                                                                   | yes    |
+| `analytics`     | `{ umamiWebsiteId?, metaPixelId?, metaPixelEnabled }`                                                                                                                                                                                                                          | partly |
+| `antispam`      | `{ turnstileEnabled }` (keys in env)                                                                                                                                                                                                                                           | flag   |
+| `payments`      | `{ finikEnabled (false), defaultMethod: "finik" \| "whatsapp", linkTtlMinutes (60, 10–1440), visa (false), notifyUnpaid (true), templates: { link, paidLocal, paidAbroad } }`; owner only. Public: `{ finik: finikEnabled && the server has Finik keys, defaultMethod, visa }` | partly |
 
 ## 4. Content block keys (`ContentBlock.data`)
 
@@ -429,6 +497,22 @@ new ──► sent
 `statusChangedAt` updates on every change. Dashboard "Сумма заказов" and "Средний чек" exclude cancelled orders;
 "Ждут подтверждения" counts `new`.
 
+Payment, beside the status above (M9):
+
+```
+unpaid ──► pending ──► paid ──► refunded        pending: a Finik link is live (online order or «Оплатить» on /pay)
+  ▲           │          ▲                       paid: a verified webhook, or the team by hand (AuditLog source)
+  └───────────┘          │                       refunded: by hand, after a refund in Finik's cabinet
+   link failed/expired   └── a late webhook still pays an expired attempt
+```
+
+- WhatsApp orders start `unpaid`, online orders `pending`. The admin can set `unpaid`, `paid` or `refunded`; `pending`
+  comes only from live links.
+- Attempts: `created` → `pending` (Finik answered with a link) or `failed`; `pending` → `succeeded` (webhook) or
+  `expired` (`payments.expire`, 10 minutes after `expiresAt`); a late success webhook turns `expired` into `succeeded`.
+- The adjustment can change only while the order is unpaid; changing the amount of a `pending` order sets it back to
+  `unpaid` (its link was for the old amount).
+
 ## 6. Object keys
 
 | Bucket  | Key                               | Notes                                                          |
@@ -451,5 +535,6 @@ new ──► sent
   the admin after deploy; the site shows placeholders until then.
 - Settings: shop (WhatsApp `+996706304803`), appearance defaults, currencies with the design's rates, notifications off.
 - Content: home, wholesale (`WS0`), delivery, placeholder privacy and offer texts marked `[...]`.
-- Dev only: ~20 demo orders across statuses (the design's `ORDERS0`, one of them a 3-line cart) and a few leads.
+- Dev only: ~20 demo orders across statuses (the design's `ORDERS0`, one of them a 3-line cart) and a few leads; the
+  `payments` setting on with WhatsApp preselected (mock Finik), and two online orders (one paid, one left unpaid).
 - Idempotent: upsert by slug/key.

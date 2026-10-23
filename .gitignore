@@ -15,6 +15,9 @@ build/
 !.env.example
 infra/.env
 
+# Finik RSA keys, local only (docs/finik/SPEC.md §2.2). Anchored, so docs/finik/ stays tracked.
+/finik/
+
 # generated
 backend/src/generated/
 

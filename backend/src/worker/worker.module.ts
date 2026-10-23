@@ -1,9 +1,11 @@
 import { Module, type DynamicModule } from '@nestjs/common';
+import { AuditModule } from '../audit/audit.module';
 import type { Env } from '../config/env';
 import { EnvModule } from '../config/env.module';
 import { JobsModule } from '../jobs/jobs.module';
 import { loggerModule } from '../logger/logger.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { PaymentsCoreModule } from '../payments/payments.module';
 import { PrismaModule } from '../prisma/prisma.module';
 import { RevalidateModule } from '../revalidate/revalidate.service';
 import { SettingsModule } from '../settings/settings.module';
@@ -24,6 +26,8 @@ export class WorkerModule {
         JobsModule.forRoot(env, { processors: true }),
         RevalidateModule,
         NotificationsModule,
+        AuditModule,
+        PaymentsCoreModule,
       ],
     };
   }

@@ -53,7 +53,10 @@ export default async function ProgramsPage() {
       <section className="mx-auto flex max-w-[1100px] flex-col gap-5 px-4 pt-14 lg:px-6 lg:pt-20">
         <SectionTitle center title={copy.programs.howTitle} lead={copy.programs.howLead} />
         <ol className={cn(card, 'flex flex-col lg:grid lg:grid-cols-3')}>
-          {copy.programs.how.map((step, index) => (
+          {(settings.payments.finik
+            ? [...copy.programs.how.slice(0, 2), copy.programs.howOnline]
+            : copy.programs.how
+          ).map((step, index) => (
             <li
               key={step.title}
               className={cn(

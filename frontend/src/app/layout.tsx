@@ -62,6 +62,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           programs={programs}
           products={products.map(cartProduct)}
           turnstileSiteKey={settings.turnstileSiteKey}
+          payments={settings.payments}
         >
           <a
             href="#main"

@@ -39,6 +39,21 @@ export async function apiGet<S extends z.ZodType>(
   return schema.parse(await response.json());
 }
 
+/**
+ * A fresh read that never enters the data cache (the payment page: its state changes within seconds). A 404 becomes
+ * null.
+ */
+export async function apiGetFresh<S extends z.ZodType>(path: string, schema: S): Promise<z.output<S> | null> {
+  await connection();
+  const response = await fetch(`${env.INTERNAL_API_URL}${path}`, {
+    headers: { 'X-Internal-Secret': env.REVALIDATE_SECRET },
+    cache: 'no-store',
+  });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error(`API ${response.status} for ${path}`);
+  return schema.parse(await response.json());
+}
+
 /** Same as apiGet, but a 404 becomes null (for notFound() handling in pages). */
 export async function apiGetOrNull<S extends z.ZodType>(
   path: string,

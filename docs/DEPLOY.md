@@ -99,30 +99,47 @@ Three buckets; two locations so a backup survives the loss of one:
   Уведомления), then "Проверить уведомления". Put the same chat id into `BACKUP_ALERT_CHAT_ID` for backup alerts.
 - **Email** (fallback channel): any SMTP provider (Resend, Mailgun, Brevo) → `SMTP_URL`, `MAIL_FROM` on a verified
   domain.
+- **Finik** (online payment, M9; `docs/finik/SPEC.md` §2.2): the owner's business cabinet in the Finik app.
+  1. The developer makes our RSA key pair on a trusted machine:
+     `openssl genrsa -out finik_private.pem 2048 && openssl rsa -in finik_private.pem -pubout -out finik_public.pem`.
+     The private key goes only into the server `.env` (`FINIK_PRIVATE_KEY_BASE64`, one base64 line:
+     `base64 < finik_private.pem | tr -d '\n'`) and a password manager; never into the repository, chat or tickets.
+  2. In the cabinet the owner creates an API key of type «Веб-клиент» with `finik_public.pem` pasted in, and reads the
+     account id («Счёт ID»). Both go into `.env` (`FINIK_API_KEY`, `FINIK_ACCOUNT_ID`).
+  3. `FINIK_WEBHOOK_URL=https://api.bom-beauty.com/v1/webhooks/finik`: sent with every payment; Finik signs its
+     webhook for this host and path. Cloudflare must let Finik's POSTs through: keep Bot Fight Mode off and add no WAF
+     or challenge rule that matches `/v1/webhooks/finik`.
+  4. Cards: Visa acceptance is switched on by Finik for the account (the owner asks her manager); nothing changes in
+     our code. MasterCard is not supported by Finik.
 
 ### 2.5 Server `.env`
 
 Start from `infra/.env.example`: the whole file, with production values. Generate secrets with `openssl rand -hex 32`.
 
-| Variable                                                               | Production value                                                                          |
-| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `POSTGRES_USER`, `POSTGRES_DB`                                         | `bom`, `bom`                                                                              |
-| `POSTGRES_PASSWORD`, `UMAMI_DB_PASSWORD`                               | generated                                                                                 |
-| `DATABASE_URL`                                                         | `postgresql://bom:<POSTGRES_PASSWORD>@postgres:5432/bom`                                  |
-| `REDIS_URL`                                                            | `redis://redis:6379`                                                                      |
-| `LOG_LEVEL`                                                            | `info`                                                                                    |
-| `WEB_ORIGIN`, `ADMIN_ORIGIN`                                           | `https://bom-beauty.com`, `https://admin.bom-beauty.com`                                  |
-| `SESSION_SECRET`, `IP_HASH_SALT`, `REVALIDATE_SECRET`                  | generated (changing `SESSION_SECRET` logs everyone out)                                   |
-| `S3_ENDPOINT`, `S3_REGION`                                             | `https://fsn1.your-objectstorage.com`, `fsn1`                                             |
-| `S3_ACCESS_KEY`, `S3_SECRET_KEY`                                       | the `fsn1` key pair                                                                       |
-| `S3_FORCE_PATH_STYLE`                                                  | `false`                                                                                   |
-| `MEDIA_PUBLIC_URL`                                                     | `https://media.bom-beauty.com`                                                            |
-| `MEDIA_UPSTREAM`                                                       | `bom-public.fsn1.your-objectstorage.com`                                                  |
-| `BACKUP_S3_*`                                                          | the `hel1` endpoint, region and its own key pair                                          |
-| `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_MEDIA_URL` | `https://bom-beauty.com`, `https://api.bom-beauty.com/v1`, `https://media.bom-beauty.com` |
-| `GHCR_OWNER`                                                           | the GitHub user or organisation that owns the repository                                  |
-| `INDEXNOW_KEY`                                                         | 32 random hex characters                                                                  |
-| `SEED_OWNER_*`                                                         | leave empty: the owner account is created with the CLI (§3)                               |
+| Variable                                                               | Production value                                                                                      |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `POSTGRES_USER`, `POSTGRES_DB`                                         | `bom`, `bom`                                                                                          |
+| `POSTGRES_PASSWORD`, `UMAMI_DB_PASSWORD`                               | generated                                                                                             |
+| `DATABASE_URL`                                                         | `postgresql://bom:<POSTGRES_PASSWORD>@postgres:5432/bom`                                              |
+| `REDIS_URL`                                                            | `redis://redis:6379`                                                                                  |
+| `LOG_LEVEL`                                                            | `info`                                                                                                |
+| `WEB_ORIGIN`, `ADMIN_ORIGIN`                                           | `https://bom-beauty.com`, `https://admin.bom-beauty.com`                                              |
+| `SESSION_SECRET`, `IP_HASH_SALT`, `REVALIDATE_SECRET`                  | generated (changing `SESSION_SECRET` logs everyone out)                                               |
+| `S3_ENDPOINT`, `S3_REGION`                                             | `https://fsn1.your-objectstorage.com`, `fsn1`                                                         |
+| `S3_ACCESS_KEY`, `S3_SECRET_KEY`                                       | the `fsn1` key pair                                                                                   |
+| `S3_FORCE_PATH_STYLE`                                                  | `false`                                                                                               |
+| `MEDIA_PUBLIC_URL`                                                     | `https://media.bom-beauty.com`                                                                        |
+| `MEDIA_UPSTREAM`                                                       | `bom-public.fsn1.your-objectstorage.com`                                                              |
+| `BACKUP_S3_*`                                                          | the `hel1` endpoint, region and its own key pair                                                      |
+| `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_MEDIA_URL` | `https://bom-beauty.com`, `https://api.bom-beauty.com/v1`, `https://media.bom-beauty.com`             |
+| `GHCR_OWNER`                                                           | the GitHub user or organisation that owns the repository                                              |
+| `INDEXNOW_KEY`                                                         | 32 random hex characters                                                                              |
+| `SEED_OWNER_*`                                                         | leave empty: the owner account is created with the CLI (§3)                                           |
+| `FINIK_ENV`                                                            | `prod` (empty = online payment off). **Never `mock`**: the API refuses to start with it in production |
+| `FINIK_API_KEY`, `FINIK_ACCOUNT_ID`                                    | from the owner's Finik cabinet (§2.4)                                                                 |
+| `FINIK_PRIVATE_KEY_BASE64`                                             | our private key as one base64 line (§2.4)                                                             |
+| `FINIK_PUBLIC_KEY_BASE64`                                              | empty (the API has Finik's production key built in); set only if Finik changes its key                |
+| `FINIK_WEBHOOK_URL`                                                    | `https://api.bom-beauty.com/v1/webhooks/finik` (https required in production)                         |
 
 Compose sets `NODE_ENV`, `API_PORT`, `TRUST_PROXY`, `RUN_WORKER_IN_API`, `WEB_INTERNAL_URL` and `INTERNAL_API_URL`
 itself. `.env` stays on the server only (`chmod 600`); it never goes into the repository or GitHub.
@@ -171,6 +188,11 @@ Repository → Settings:
    - [ ] An external uptime monitor (UptimeRobot, Better Stack free tier) on `https://bom-beauty.com/health` and
          `https://api.bom-beauty.com/health/ready`. Optional on-box Uptime Kuma: `--profile monitoring`, reachable
          through an SSH tunnel to `127.0.0.1:3001`.
+   - [ ] Online payment (with `FINIK_*` set, the site switch still off): Настройки → Оплата shows «Боевой режим», the
+         masked account and the webhook URL; «Проверить подключение» → «Открыть страницу оплаты» → pay 1 сом with a
+         real banking app → «Платёж получен: всё работает» and «✅ Проверка Finik прошла» in Telegram. Once Finik has
+         switched cards on, one more 1 сом check with a Visa card. Then the owner updates the payment texts (HANDOFF §3)
+         and turns on «Принимать онлайн-оплату на сайте».
 
 ## 4. Operations
 
@@ -208,6 +230,15 @@ still runs on the new schema. If data was damaged, restore the database (`infra/
   3. Rolling back past M8 means restoring the `pre-migrate` dump; orders placed after the deploy are then in Telegram
      and WhatsApp only.
 
+- **M9, online payment with Finik (2026-10-23, migration `20261023120000_finik_payments`)**. Additive: new enums,
+  nullable or defaulted order columns (existing orders read as WhatsApp / «Не оплачен», each gets a random pay token)
+  and two new tables; the previous image still runs on the new schema.
+  1. Deploy as usual. Without `FINIK_*` in `.env` nothing changes on the site: online payment stays off and hidden.
+  2. Add the `FINIK_*` rows (§2.5) when the keys are ready, `docker compose -f docker-compose.prod.yml up -d`, then the
+     online payment check in §3. Do not copy `FINIK_ENV=mock` from `.env.example`: the API refuses to start with it.
+  3. Switching environments (beta → prod) leaves earlier attempts orphaned (their links belong to the other
+     environment); they simply expire.
+
 **Logs**: `docker compose -f docker-compose.prod.yml logs -f --tail=200 api worker web`. The API logs JSON with request
 ids and never logs phones, names, addresses, cookies or tokens. Docker keeps 5 × 10 MB per container.
 
@@ -224,11 +255,15 @@ list and the server firewall together when Cloudflare announces a change.
 **Postgres major upgrade**: dump with the backup job, start a new data volume on the new version, restore
 (`restore.md`), switch.
 
-| Symptom                                 | Look at                                                                                       |
-| --------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Site shows "Что-то пошло не так"        | `api` health and logs; `web` reaches it as `http://api:4000/v1`                               |
-| Admin changes do not appear on the site | `worker` logs (`web.revalidate`); `REVALIDATE_SECRET` equal for both                          |
-| Photos stuck on "Обрабатываем…"         | `worker` logs (`media.process`), bucket keys and endpoint                                     |
-| Uploads fail in the admin               | browser console: CORS on `bom-private`, or `VITE_UPLOAD_ORIGIN` not matching the CSP          |
-| Every visitor rate-limited at once      | `TRUST_PROXY=1` and Caddy's `trusted_proxies`; the API must see visitor IPs, not Cloudflare's |
-| No Telegram messages                    | Настройки → Уведомления → test; `TELEGRAM_BOT_TOKEN`; the owner must have written to the bot  |
+| Symptom                                  | Look at                                                                                                                                                                                                                                                                                                    |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Site shows "Что-то пошло не так"         | `api` health and logs; `web` reaches it as `http://api:4000/v1`                                                                                                                                                                                                                                            |
+| Admin changes do not appear on the site  | `worker` logs (`web.revalidate`); `REVALIDATE_SECRET` equal for both                                                                                                                                                                                                                                       |
+| Photos stuck on "Обрабатываем…"          | `worker` logs (`media.process`), bucket keys and endpoint                                                                                                                                                                                                                                                  |
+| Uploads fail in the admin                | browser console: CORS on `bom-private`, or `VITE_UPLOAD_ORIGIN` not matching the CSP                                                                                                                                                                                                                       |
+| Every visitor rate-limited at once       | `TRUST_PROXY=1` and Caddy's `trusted_proxies`; the API must see visitor IPs, not Cloudflare's                                                                                                                                                                                                              |
+| No Telegram messages                     | Настройки → Уведомления → test; `TELEGRAM_BOT_TOKEN`; the owner must have written to the bot                                                                                                                                                                                                               |
+| «Проверить подключение»: Finik 403       | wrong `FINIK_API_KEY` or a key from the other environment (`FINIK_ENV`)                                                                                                                                                                                                                                    |
+| «Проверить подключение»: Finik 401       | the API key was created with another public key, the server clock is off, or a changed body                                                                                                                                                                                                                |
+| Paid on Finik, order stays «Ждёт оплаты» | `docker compose logs api \| grep -i finik`: `webhook rejected: bad signature` → `FINIK_WEBHOOK_URL` host or path differs from what Finik signs, or the wrong environment's key; no webhook at all → Cloudflare rule or challenge on `/v1/webhooks/finik`, ask Finik. Meanwhile mark the order paid by hand |
+| Telegram «Проверьте оплату»              | another amount or a second payment: check Finik's cabinet, refund there, mark «Возврат»                                                                                                                                                                                                                    |

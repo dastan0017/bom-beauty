@@ -1,12 +1,13 @@
 'use client';
 
-import type { ProgramCard, QuizKey } from '@bom/shared';
+import type { ProgramCard, PublicSettings, QuizKey } from '@bom/shared';
 import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { captureAttribution, flushOutbox } from '@/lib/submission';
 import { CartProvider, type CartProduct } from '../cart/cart';
 import { CurrencyProvider, type CurrencyOption } from '../currency';
+import { PendingPaymentWatcher } from '../payment/pending-payment-watcher';
 import type { OrderItem, OrderRequest } from './order-sheet';
 import { QuizDialog, type QuizState } from './quiz-dialog';
 import { VideoPlayer, type VideoSpec } from './video-player';
@@ -63,6 +64,7 @@ export function SiteOverlays({
   programs,
   products,
   turnstileSiteKey,
+  payments,
   children,
 }: {
   whatsapp: string;
@@ -70,6 +72,7 @@ export function SiteOverlays({
   programs: ProgramCard[];
   products: CartProduct[];
   turnstileSiteKey: string | null;
+  payments: PublicSettings['payments'];
   children: ReactNode;
 }) {
   const router = useRouter();
@@ -240,8 +243,10 @@ export function SiteOverlays({
               onClose={() => setOrderOpen(false)}
               whatsapp={whatsapp}
               turnstileSiteKey={turnstileSiteKey}
+              payments={payments}
             />
           )}
+          <PendingPaymentWatcher />
           <QuizDialog
             state={quiz}
             programs={programs}

@@ -11,5 +11,7 @@
 .env
 .env.*
 infra/.env
+# Finik RSA keys: the Dockerfiles run `COPY . .`, keep the private key out of every build context.
+finik
 design
 docs

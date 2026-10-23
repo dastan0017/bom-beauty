@@ -2,6 +2,7 @@ import {
   formatKgs,
   formatPhoneDisplay,
   ORDER_ITEM_TYPE_LABELS,
+  ORDER_PAYMENT_STATUS_LABELS,
   ORDER_STATUS_LABELS,
   relativeDateTime,
   type OrderDetail,
@@ -15,6 +16,7 @@ import { useUser } from '@/features/auth/auth';
 import { errorText } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { useDeleteOrder, useOrder, useUpdateOrder } from '@/api/orders';
+import { PaymentSection } from './payment-section';
 
 /** Order details (gap: the design has no detail view; the brief asks for one with a note). */
 export function OrderDrawer({ id, onClose }: { id: string | null; onClose: () => void }) {
@@ -165,6 +167,8 @@ function OrderBody({ order, onClose }: { order: OrderDetail; onClose: () => void
           {order.comment && <Row label={copy.order.comment}>{order.comment}</Row>}
         </Section>
 
+        <PaymentSection order={order} busy={update.isPending} save={save} />
+
         <Section title={copy.order.message}>
           <p className="rounded-xl bg-[#e6f6ec] px-3.5 py-3 text-sm leading-normal whitespace-pre-line text-[#14142B]">
             {order.message}
@@ -206,12 +210,8 @@ function OrderBody({ order, onClose }: { order: OrderDetail; onClose: () => void
               <HistoryItem
                 key={`${entry.at}-${index}`}
                 at={entry.at}
-                text={
-                  entry.action === 'status' && entry.from && entry.to
-                    ? copy.order.historyStatus(ORDER_STATUS_LABELS[entry.from], ORDER_STATUS_LABELS[entry.to])
-                    : copy.order.historyNote
-                }
-                by={entry.userName}
+                text={historyText(entry)}
+                by={entry.payment?.source === 'finik' ? null : entry.userName}
               />
             ))}
           </ol>
@@ -291,6 +291,22 @@ function HistoryItem({ at, text, by }: { at: string; text: string; by?: string |
       </span>
     </li>
   );
+}
+
+function historyText(entry: OrderDetail['history'][number]): string {
+  if (entry.action === 'status' && entry.from && entry.to) {
+    return copy.order.historyStatus(ORDER_STATUS_LABELS[entry.from], ORDER_STATUS_LABELS[entry.to]);
+  }
+  if (entry.action === 'payment' && entry.payment) {
+    const { from, to, source } = entry.payment;
+    const text = copy.order.historyPayment(
+      from ? ORDER_PAYMENT_STATUS_LABELS[from] : null,
+      ORDER_PAYMENT_STATUS_LABELS[to],
+    );
+    return source === 'finik' ? `${text} ${copy.order.historyFinik}` : text;
+  }
+  if (entry.action === 'adjustment') return copy.order.historyAdjustment;
+  return copy.order.historyNote;
 }
 
 function shortUrl(url: string): string {

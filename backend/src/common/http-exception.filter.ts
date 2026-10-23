@@ -34,6 +34,8 @@ const MESSAGES: Record<ErrorCode, string> = {
   too_large: 'Файл слишком большой',
   rate_limited: 'Слишком много запросов, попробуйте позже',
   internal: 'Что-то пошло не так',
+  payment_unavailable: 'Онлайн-оплата сейчас недоступна',
+  payment_failed: 'Не получилось открыть оплату, попробуйте ещё раз',
 };
 
 /** Every error leaves the API as `{ error: { code, message, fields? } }`. */

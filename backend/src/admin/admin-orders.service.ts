@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import {
   addDays,
   bishkekDateStart,
@@ -6,8 +6,11 @@ import {
   cityOf,
   orderKindLabel,
   orderLineLabel,
+  ORDER_PAYMENT_STATUS_LABELS,
+  ORDER_PAYMENT_STATUSES,
   ORDER_STATUS_LABELS,
   ORDER_STATUSES,
+  PAYMENT_METHOD_LABELS,
   utmSchema,
   type OrderCounters,
   type OrderDetail,
@@ -19,11 +22,17 @@ import {
 } from '@bom/shared';
 import { z } from 'zod';
 import { AuditService } from '../audit/audit.service';
-import { notFound } from '../common/errors';
+import { ApiException, invalidField, notFound } from '../common/errors';
+import { PaymentsService } from '../payments/payments.service';
 import type { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 const statusSchema = z.enum(ORDER_STATUSES);
+const paymentDiffSchema = z.object({
+  from: z.enum(ORDER_PAYMENT_STATUSES).nullable().catch(null),
+  to: z.enum(ORDER_PAYMENT_STATUSES),
+  source: z.enum(['finik', 'manual']),
+});
 
 /** Lines of an order, for every query that returns order rows. */
 export const orderLinesInclude = {
@@ -45,6 +54,8 @@ export function toOrderRow(order: OrderWithLines): OrderRow {
     city: cityOf(order.address),
     totalKgs: order.totalKgs,
     status: order.status,
+    paymentMethod: order.paymentMethod,
+    paymentStatus: order.paymentStatus,
     createdAt: order.createdAt.toISOString(),
   };
 }
@@ -81,6 +92,7 @@ export class AdminOrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly payments: PaymentsService,
   ) {}
 
   async list(query: OrderListQuery & { limit: number }): Promise<OrderList> {
@@ -133,14 +145,17 @@ export class AdminOrdersService {
         const diff = z
           .object({ from: statusSchema.optional(), to: statusSchema.optional() })
           .safeParse(log.diff);
+        const payment = log.action === 'payment' ? paymentDiffSchema.safeParse(log.diff) : null;
         return {
           at: log.createdAt.toISOString(),
           action: log.action,
           from: diff.success ? (diff.data.from ?? null) : null,
           to: diff.success ? (diff.data.to ?? null) : null,
           userName: users.find((user) => user.id === log.userId)?.name ?? null,
+          payment: payment?.success ? payment.data : null,
         };
       }),
+      payment: await this.payments.orderPayment(order),
     };
   }
 
@@ -149,17 +164,95 @@ export class AdminOrdersService {
     change: UpdateOrder,
     actor: { userId: string; ip: string | null },
   ): Promise<OrderDetail> {
-    const order = await this.prisma.order.findUnique({ where: { id }, select: { status: true, note: true } });
-    if (!order) throw notFound('Заказ не найден');
-    const statusChanged = change.status !== undefined && change.status !== order.status;
-    const noteChanged = change.note !== undefined && change.note !== order.note;
-    if (statusChanged || noteChanged) {
-      await this.prisma.order.update({
-        where: { id },
-        data: {
-          ...(statusChanged ? { status: change.status, statusChangedAt: new Date() } : {}),
-          ...(noteChanged ? { note: change.note } : {}),
+    // The Finik webhook locks the same row, so a payment landing right now is either seen here or waits for this.
+    const { order, statusChanged, noteChanged, paymentChanged, adjustmentChanged, nextAdjustment } =
+      await this.prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT id FROM orders WHERE id = ${id}::uuid FOR UPDATE`;
+        const order = await tx.order.findUnique({
+          where: { id },
+          select: {
+            status: true,
+            note: true,
+            paymentStatus: true,
+            paidAt: true,
+            totalKgs: true,
+            adjustmentKgs: true,
+            adjustmentNote: true,
+          },
+        });
+        if (!order) throw notFound('Заказ не найден');
+        const statusChanged = change.status !== undefined && change.status !== order.status;
+        const noteChanged = change.note !== undefined && change.note !== order.note;
+        const paymentChanged =
+          change.paymentStatus !== undefined && change.paymentStatus !== order.paymentStatus;
+        const nextAdjustment = change.adjustmentKgs ?? order.adjustmentKgs;
+        const nextAdjustmentNote =
+          change.adjustmentNote === undefined ? order.adjustmentNote : change.adjustmentNote.trim() || null;
+        const adjustmentChanged =
+          nextAdjustment !== order.adjustmentKgs || nextAdjustmentNote !== order.adjustmentNote;
+        if (adjustmentChanged) {
+          // The amount of a paid order is history: a correction after payment would not match what Finik received.
+          if (order.paymentStatus === 'paid' || order.paymentStatus === 'refunded') {
+            throw new ApiException(
+              'conflict',
+              HttpStatus.CONFLICT,
+              'Сумму оплаченного заказа изменить нельзя',
+            );
+          }
+          if (order.totalKgs + nextAdjustment < 1)
+            throw invalidField('adjustmentKgs', 'order.adjustment.amount');
+        }
+        // A link issued for the old amount no longer settles the order; the pay page asks Finik for a new one.
+        const relink =
+          nextAdjustment !== order.adjustmentKgs && !paymentChanged && order.paymentStatus === 'pending';
+        if (statusChanged || noteChanged || paymentChanged || adjustmentChanged) {
+          await tx.order.update({
+            where: { id },
+            data: {
+              ...(statusChanged ? { status: change.status, statusChangedAt: new Date() } : {}),
+              ...(noteChanged ? { note: change.note } : {}),
+              ...(paymentChanged
+                ? {
+                    paymentStatus: change.paymentStatus,
+                    paidAt:
+                      change.paymentStatus === 'paid'
+                        ? (order.paidAt ?? new Date())
+                        : change.paymentStatus === 'unpaid'
+                          ? null
+                          : order.paidAt,
+                  }
+                : {}),
+              ...(adjustmentChanged
+                ? { adjustmentKgs: nextAdjustment, adjustmentNote: nextAdjustmentNote }
+                : {}),
+              ...(relink ? { paymentStatus: 'unpaid' as const } : {}),
+            },
+          });
+        }
+        return { order, statusChanged, noteChanged, paymentChanged, adjustmentChanged, nextAdjustment };
+      });
+    if (paymentChanged) {
+      await this.audit.log({
+        userId: actor.userId,
+        entity: 'order',
+        entityId: id,
+        action: 'payment',
+        diff: {
+          from: order.paymentStatus,
+          to: change.paymentStatus ?? order.paymentStatus,
+          source: 'manual',
         },
+        ip: actor.ip,
+      });
+    }
+    if (adjustmentChanged) {
+      await this.audit.log({
+        userId: actor.userId,
+        entity: 'order',
+        entityId: id,
+        action: 'adjustment',
+        diff: { from: order.adjustmentKgs, to: nextAdjustment },
+        ip: actor.ip,
       });
     }
     if (statusChanged) {
@@ -226,6 +319,10 @@ export class AdminOrdersService {
       'Из теста',
       'UTM source',
       'UTM campaign',
+      'Оплата',
+      'Статус оплаты',
+      'Дата оплаты',
+      'К оплате, сом',
     ];
     const lines = orders.map((order) => {
       const utm = utmSchema.safeParse(order.utm);
@@ -248,6 +345,10 @@ export class AdminOrdersService {
         order.fromQuiz ? 'да' : '',
         utm.success ? (utm.data.source ?? '') : '',
         utm.success ? (utm.data.campaign ?? '') : '',
+        PAYMENT_METHOD_LABELS[order.paymentMethod],
+        ORDER_PAYMENT_STATUS_LABELS[order.paymentStatus],
+        order.paidAt ? bishkekDateTime(order.paidAt) : '',
+        order.totalKgs + order.adjustmentKgs,
       ];
     });
     return `\uFEFF${[header, ...lines].map((row) => row.map(csvCell).join(';')).join('\r\n')}\r\n`;

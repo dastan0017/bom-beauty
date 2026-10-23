@@ -6,6 +6,26 @@ export type OrderStatus = (typeof ORDER_STATUSES)[number];
 export const ORDER_ITEM_TYPES = ['product', 'program'] as const;
 export type OrderItemType = (typeof ORDER_ITEM_TYPES)[number];
 
+/** How the customer chose to pay: online through Finik, or in WhatsApp (bank details or a payment link). */
+export const PAYMENT_METHODS = ['whatsapp', 'finik'] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
+/** Payment state of an order, beside its fulfilment status (docs/finik/SPEC.md §4.2). */
+export const ORDER_PAYMENT_STATUSES = ['unpaid', 'pending', 'paid', 'refunded'] as const;
+export type OrderPaymentStatus = (typeof ORDER_PAYMENT_STATUSES)[number];
+
+/** One attempt to collect money through Finik. */
+export const PAYMENT_STATUSES = ['created', 'pending', 'succeeded', 'failed', 'expired'] as const;
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
+
+/** `check` = the admin's 1 сом connection test, not tied to an order. */
+export const PAYMENT_PURPOSES = ['order', 'check'] as const;
+export type PaymentPurpose = (typeof PAYMENT_PURPOSES)[number];
+
+/** How a successful payment was made, from the webhook's `service.id`. */
+export const PAYMENT_CHANNELS = ['qr', 'visa'] as const;
+export type PaymentChannel = (typeof PAYMENT_CHANNELS)[number];
+
 export const LEAD_KINDS = ['quiz', 'wholesale'] as const;
 export type LeadKind = (typeof LEAD_KINDS)[number];
 

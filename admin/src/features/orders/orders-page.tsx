@@ -8,6 +8,7 @@ import {
   DownloadIcon,
   inputClass,
   PageHeader,
+  PaymentChip,
   Segmented,
   Spinner,
   StatusSelect,
@@ -171,7 +172,15 @@ export function OrdersPage() {
               <span className="truncate text-[15px] text-muted" title={order.address}>
                 {order.city}
               </span>
-              <span className="text-[15px] font-semibold whitespace-nowrap">{formatKgs(order.totalKgs)}</span>
+              <span className="flex flex-col gap-1">
+                <span className="text-[15px] font-semibold whitespace-nowrap">
+                  {formatKgs(order.totalKgs)}
+                </span>
+                {/* WhatsApp orders nobody marked look as before; online ones and marked ones get a chip. */}
+                {(order.paymentMethod === 'finik' || order.paymentStatus !== 'unpaid') && (
+                  <PaymentChip status={order.paymentStatus} />
+                )}
+              </span>
               <span className="text-sm text-muted">{relativeDateTime(new Date(order.createdAt), now)}</span>
               <span className="flex">
                 <StatusSelect

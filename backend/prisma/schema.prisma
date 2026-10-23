@@ -26,6 +26,31 @@ enum OrderItemType {
   program
 }
 
+enum PaymentMethod {
+  whatsapp
+  finik
+}
+
+enum OrderPaymentStatus {
+  unpaid
+  pending
+  paid
+  refunded
+}
+
+enum PaymentStatus {
+  created
+  pending
+  succeeded
+  failed
+  expired
+}
+
+enum PaymentPurpose {
+  order
+  check
+}
+
 enum LeadKind {
   quiz
   wholesale
@@ -367,10 +392,78 @@ model Order {
   createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
 
+  // Online payment (docs/finik/SPEC.md §0, §4). Payment state sits beside the fulfilment status above.
+  paymentMethod    PaymentMethod      @default(whatsapp) @map("payment_method")
+  paymentStatus    OrderPaymentStatus @default(unpaid) @map("payment_status")
+  paidAt           DateTime?          @map("paid_at") @db.Timestamptz(3)
+  /// The "не оплачен" Telegram message went out (sent once per online order).
+  unpaidNotifiedAt DateTime?          @map("unpaid_notified_at") @db.Timestamptz(3)
+  /// Secret part of the order's payment page /pay/<token>: 122 random bits, never derived from the id.
+  payToken         String             @unique @default(dbgenerated("replace((gen_random_uuid())::text, '-'::text, ''::text)")) @map("pay_token")
+  /// Owner's correction while unpaid (delivery, discount, an added item); amount due = totalKgs + adjustmentKgs.
+  adjustmentKgs    Int                @default(0) @map("adjustment_kgs")
+  adjustmentNote   String?            @map("adjustment_note")
+  payments         Payment[]
+
   @@index([status, createdAt])
   @@index([createdAt])
   @@index([phone])
+  @@index([paymentStatus, createdAt])
   @@map("orders")
+}
+
+/// One attempt to collect money through Finik; `id` is sent to Finik as PaymentId.
+model Payment {
+  id              String         @id @default(uuid(7)) @db.Uuid
+  orderId         String?        @map("order_id") @db.Uuid
+  order           Order?         @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  /// `check` = the admin's 1 сом connection test, without an order.
+  purpose         PaymentPurpose @default(order)
+  provider        String         @default("finik")
+  /// mock | beta | prod at creation.
+  environment     String
+  status          PaymentStatus  @default(created)
+  amountKgs       Int            @map("amount_kgs")
+  /// Finik's page: a bearer link, never logged.
+  paymentUrl      String?        @map("payment_url")
+  expiresAt       DateTime       @map("expires_at") @db.Timestamptz(3)
+  /// Short reason when Finik refused or did not answer.
+  error           String?
+  /// From the webhook; not unique (in production it can equal our PaymentId).
+  transactionId   String?        @map("transaction_id")
+  /// Webhook `id`, Finik's operation id.
+  operationId     String?        @map("operation_id")
+  receiptNumber   String?        @map("receipt_number")
+  /// Webhook amount × 100 (1 сом = 100 тыйын).
+  paidAmountTyiyn Int?           @map("paid_amount_tyiyn")
+  /// qr | visa, from the webhook's service.id.
+  channel         String?
+  paidAt          DateTime?      @map("paid_at") @db.Timestamptz(3)
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  events          PaymentEvent[]
+
+  @@index([orderId, createdAt])
+  @@index([status, expiresAt])
+  @@map("payments")
+}
+
+/// Every verified Finik webhook, once. Whitelisted fields only, no personal data.
+model PaymentEvent {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  paymentId String?  @map("payment_id") @db.Uuid
+  payment   Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  /// Webhook id, else transactionId, else sha256 of the raw body.
+  dedupeKey String   @unique @map("dedupe_key")
+  /// As Finik sent it, e.g. "SUCCEEDED".
+  status    String
+  /// applied · duplicate_payment · amount_mismatch · paid_cancelled · paid_deleted · check_paid · failed · unknown_payment · ignored
+  outcome   String
+  data      Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@index([paymentId])
+  @@map("payment_events")
 }
 
 // One product or program in an order: a cart order has several product lines, a program order has one line.

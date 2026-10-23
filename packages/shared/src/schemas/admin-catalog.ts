@@ -267,7 +267,16 @@ export const contentInputSchema = z.object({ data: z.record(z.string(), z.unknow
 // Settings
 
 export const settingKeyParamsSchema = z.object({
-  key: z.enum(['shop', 'appearance', 'currencies', 'notifications', 'seo', 'analytics', 'antispam']),
+  key: z.enum([
+    'shop',
+    'appearance',
+    'currencies',
+    'notifications',
+    'seo',
+    'analytics',
+    'antispam',
+    'payments',
+  ]),
 });
 /** PUT body: `value` is validated against SETTING_SCHEMAS[key] by the API. */
 export const settingInputSchema = z.object({ value: z.record(z.string(), z.unknown()) });

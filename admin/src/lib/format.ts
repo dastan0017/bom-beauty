@@ -19,6 +19,8 @@ export function errorText(error: unknown): string {
   if (error instanceof ApiError) {
     const code = Object.values(error.fields)[0];
     if (code) return copy.validation[code] ?? copy.editor.invalid;
+    // A conflict explains itself in Russian ("Сумму оплаченного заказа изменить нельзя").
+    if (error.status === 409 && error.code === 'conflict') return error.message;
   }
   return copy.errors.generic;
 }

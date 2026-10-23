@@ -244,6 +244,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/pay/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["PayController_page"];
+        put?: never;
+        post: operations["PayController_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/webhooks/finik": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["FinikWebhookController_finik"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/payments/finik": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminPaymentsController_status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/payments/finik/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminPaymentsController_check"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/payments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminPaymentsController_checkStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/leads/quiz": {
         parameters: {
             query?: never;
@@ -833,6 +913,12 @@ export interface components {
                 metaPixelId: string | null;
             };
             turnstileSiteKey: string | null;
+            payments: {
+                finik: boolean;
+                /** @enum {string} */
+                defaultMethod: "whatsapp" | "finik";
+                visa: boolean;
+            };
         };
         LoginDto: {
             /** Format: email */
@@ -1260,11 +1346,58 @@ export interface components {
             displayCurrency: "KGS" | "USD" | "RUB" | "EUR" | "KZT" | "UZS" | "KRW";
             displayRate?: number;
             fromQuiz?: boolean;
+            /**
+             * @default whatsapp
+             * @enum {string}
+             */
+            paymentMethod: "whatsapp" | "finik";
         };
         CreateOrderResponseDto_Output: {
             /** Format: uuid */
             id: string;
             number: number;
+            payment: {
+                url: string | null;
+                /** Format: uri */
+                page: string;
+            } | null;
+        };
+        PayPageDto_Output: {
+            number: number;
+            lines: {
+                /** @enum {string} */
+                type: "product" | "program";
+                title: string;
+                qty: number;
+                totalKgs: number;
+            }[];
+            totalKgs: number;
+            adjustmentKgs: number;
+            adjustmentNote: string | null;
+            amountKgs: number;
+            /** @enum {string} */
+            status: "unpaid" | "pending" | "paid" | "refunded" | "cancelled";
+            paidAt: string | null;
+            canPay: boolean;
+        };
+        PayStartDto_Output: {
+            /** Format: uri */
+            url: string;
+        };
+        FinikStatusDto_Output: {
+            configured: boolean;
+            environment: ("mock" | "beta" | "prod") | null;
+            accountId: string | null;
+            webhookUrl: string | null;
+        };
+        PaymentCheckDto_Output: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            status: "created" | "pending" | "succeeded" | "failed" | "expired";
+            url: string | null;
+            error: string | null;
+            paidAt: string | null;
         };
         CreateQuizLeadDto: {
             /** Format: uuid */
@@ -1342,6 +1475,10 @@ export interface components {
                 totalKgs: number;
                 /** @enum {string} */
                 status: "new" | "sent" | "cancelled";
+                /** @enum {string} */
+                paymentMethod: "whatsapp" | "finik";
+                /** @enum {string} */
+                paymentStatus: "unpaid" | "pending" | "paid" | "refunded";
                 /** Format: date-time */
                 createdAt: string;
             }[];
@@ -1372,6 +1509,10 @@ export interface components {
             totalKgs: number;
             /** @enum {string} */
             status: "new" | "sent" | "cancelled";
+            /** @enum {string} */
+            paymentMethod: "whatsapp" | "finik";
+            /** @enum {string} */
+            paymentStatus: "unpaid" | "pending" | "paid" | "refunded";
             /** Format: date-time */
             createdAt: string;
             comment: string | null;
@@ -1398,12 +1539,54 @@ export interface components {
                 from: ("new" | "sent" | "cancelled") | null;
                 to: ("new" | "sent" | "cancelled") | null;
                 userName: string | null;
+                payment: {
+                    from: ("unpaid" | "pending" | "paid" | "refunded") | null;
+                    /** @enum {string} */
+                    to: "unpaid" | "pending" | "paid" | "refunded";
+                    /** @enum {string} */
+                    source: "finik" | "manual";
+                } | null;
             }[];
+            payment: {
+                /** @enum {string} */
+                method: "whatsapp" | "finik";
+                /** @enum {string} */
+                status: "unpaid" | "pending" | "paid" | "refunded";
+                paidAt: string | null;
+                adjustmentKgs: number;
+                adjustmentNote: string | null;
+                amountKgs: number;
+                payUrl: string | null;
+                linkMessage: string | null;
+                attempts: {
+                    /** Format: uuid */
+                    id: string;
+                    /** @enum {string} */
+                    purpose: "order" | "check";
+                    /** @enum {string} */
+                    status: "created" | "pending" | "succeeded" | "failed" | "expired";
+                    amountKgs: number;
+                    channel: ("qr" | "visa") | null;
+                    /** Format: date-time */
+                    createdAt: string;
+                    /** Format: date-time */
+                    expiresAt: string;
+                    paidAt: string | null;
+                    paidAmountKgs: number | null;
+                    transactionId: string | null;
+                    receiptNumber: string | null;
+                    error: string | null;
+                }[];
+            };
         };
         UpdateOrderDto: {
             /** @enum {string} */
             status?: "new" | "sent" | "cancelled";
             note?: string;
+            /** @enum {string} */
+            paymentStatus?: "unpaid" | "paid" | "refunded";
+            adjustmentKgs?: number;
+            adjustmentNote?: string;
         };
         LeadListDto_Output: {
             items: {
@@ -1479,6 +1662,10 @@ export interface components {
                 totalKgs: number;
                 /** @enum {string} */
                 status: "new" | "sent" | "cancelled";
+                /** @enum {string} */
+                paymentMethod: "whatsapp" | "finik";
+                /** @enum {string} */
+                paymentStatus: "unpaid" | "pending" | "paid" | "refunded";
                 /** Format: date-time */
                 createdAt: string;
             }[];
@@ -2317,6 +2504,133 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CreateOrderResponseDto_Output"];
+                };
+            };
+        };
+    };
+    PayController_page: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayPageDto_Output"];
+                };
+            };
+        };
+    };
+    PayController_start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PayStartDto_Output"];
+                };
+            };
+        };
+    };
+    FinikWebhookController_finik: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminPaymentsController_status: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinikStatusDto_Output"];
+                };
+            };
+        };
+    };
+    AdminPaymentsController_check: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentCheckDto_Output"];
+                };
+            };
+        };
+    };
+    AdminPaymentsController_checkStatus: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentCheckDto_Output"];
                 };
             };
         };
@@ -3224,7 +3538,7 @@ export interface operations {
                 "X-CSRF-Token"?: string;
             };
             path: {
-                key: "shop" | "appearance" | "currencies" | "notifications" | "seo" | "analytics" | "antispam";
+                key: "shop" | "appearance" | "currencies" | "notifications" | "seo" | "analytics" | "antispam" | "payments";
             };
             cookie?: never;
         };

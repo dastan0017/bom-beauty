@@ -1,5 +1,5 @@
 import { z } from '../zod';
-import { CURRENCY_CODES } from '../enums';
+import { CURRENCY_CODES, PAYMENT_METHODS } from '../enums';
 import { normalizePhone } from '../phone';
 import { LINE_QTY_MAX, ORDER_LINES_MAX } from '../limits';
 import { slugSchema, submissionMetaShape } from './common';
@@ -55,6 +55,8 @@ export const createOrderSchema = z
     displayCurrency: z.enum(CURRENCY_CODES).default('KGS'),
     displayRate: z.number().positive().optional(),
     fromQuiz: z.boolean().optional(),
+    /** `finik`: pay online now. Outbox entries from before online payment have none and stay WhatsApp orders. */
+    paymentMethod: z.enum(PAYMENT_METHODS).default('whatsapp'),
   })
   .refine((value) => value.items !== undefined || value.item !== undefined, {
     message: 'order.items.required',
@@ -75,5 +77,19 @@ export function orderLinesOf(order: Pick<CreateOrder, 'items' | 'item' | 'qty'>)
   return [...merged.values()];
 }
 
-export const createOrderResponseSchema = z.object({ id: z.uuid(), number: z.number().int() });
+/** Where an online order goes next: Finik's page now, or our payment page when Finik did not answer. */
+export const orderPaymentStartSchema = z.object({
+  /** Finik's payment page; null when Finik refused or timed out (the site then opens `page`). */
+  url: z.url().nullable(),
+  /** The order's own payment page on the site, `/pay/<token>`. */
+  page: z.url(),
+});
+export type OrderPaymentStart = z.infer<typeof orderPaymentStartSchema>;
+
+export const createOrderResponseSchema = z.object({
+  id: z.uuid(),
+  number: z.number().int(),
+  /** Null for WhatsApp orders. */
+  payment: orderPaymentStartSchema.nullable(),
+});
 export type CreateOrderResponse = z.infer<typeof createOrderResponseSchema>;

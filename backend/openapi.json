@@ -408,6 +408,198 @@
         ]
       }
     },
+    "/v1/pay/{token}": {
+      "get": {
+        "operationId": "PayController_page",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "pattern": "^[A-Za-z0-9_-]{16,64}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayPageDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "public"
+        ]
+      },
+      "post": {
+        "operationId": "PayController_start",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "pattern": "^[A-Za-z0-9_-]{16,64}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayStartDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "public"
+        ]
+      }
+    },
+    "/v1/webhooks/finik": {
+      "post": {
+        "operationId": "FinikWebhookController_finik",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "webhooks"
+        ]
+      }
+    },
+    "/v1/admin/payments/finik": {
+      "get": {
+        "operationId": "AdminPaymentsController_status",
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "description": "Required on mutations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FinikStatusDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/payments/finik/check": {
+      "post": {
+        "operationId": "AdminPaymentsController_check",
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "description": "Required on mutations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentCheckDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/payments/{id}": {
+      "get": {
+        "operationId": "AdminPaymentsController_checkStatus",
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "description": "Required on mutations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentCheckDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/v1/leads/quiz": {
       "post": {
         "operationId": "LeadsController_quiz",
@@ -2184,7 +2376,8 @@
                 "notifications",
                 "seo",
                 "analytics",
-                "antispam"
+                "antispam",
+                "payments"
               ]
             }
           }
@@ -3090,6 +3283,30 @@
                 "type": "null"
               }
             ]
+          },
+          "payments": {
+            "type": "object",
+            "properties": {
+              "finik": {
+                "type": "boolean"
+              },
+              "defaultMethod": {
+                "type": "string",
+                "enum": [
+                  "whatsapp",
+                  "finik"
+                ]
+              },
+              "visa": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "finik",
+              "defaultMethod",
+              "visa"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -3098,7 +3315,8 @@
           "currencies",
           "seo",
           "analytics",
-          "turnstileSiteKey"
+          "turnstileSiteKey",
+          "payments"
         ],
         "additionalProperties": false
       },
@@ -5275,6 +5493,14 @@
           },
           "fromQuiz": {
             "type": "boolean"
+          },
+          "paymentMethod": {
+            "default": "whatsapp",
+            "type": "string",
+            "enum": [
+              "whatsapp",
+              "finik"
+            ]
           }
         },
         "required": [
@@ -5298,11 +5524,275 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
+          },
+          "payment": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "uri"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "page": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                },
+                "required": [
+                  "url",
+                  "page"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
           "id",
-          "number"
+          "number",
+          "payment"
+        ],
+        "additionalProperties": false
+      },
+      "PayPageDto_Output": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "product",
+                    "program"
+                  ]
+                },
+                "title": {
+                  "type": "string"
+                },
+                "qty": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "totalKgs": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "type",
+                "title",
+                "qty",
+                "totalKgs"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "totalKgs": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "adjustmentKgs": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "adjustmentNote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "amountKgs": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "unpaid",
+              "pending",
+              "paid",
+              "refunded",
+              "cancelled"
+            ]
+          },
+          "paidAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "canPay": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "number",
+          "lines",
+          "totalKgs",
+          "adjustmentKgs",
+          "adjustmentNote",
+          "amountKgs",
+          "status",
+          "paidAt",
+          "canPay"
+        ],
+        "additionalProperties": false
+      },
+      "PayStartDto_Output": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "FinikStatusDto_Output": {
+        "type": "object",
+        "properties": {
+          "configured": {
+            "type": "boolean"
+          },
+          "environment": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "mock",
+                  "beta",
+                  "prod"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "accountId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "webhookUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "configured",
+          "environment",
+          "accountId",
+          "webhookUrl"
+        ],
+        "additionalProperties": false
+      },
+      "PaymentCheckDto_Output": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "created",
+              "pending",
+              "succeeded",
+              "failed",
+              "expired"
+            ]
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "paidAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "url",
+          "error",
+          "paidAt"
         ],
         "additionalProperties": false
       },
@@ -5604,6 +6094,22 @@
                     "cancelled"
                   ]
                 },
+                "paymentMethod": {
+                  "type": "string",
+                  "enum": [
+                    "whatsapp",
+                    "finik"
+                  ]
+                },
+                "paymentStatus": {
+                  "type": "string",
+                  "enum": [
+                    "unpaid",
+                    "pending",
+                    "paid",
+                    "refunded"
+                  ]
+                },
                 "createdAt": {
                   "type": "string",
                   "format": "date-time",
@@ -5620,6 +6126,8 @@
                 "city",
                 "totalKgs",
                 "status",
+                "paymentMethod",
+                "paymentStatus",
                 "createdAt"
               ],
               "additionalProperties": false
@@ -5754,6 +6262,22 @@
               "new",
               "sent",
               "cancelled"
+            ]
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "whatsapp",
+              "finik"
+            ]
+          },
+          "paymentStatus": {
+            "type": "string",
+            "enum": [
+              "unpaid",
+              "pending",
+              "paid",
+              "refunded"
             ]
           },
           "createdAt": {
@@ -5899,6 +6423,56 @@
                     "string",
                     "null"
                   ]
+                },
+                "payment": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "from": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "unpaid",
+                                "pending",
+                                "paid",
+                                "refunded"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "to": {
+                          "type": "string",
+                          "enum": [
+                            "unpaid",
+                            "pending",
+                            "paid",
+                            "refunded"
+                          ]
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "finik",
+                            "manual"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "from",
+                        "to",
+                        "source"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 }
               },
               "required": [
@@ -5906,10 +6480,199 @@
                 "action",
                 "from",
                 "to",
-                "userName"
+                "userName",
+                "payment"
               ],
               "additionalProperties": false
             }
+          },
+          "payment": {
+            "type": "object",
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": [
+                  "whatsapp",
+                  "finik"
+                ]
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "unpaid",
+                  "pending",
+                  "paid",
+                  "refunded"
+                ]
+              },
+              "paidAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "adjustmentKgs": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "adjustmentNote": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "amountKgs": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "payUrl": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "linkMessage": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "attempts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "purpose": {
+                      "type": "string",
+                      "enum": [
+                        "order",
+                        "check"
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "created",
+                        "pending",
+                        "succeeded",
+                        "failed",
+                        "expired"
+                      ]
+                    },
+                    "amountKgs": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "channel": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "qr",
+                            "visa"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    },
+                    "paidAt": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "paidAmountKgs": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "transactionId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "receiptNumber": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "error": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "purpose",
+                    "status",
+                    "amountKgs",
+                    "channel",
+                    "createdAt",
+                    "expiresAt",
+                    "paidAt",
+                    "paidAmountKgs",
+                    "transactionId",
+                    "receiptNumber",
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "method",
+              "status",
+              "paidAt",
+              "adjustmentKgs",
+              "adjustmentNote",
+              "amountKgs",
+              "payUrl",
+              "linkMessage",
+              "attempts"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -5922,6 +6685,8 @@
           "city",
           "totalKgs",
           "status",
+          "paymentMethod",
+          "paymentStatus",
           "createdAt",
           "comment",
           "message",
@@ -5933,7 +6698,8 @@
           "referrer",
           "utm",
           "statusChangedAt",
-          "history"
+          "history",
+          "payment"
         ],
         "additionalProperties": false
       },
@@ -5951,6 +6717,23 @@
           "note": {
             "type": "string",
             "maxLength": 2000
+          },
+          "paymentStatus": {
+            "type": "string",
+            "enum": [
+              "unpaid",
+              "paid",
+              "refunded"
+            ]
+          },
+          "adjustmentKgs": {
+            "type": "integer",
+            "minimum": -1000000,
+            "maximum": 1000000
+          },
+          "adjustmentNote": {
+            "type": "string",
+            "maxLength": 200
           }
         }
       },
@@ -6298,6 +7081,22 @@
                     "cancelled"
                   ]
                 },
+                "paymentMethod": {
+                  "type": "string",
+                  "enum": [
+                    "whatsapp",
+                    "finik"
+                  ]
+                },
+                "paymentStatus": {
+                  "type": "string",
+                  "enum": [
+                    "unpaid",
+                    "pending",
+                    "paid",
+                    "refunded"
+                  ]
+                },
                 "createdAt": {
                   "type": "string",
                   "format": "date-time",
@@ -6314,6 +7113,8 @@
                 "city",
                 "totalKgs",
                 "status",
+                "paymentMethod",
+                "paymentStatus",
                 "createdAt"
               ],
               "additionalProperties": false

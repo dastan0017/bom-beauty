@@ -104,6 +104,51 @@ test('catalog: create a product, see it on the site, delete it', async ({ reques
   await expect(page.getByText(name)).toHaveCount(0);
 });
 
+test('payments: the link to send, a WhatsApp order marked paid, the «Оплата» settings', async ({
+  request,
+}) => {
+  const name = `E2E pay ${randomUUID().slice(0, 6)}`;
+  const created = await request.post(`${API}/orders`, {
+    data: {
+      clientRef: randomUUID(),
+      items: [{ type: 'product', slug: 'dr-sgn-cica-serum', qty: 1 }],
+      name,
+      phone: '+996 555 00 11 22',
+      address: 'Бишкек, ул. Тестовая, 5',
+      message: 'Здравствуйте! Хочу заказать',
+      pageUrl: 'http://localhost:3100/catalog',
+      paymentMethod: 'whatsapp',
+    },
+  });
+  expect(created.status()).toBe(201);
+
+  await page
+    .getByRole('link', { name: /Заказы/ })
+    .first()
+    .click();
+  await page.getByRole('searchbox', { name: 'Поиск по имени, телефону или заказу' }).fill(name);
+  const row = page.getByRole('row').filter({ hasText: name });
+  await expect(row).toHaveCount(1);
+  await row.click();
+  const drawer = page.getByRole('dialog');
+  // With online payment on (the dev seed), the drawer offers the order's payment link for WhatsApp.
+  await expect(drawer.getByRole('link', { name: 'Отправить ссылку' })).toHaveAttribute(
+    'href',
+    /^https:\/\/wa\.me\/996555001122\?text=.*%2Fpay%2F[0-9a-f]{32}/,
+  );
+  await drawer.getByLabel('Статус оплаты').selectOption('paid');
+  await expect(page.getByText('Статус оплаты изменён').first()).toBeVisible();
+  await expect(drawer.getByText('Оплата: Не оплачен → Оплачен')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(row.getByText('Оплачен')).toBeVisible();
+
+  await page.getByRole('link', { name: 'Настройки' }).first().click();
+  await page.getByRole('link', { name: 'Оплата', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Подключение Finik' })).toBeVisible();
+  await expect(page.getByText('Тестовый режим, без Finik')).toBeVisible();
+  await expect(page.getByRole('switch', { name: 'Принимать онлайн-оплату на сайте' })).toBeChecked();
+});
+
 test('logout returns to the login screen', async () => {
   await page.getByRole('button', { name: 'Выйти' }).click();
   await expect(page.getByRole('heading', { name: 'Вход в админ-панель' })).toBeVisible();

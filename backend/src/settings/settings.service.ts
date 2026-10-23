@@ -10,6 +10,7 @@ import {
 import type { Env } from '../config/env';
 import { ENV } from '../config/env.module';
 import { imageMediaSelect, toImageRef } from '../common/media-refs';
+import { FINIK_CONFIG, isFinikConfigured, type FinikConfig } from '../payments/finik/finik.config';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -19,6 +20,7 @@ export class SettingsService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(ENV) private readonly env: Env,
+    @Inject(FINIK_CONFIG) private readonly finik: FinikConfig,
   ) {}
 
   /** Stored value merged over the defaults; an invalid stored value falls back to the defaults. */
@@ -36,13 +38,14 @@ export class SettingsService {
   }
 
   async publicSettings(): Promise<PublicSettings> {
-    const [shop, appearance, currencies, seo, analytics, antispam] = await Promise.all([
+    const [shop, appearance, currencies, seo, analytics, antispam, payments] = await Promise.all([
       this.get('shop'),
       this.get('appearance'),
       this.get('currencies'),
       this.get('seo'),
       this.get('analytics'),
       this.get('antispam'),
+      this.get('payments'),
     ]);
     const ogMedia = seo.ogMediaId
       ? await this.prisma.media.findUnique({ where: { id: seo.ogMediaId }, select: imageMediaSelect })
@@ -65,6 +68,12 @@ export class SettingsService {
         metaPixelId: analytics.metaPixelEnabled ? analytics.metaPixelId : null,
       },
       turnstileSiteKey: antispam.turnstileEnabled ? (this.env.TURNSTILE_SITE_KEY ?? null) : null,
+      // Online payment shows only when the owner switched it on and the server has Finik's keys.
+      payments: {
+        finik: payments.finikEnabled && isFinikConfigured(this.finik),
+        defaultMethod: payments.defaultMethod,
+        visa: payments.visa,
+      },
     };
   }
 }

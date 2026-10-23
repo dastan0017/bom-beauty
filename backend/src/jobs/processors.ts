@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
 import { MediaPipelineService } from '../media/media-pipeline.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { PaymentsService } from '../payments/payments.service';
 import { RevalidateSender } from '../revalidate/revalidate.service';
 import { VideosService } from '../videos/videos.service';
 import { MaintenanceService } from './maintenance.service';
@@ -89,5 +90,20 @@ export class MaintenanceProcessor extends WorkerHost {
   async process(job: Job): Promise<void> {
     if (job.name === 'uploads.cleanup') await this.maintenance.uploadsCleanup();
     if (job.name === 'sessions.cleanup') await this.maintenance.sessionsCleanup();
+  }
+}
+
+@Processor(QUEUES.payments, { concurrency: 1 })
+export class PaymentsProcessor extends WorkerHost {
+  private readonly logger = new Logger(PaymentsProcessor.name);
+  constructor(private readonly payments: PaymentsService) {
+    super();
+  }
+  async process(job: Job): Promise<void> {
+    if (job.name === 'payments.expire') await this.payments.expire();
+  }
+  @OnWorkerEvent('failed')
+  failed(job: Job | undefined, error: Error) {
+    logFailure(this.logger, job, error);
   }
 }

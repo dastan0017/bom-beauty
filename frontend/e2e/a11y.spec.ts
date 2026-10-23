@@ -1,12 +1,10 @@
-import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { expectNoViolations } from './support/axe';
 import { whenHydrated } from './support/hydration';
 import { addReviews } from './support/reviews';
 
 // WCAG 2.2 AA checks with axe on every page type and on the overlays (order sheet, quiz), plus label-in-name, which
 // Lighthouse also runs. Two review screenshots are added first so the home slider is checked too.
-
-const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 let removeReviews: (() => Promise<void>) | undefined;
 test.beforeAll(async ({}, testInfo) => {
@@ -16,15 +14,6 @@ test.beforeAll(async ({}, testInfo) => {
 test.afterAll(async () => {
   await removeReviews?.();
 });
-
-async function expectNoViolations(page: Page, include?: string): Promise<void> {
-  const builder = new AxeBuilder({ page }).options({
-    runOnly: { type: 'tag', values: TAGS },
-    rules: { 'label-content-name-mismatch': { enabled: true } },
-  });
-  const { violations } = await (include ? builder.include(include) : builder).analyze();
-  expect(violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`)).toEqual([]);
-}
 
 const PAGES = [
   '/',

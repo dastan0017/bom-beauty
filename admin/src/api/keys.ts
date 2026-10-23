@@ -31,6 +31,10 @@ export const keys = {
   video: (id: string) => ['video', id] as const,
   content: (key: string) => ['content', key] as const,
   settings: ['settings'] as const,
+  payments: {
+    finik: ['payments', 'finik'] as const,
+    check: (id: string) => ['payments', 'check', id] as const,
+  },
   users: ['users'] as const,
   audit: (entity: string) => ['audit', entity] as const,
 };
