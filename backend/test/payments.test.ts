@@ -1,6 +1,7 @@
 import { generateKeyPairSync, randomUUID, type KeyObject } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import {
+  DEFAULT_WHATSAPP_TEMPLATES,
   formatKgs,
   type CreateOrderInput,
   type CreateOrderResponse,
@@ -395,8 +396,9 @@ describe('online payment (Finik beta, stubbed)', () => {
     const wa = new URL(button?.url ?? '');
     expect(`${wa.origin}${wa.pathname}`).toBe('https://wa.me/996555123456');
     expect(wa.searchParams.get('text')).toBe(
-      `Здравствуйте, Айгерим! Оплату за заказ №${order.number} получили, спасибо 🌸 Доставим по адресу: ` +
-        'Бишкек, ул. Токтогула 1. Когда вам удобно принять заказ?',
+      `Здравствуйте, Айгерим! Оплату за заказ №${order.number} получили, спасибо 🌸\n\n` +
+        `В заказе:\n• Успокаивающая cica-сыворотка × 2 · ${kgs(3800)}\nОплачено: ${kgs(3800)}\n\n` +
+        'Доставим по адресу: Бишкек, ул. Токтогула 1. Когда вам удобно принять заказ?',
     );
 
     // Finik delivers at least once: the same delivery changes nothing and notifies nobody.
@@ -706,7 +708,9 @@ describe('online payment (Finik beta, stubbed)', () => {
     expect(order).toMatchObject({ paymentMethod: 'whatsapp', paymentStatus: 'unpaid' });
     const payUrl = `${ctx.env.WEB_ORIGIN}/pay/${order.payToken}`;
     expect(notified({ entity: 'order', id })).toBe(1);
-    const linkText = `Здравствуйте, Айгерим! Ваш заказ №${order.number} на ${kgs(3800)}. Оплатить можно по ссылке: ${payUrl}`;
+    const linkText =
+      `Здравствуйте, Айгерим! Ваш заказ №${order.number}:\n• Успокаивающая cica-сыворотка × 2 · ${kgs(3800)}\n\n` +
+      `К оплате: ${kgs(3800)}\nОплатить можно по ссылке: ${payUrl}`;
     const message = await telegramWith(`🛍 Заказ №${order.number} · через WhatsApp · не оплачен`);
     const button = message.reply_markup?.inline_keyboard[0]?.[0];
     expect(button?.text).toBe('💬 Отправить ссылку на оплату');
@@ -731,7 +735,9 @@ describe('online payment (Finik beta, stubbed)', () => {
       adjustmentNote: 'Доставка',
       amountKgs: 4100,
     });
-    expect(adjusted.body.payment.linkMessage).toContain(`на ${kgs(4100)}`);
+    expect(adjusted.body.payment.linkMessage).toContain(
+      `× 2 · ${kgs(3800)}\n• Доставка: +${kgs(300)}\n\nК оплате: ${kgs(4100)}`,
+    );
     const tooLow = await patchOrder(id, { adjustmentKgs: -3800 }, manager);
     expect(tooLow.status).toBe(400);
     expect(tooLow.body.error.fields).toEqual({ adjustmentKgs: 'order.adjustment.amount' });
@@ -758,6 +764,28 @@ describe('online payment (Finik beta, stubbed)', () => {
     const [header, ...rows] = csv.split('\r\n');
     expect(header?.endsWith(';Оплата;Статус оплаты;Дата оплаты;К оплате, сом')).toBe(true);
     expect(rows.find((row) => row.startsWith(`${order.number};`))).toMatch(/;WhatsApp;Оплачен;[^;]+;4100$/);
+  });
+
+  it('reads templates saved before {состав} existed as the new defaults, keeping edited ones', async () => {
+    const edited = 'Салам, {имя}! Заказ №{заказ}, {сумма}: {ссылка}';
+    await setPayments({
+      templates: {
+        link: edited,
+        paidLocal:
+          'Здравствуйте, {имя}! Оплату за заказ №{заказ} получили, спасибо 🌸 Доставим по адресу: {адрес}. Когда вам удобно принять заказ?',
+        paidAbroad:
+          'Здравствуйте, {имя}! Оплату за заказ №{заказ} получили, спасибо 🌸 Отправим заказ в течение [...] дней, трек-номер пришлём сюда.',
+      },
+    });
+    const settings = await request<{ payments: PaymentsSetting }>(ctx.url('/v1/admin/settings'), {
+      headers: owner.read,
+    });
+    expect(settings.body.payments.templates).toEqual({
+      link: edited,
+      paidLocal: DEFAULT_WHATSAPP_TEMPLATES.paidLocal,
+      paidAbroad: DEFAULT_WHATSAPP_TEMPLATES.paidAbroad,
+    });
+    await setPayments({ templates: { ...DEFAULT_WHATSAPP_TEMPLATES } });
   });
 
   it('lets only the owner read the connection and run the 1 сом check', async () => {

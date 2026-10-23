@@ -564,7 +564,7 @@ function PaymentsForm({ settings }: { settings: AdminSettings }) {
               <Text label={t.template[key]} error={errors[`payments.templates.${key}`]}>
                 <textarea
                   value={payments.templates[key]}
-                  rows={3}
+                  rows={7}
                   maxLength={1000}
                   onChange={(e) =>
                     set('payments', { templates: { ...payments.templates, [key]: e.target.value } })

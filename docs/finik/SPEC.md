@@ -43,7 +43,7 @@ Agreed with the developer after this spec was written. **Where a later section d
    - Online orders get **no** message at creation. WhatsApp orders with online payment off keep today's message.
 3. **No country field in the form:** Kyrgyzstan versus abroad comes from the phone's country code.
 4. **WhatsApp texts are editable** in «Настройки → Оплата»: three templates (link, paid in Kyrgyzstan, paid abroad)
-   with the placeholders `{имя}`, `{заказ}`, `{сумма}`, `{адрес}` and `{ссылка}`. The defaults live in
+   with the placeholders `{имя}`, `{заказ}`, `{состав}` (added after launch: what was ordered), `{сумма}`, `{адрес}` and `{ссылка}`. The defaults live in
    `packages/shared/src/whatsapp.ts`; delivery times are written into the abroad template.
 5. **Adjustment instead of order editing:** while an order is unpaid, the admin can set a signed adjustment in сом
    with a short note (delivery, discount, an added item). Amount due = `totalKgs + adjustmentKgs`, which must be > 0.

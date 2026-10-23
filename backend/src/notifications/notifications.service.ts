@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
+  buildOrderItemsText,
   formatKgs,
   paidTemplateFor,
   renderWhatsappTemplate,
@@ -34,7 +35,7 @@ import {
 const orderSelect = {
   id: true,
   number: true,
-  lines: { orderBy: { position: 'asc' }, select: { type: true, title: true, qty: true } },
+  lines: { orderBy: { position: 'asc' }, select: { type: true, title: true, qty: true, totalKgs: true } },
   totalKgs: true,
   adjustmentKgs: true,
   adjustmentNote: true,
@@ -195,6 +196,7 @@ export class NotificationsService {
     const whatsappText = renderWhatsappTemplate(templates[key], {
       name: order.name,
       number: order.number,
+      items: buildOrderItemsText(order),
       total: formatKgs(order.totalKgs + order.adjustmentKgs),
       address: order.address,
       link: payPageUrl(this.env.WEB_ORIGIN, order.payToken),

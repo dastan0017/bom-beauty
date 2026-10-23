@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { formatKgs } from './money';
 import {
+  buildOrderItemsText,
   buildOrderMessage,
   buildOrderQuestionMessage,
   buildPaidMessage,
@@ -11,6 +12,7 @@ import {
   DEFAULT_WHATSAPP_TEMPLATES,
   paidTemplateFor,
   renderWhatsappTemplate,
+  upgradeWhatsappTemplates,
   waLink,
 } from './whatsapp';
 
@@ -129,21 +131,56 @@ describe('online payment texts', () => {
     expect(text).toContain('Адрес: Бишкек, ул. Токтогула 1\nНомер заказа на сайте: №1042\n\nПришлите');
   });
 
+  it('lists what was ordered: quantity, price and the owner adjustment', () => {
+    const lines = [
+      { type: 'program' as const, title: 'Акне и постакне', qty: 1, totalKgs: 5900 },
+      { type: 'product' as const, title: 'Cica-сыворотка', qty: 2, totalKgs: 3800 },
+    ];
+    expect(buildOrderItemsText({ lines })).toBe(
+      `• Программа «Акне и постакне» · ${formatKgs(5900)}\n• Cica-сыворотка × 2 · ${formatKgs(3800)}`,
+    );
+    expect(buildOrderItemsText({ lines, adjustmentKgs: 300, adjustmentNote: ' Доставка ' })).toMatch(
+      new RegExp(`\\n• Доставка: \\+${formatKgs(300)}$`),
+    );
+    expect(buildOrderItemsText({ lines, adjustmentKgs: -500, adjustmentNote: null })).toMatch(
+      new RegExp(`\\n• Корректировка: −${formatKgs(500)}$`),
+    );
+  });
+
   it('fills every placeholder of the owner templates', () => {
     const values = {
       name: ' Бекзат ',
       number: 1043,
-      total: formatKgs(5100),
+      items: `• Cica-сыворотка × 2 · ${formatKgs(3800)}\n• Доставка: +${formatKgs(300)}`,
+      total: formatKgs(4100),
       address: 'Ош, ул. Ленина 10',
       link: 'https://bom-beauty.com/pay/k7Qm2x',
     };
     expect(renderWhatsappTemplate(DEFAULT_WHATSAPP_TEMPLATES.link, values)).toBe(
-      'Здравствуйте, Бекзат! Ваш заказ №1043 на 5 100 сом. Оплатить можно по ссылке: https://bom-beauty.com/pay/k7Qm2x',
+      `Здравствуйте, Бекзат! Ваш заказ №1043:\n${values.items}\n\nК оплате: ${formatKgs(4100)}\n` +
+        'Оплатить можно по ссылке: https://bom-beauty.com/pay/k7Qm2x',
     );
-    expect(renderWhatsappTemplate(DEFAULT_WHATSAPP_TEMPLATES.paidLocal, values)).toContain(
-      'Доставим по адресу: Ош, ул. Ленина 10.',
-    );
+    const paid = renderWhatsappTemplate(DEFAULT_WHATSAPP_TEMPLATES.paidLocal, values);
+    expect(paid).toContain(`В заказе:\n${values.items}\nОплачено: ${formatKgs(4100)}`);
+    expect(paid).toContain('Доставим по адресу: Ош, ул. Ленина 10.');
+    expect(renderWhatsappTemplate(DEFAULT_WHATSAPP_TEMPLATES.paidAbroad, values)).toContain(values.items);
     expect(renderWhatsappTemplate('{имя}, {заказ}, {неизвестно}', values)).toBe('Бекзат, 1043, {неизвестно}');
+  });
+
+  it('moves saved first-version templates to the new defaults, and keeps edited ones', () => {
+    const edited = 'Салам, {имя}! Заказ №{заказ}: {ссылка}';
+    const first = {
+      link: 'Здравствуйте, {имя}! Ваш заказ №{заказ} на {сумма}. Оплатить можно по ссылке: {ссылка}',
+      paidLocal:
+        'Здравствуйте, {имя}! Оплату за заказ №{заказ} получили, спасибо 🌸 Доставим по адресу: {адрес}. Когда вам удобно принять заказ?',
+      paidAbroad: edited,
+    };
+    expect(upgradeWhatsappTemplates(first)).toEqual({
+      link: DEFAULT_WHATSAPP_TEMPLATES.link,
+      paidLocal: DEFAULT_WHATSAPP_TEMPLATES.paidLocal,
+      paidAbroad: edited,
+    });
+    for (const text of Object.values(DEFAULT_WHATSAPP_TEMPLATES)) expect(text).toContain('{состав}');
   });
 
   it('picks the delivery template from the phone country', () => {

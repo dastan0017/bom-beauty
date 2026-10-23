@@ -3,6 +3,7 @@ import {
   FOREIGN_CURRENCY_CODES,
   SETTING_DEFAULTS,
   SETTING_SCHEMAS,
+  upgradeWhatsappTemplates,
   type PublicSettings,
   type SettingKey,
   type SettingValue,
@@ -34,7 +35,13 @@ export class SettingsService {
       this.logger.warn(`Stored setting "${key}" is invalid; using defaults`);
       return defaults;
     }
-    return parsed.data as SettingValue<K>;
+    const value = parsed.data as SettingValue<K>;
+    // Templates saved before `{состав}` existed, never edited since, read as today's defaults.
+    if (key === 'payments') {
+      const payments = value as SettingValue<'payments'>;
+      return { ...payments, templates: upgradeWhatsappTemplates(payments.templates) } as SettingValue<K>;
+    }
+    return value;
   }
 
   async publicSettings(): Promise<PublicSettings> {

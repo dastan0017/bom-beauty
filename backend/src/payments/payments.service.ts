@@ -2,10 +2,12 @@ import { createHash } from 'node:crypto';
 import type { IncomingHttpHeaders } from 'node:http';
 import { HttpStatus, Inject, Injectable, Logger } from '@nestjs/common';
 import {
+  buildOrderItemsText,
   formatKgs,
   PAYMENT_CHANNELS,
   renderWhatsappTemplate,
   type FinikStatus,
+  type OrderItemType,
   type OrderPayment,
   type OrderPaymentStart,
   type PaymentAttempt,
@@ -567,6 +569,7 @@ export class PaymentsService {
     totalKgs: number;
     adjustmentKgs: number;
     adjustmentNote: string | null;
+    lines: { type: OrderItemType; title: string; qty: number; totalKgs: number }[];
   }): Promise<OrderPayment> {
     const [attempts, on, payments] = await Promise.all([
       this.prisma.payment.findMany({
@@ -592,6 +595,7 @@ export class PaymentsService {
         ? renderWhatsappTemplate(payments.templates.link, {
             name: order.name,
             number: order.number,
+            items: buildOrderItemsText(order),
             total: formatKgs(amountKgs),
             address: order.address,
             link: payUrl,

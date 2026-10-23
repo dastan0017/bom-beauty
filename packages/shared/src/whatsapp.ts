@@ -1,5 +1,6 @@
 import type { OrderItemType, WholesaleBuyer, WholesaleCountry } from './enums';
 import { WHOLESALE_BUYER_LABELS, WHOLESALE_COUNTRY_LABELS } from './labels';
+import { formatKgs } from './money';
 import { quizAnswerLabel, type QuizAnswers } from './quiz';
 
 // WhatsApp message texts, verbatim from design/Bom Beauty Prototype.dc.html.
@@ -75,25 +76,81 @@ export function buildOrderMessage(order: OrderMessageInput, options: OrderMessag
 // Texts the owner sends to customers from the Telegram bot (docs/finik/SPEC.md §0). Ours, so no em-dashes. The owner
 // can rewrite them in «Настройки → Оплата»; these are the defaults. Delivery times abroad are hers to fill in.
 
-/** Placeholders the owner can use in her templates. */
-export const WHATSAPP_PLACEHOLDERS = ['{имя}', '{заказ}', '{сумма}', '{адрес}', '{ссылка}'] as const;
+/** Placeholders the owner can use in her templates; `{состав}` is what was ordered (buildOrderItemsText). */
+export const WHATSAPP_PLACEHOLDERS = [
+  '{имя}',
+  '{заказ}',
+  '{состав}',
+  '{сумма}',
+  '{адрес}',
+  '{ссылка}',
+] as const;
 
 export const DEFAULT_WHATSAPP_TEMPLATES = {
   /** Payment link for an unpaid order. */
-  link: 'Здравствуйте, {имя}! Ваш заказ №{заказ} на {сумма}. Оплатить можно по ссылке: {ссылка}',
+  link: 'Здравствуйте, {имя}! Ваш заказ №{заказ}:\n{состав}\n\nК оплате: {сумма}\nОплатить можно по ссылке: {ссылка}',
   /** Paid, delivery within Kyrgyzstan (phone +996). */
   paidLocal:
-    'Здравствуйте, {имя}! Оплату за заказ №{заказ} получили, спасибо 🌸 Доставим по адресу: {адрес}. Когда вам удобно принять заказ?',
+    'Здравствуйте, {имя}! Оплату за заказ №{заказ} получили, спасибо 🌸\n\nВ заказе:\n{состав}\nОплачено: {сумма}\n\nДоставим по адресу: {адрес}. Когда вам удобно принять заказ?',
   /** Paid, delivery abroad (any other phone). */
   paidAbroad:
-    'Здравствуйте, {имя}! Оплату за заказ №{заказ} получили, спасибо 🌸 Отправим заказ в течение [...] дней, трек-номер пришлём сюда.',
+    'Здравствуйте, {имя}! Оплату за заказ №{заказ} получили, спасибо 🌸\n\nВ заказе:\n{состав}\nОплачено: {сумма}\n\nОтправим заказ в течение [...] дней, трек-номер пришлём сюда.',
 } as const;
 export type WhatsappTemplateKey = keyof typeof DEFAULT_WHATSAPP_TEMPLATES;
+
+/** The first defaults (2026-10-23, before `{состав}`): a saved template still equal to one of them reads as today's. */
+const FIRST_WHATSAPP_TEMPLATES: Record<WhatsappTemplateKey, string> = {
+  link: 'Здравствуйте, {имя}! Ваш заказ №{заказ} на {сумма}. Оплатить можно по ссылке: {ссылка}',
+  paidLocal:
+    'Здравствуйте, {имя}! Оплату за заказ №{заказ} получили, спасибо 🌸 Доставим по адресу: {адрес}. Когда вам удобно принять заказ?',
+  paidAbroad:
+    'Здравствуйте, {имя}! Оплату за заказ №{заказ} получили, спасибо 🌸 Отправим заказ в течение [...] дней, трек-номер пришлём сюда.',
+};
+
+/** Saved templates nobody edited move to the current defaults; the owner's own wording stays as she wrote it. */
+export function upgradeWhatsappTemplates(
+  templates: Record<WhatsappTemplateKey, string>,
+): Record<WhatsappTemplateKey, string> {
+  const keys = Object.keys(DEFAULT_WHATSAPP_TEMPLATES) as WhatsappTemplateKey[];
+  return Object.fromEntries(
+    keys.map((key) => [
+      key,
+      templates[key] === FIRST_WHATSAPP_TEMPLATES[key] ? DEFAULT_WHATSAPP_TEMPLATES[key] : templates[key],
+    ]),
+  ) as Record<WhatsappTemplateKey, string>;
+}
+
+export interface OrderItemsInput {
+  lines: { type: OrderItemType; title: string; qty: number; totalKgs: number }[];
+  adjustmentKgs?: number;
+  adjustmentNote?: string | null;
+}
+
+/**
+ * `{состав}`: one line per item with quantity and price in сом, then the owner's adjustment (delivery, discount):
+ * «• Программа «Акне и постакне» · 5 900 сом», «• Cica-сыворотка × 2 · 3 800 сом», «• Доставка: +300 сом».
+ */
+export function buildOrderItemsText(order: OrderItemsInput): string {
+  const items = order.lines.map(
+    (line) =>
+      `• ${orderItemLabel(line)}${line.qty > 1 ? ` × ${line.qty}` : ''} · ${formatKgs(line.totalKgs)}`,
+  );
+  const adjustment = order.adjustmentKgs ?? 0;
+  if (adjustment) {
+    const sign = adjustment > 0 ? '+' : '−';
+    items.push(
+      `• ${order.adjustmentNote?.trim() || 'Корректировка'}: ${sign}${formatKgs(Math.abs(adjustment))}`,
+    );
+  }
+  return items.join('\n');
+}
 
 export interface WhatsappTemplateValues {
   name: string;
   number: number;
-  /** Formatted amount, "5 900 сом". */
+  /** What was ordered, from buildOrderItemsText. */
+  items: string;
+  /** Formatted amount due, "5 900 сом". */
   total: string;
   address: string;
   link?: string;
@@ -104,6 +161,7 @@ export function renderWhatsappTemplate(template: string, values: WhatsappTemplat
   return template
     .replaceAll('{имя}', values.name.trim())
     .replaceAll('{заказ}', String(values.number))
+    .replaceAll('{состав}', values.items)
     .replaceAll('{сумма}', values.total)
     .replaceAll('{адрес}', values.address.trim())
     .replaceAll('{ссылка}', values.link ?? '')
