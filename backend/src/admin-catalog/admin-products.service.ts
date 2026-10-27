@@ -10,7 +10,14 @@ import {
 import type { z } from 'zod';
 import { AuditService } from '../audit/audit.service';
 import { ApiException, invalidField, notFound } from '../common/errors';
-import { adminMediaSelect, imageMediaSelect, toAdminMedia, toImageRef } from '../common/media-refs';
+import {
+  adminMediaSelect,
+  adminVideoSelect,
+  imageMediaSelect,
+  toAdminMedia,
+  toAdminVideo,
+  toImageRef,
+} from '../common/media-refs';
 import type { Env } from '../config/env';
 import { ENV } from '../config/env.module';
 import type { Prisma } from '../generated/prisma/client';
@@ -63,6 +70,7 @@ const detailSelect = {
   updatedAt: true,
   brand: { select: { name: true, description: true } },
   images: { orderBy: { order: 'asc' }, select: { media: { select: adminMediaSelect } } },
+  video: { select: adminVideoSelect },
   programItems: { select: { program: { select: { id: true, title: true } } } },
 } satisfies Prisma.ProductSelect;
 
@@ -215,6 +223,7 @@ export class AdminProductsService {
       seoulChoice: row.seoulChoice,
       isNew: row.isNew,
       images: row.images.map((image) => toAdminMedia(image.media, this.env.MEDIA_PUBLIC_URL)),
+      video: row.video ? toAdminVideo(row.video) : null,
       seoTitle: row.seoTitle,
       seoDescription: row.seoDescription,
       programs: row.programItems.map((item) => item.program),
@@ -225,6 +234,7 @@ export class AdminProductsService {
   async create(input: ProductData, actor: Actor): Promise<AdminProduct> {
     const slug = await resolveSlug(input.slug, input.name, (candidate) => this.slugTaken(candidate));
     await this.checkImages(input.imageIds);
+    await this.checkVideo(input.videoId);
     const brandId = await this.brandId(input.brandName);
     const brandText = await this.setBrandDescription(brandId, input.brandDescription);
     const last = await this.prisma.product.aggregate({
@@ -261,6 +271,7 @@ export class AdminProductsService {
         ? await resolveSlug(input.slug, input.name, (candidate) => this.slugTaken(candidate, id))
         : current.slug;
     await this.checkImages(input.imageIds);
+    await this.checkVideo(input.videoId);
     const brandId = await this.brandId(input.brandName);
     const brandText = await this.setBrandDescription(brandId, input.brandDescription);
     await this.prisma.$transaction([
@@ -384,6 +395,7 @@ export class AdminProductsService {
       isNew: input.isNew,
       seoTitle: input.seoTitle,
       seoDescription: input.seoDescription,
+      videoId: input.videoId,
     };
   }
 
@@ -419,6 +431,11 @@ export class AdminProductsService {
       data: { description },
     });
     return changed.count > 0;
+  }
+
+  private async checkVideo(id: string | null): Promise<void> {
+    if (id && !(await this.prisma.video.count({ where: { id } })))
+      throw invalidField('videoId', 'video.not_found');
   }
 
   private async checkImages(ids: string[]): Promise<void> {

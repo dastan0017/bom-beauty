@@ -1,4 +1,4 @@
-import { BADGES, type AdminMedia, type AdminProduct, type ProductInput } from '@bom/shared';
+import { BADGES, type AdminMedia, type AdminProduct, type AdminVideo, type ProductInput } from '@bom/shared';
 import { AlertDialog } from 'radix-ui';
 import { useState, type ReactNode } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
@@ -21,6 +21,7 @@ import {
   Toggle,
   useUnsavedGuard,
 } from '@/components/ui/editor';
+import { VideoSlot } from '@/components/ui/media';
 import { copy } from '@/content/copy';
 import { env } from '@/env';
 import { errorText, fieldErrors } from '@/lib/format';
@@ -46,6 +47,7 @@ const EMPTY: ProductInput = {
   seoulChoice: false,
   isNew: false,
   imageIds: [],
+  videoId: null,
   seoTitle: null,
   seoDescription: null,
 };
@@ -72,6 +74,7 @@ function toInput(product: AdminProduct): ProductInput {
     seoulChoice: product.seoulChoice,
     isNew: product.isNew,
     imageIds: product.images.map((image) => image.id),
+    videoId: product.video?.id ?? null,
     seoTitle: product.seoTitle,
     seoDescription: product.seoDescription,
   };
@@ -105,6 +108,7 @@ function ProductForm({ product, initial }: { product: AdminProduct | null; initi
   const [baseline, setBaseline] = useState<ProductInput>(initial);
   const [form, setForm] = useState<ProductInput>(initial);
   const [images, setImages] = useState<AdminMedia[]>(product?.images ?? []);
+  const [video, setVideo] = useState<AdminVideo | null>(product?.video ?? null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   // A just-created item arrives here with { saved: true } after the redirect to its own URL.
   const location = useLocation();
@@ -156,6 +160,7 @@ function ProductForm({ product, initial }: { product: AdminProduct | null; initi
           setBaseline(next);
           setForm(next);
           setImages(result.images);
+          setVideo(result.video);
           setSavedBrand({ name: result.brandName, text: result.brandDescription });
           setSaved(true);
           setErrors({});
@@ -360,6 +365,19 @@ function ProductForm({ product, initial }: { product: AdminProduct | null; initi
           >
             <ProductPhotos images={images} onChange={changePhotos} />
             <FieldError error={errors.imageIds} />
+          </Panel>
+          <Panel title={copy.product.video}>
+            <VideoSlot
+              video={form.videoId ? video : null}
+              hint={copy.product.videoHint}
+              title={form.name.trim() || copy.product.new}
+              onChange={(uploaded) => {
+                setVideo(uploaded);
+                set('videoId', uploaded.id);
+              }}
+              onRemove={() => set('videoId', null)}
+            />
+            <FieldError error={errors.videoId} />
           </Panel>
           <SwitchRow label={copy.editor.inStock} checked={form.inStock} onChange={(v) => set('inStock', v)} />
           <SwitchRow

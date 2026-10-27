@@ -26,6 +26,8 @@ export const productCardSchema = z.object({
   seoulChoice: z.boolean(),
   isNew: z.boolean(),
   image: imageRefSchema.nullable(),
+  /** Ready product video: the catalog card and the product gallery open it in the player. */
+  video: videoRefSchema.nullable().default(null),
 });
 export type ProductCard = z.infer<typeof productCardSchema>;
 

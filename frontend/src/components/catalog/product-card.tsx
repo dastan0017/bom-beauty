@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
 import { AddToCart } from '../cart/add-to-cart';
+import { ProductVideoButton } from './product-client';
 import type { CartProduct } from '../cart/cart';
 import { BbImage, PhotoPlaceholder } from '../bb-image';
 import { Price } from '../currency';
@@ -32,7 +33,7 @@ export function ProductBadge({ label }: { label: string }) {
 /** Catalog grid card (design: isCatalog → items). */
 export function ProductCard({ product, priority = false }: { product: ProductCardData; priority?: boolean }) {
   return (
-    <article className={cn(card, 'flex flex-col px-2 pt-2 pb-2.5')}>
+    <article className={cn(card, 'relative flex flex-col px-2 pt-2 pb-2.5')}>
       <Link href={`/catalog/${product.slug}`} className="flex flex-1 flex-col">
         <span className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-[calc(var(--rc)-8px)] bg-surface-2">
           <BbImage
@@ -54,6 +55,9 @@ export function ProductCard({ product, priority = false }: { product: ProductCar
           </span>
         </span>
       </Link>
+      {product.video && (
+        <ProductVideoButton product={cartProduct(product)} video={product.video} variant="card" />
+      )}
       <AddToCart slug={product.slug} name={product.name} size="card" />
     </article>
   );

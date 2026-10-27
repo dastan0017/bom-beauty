@@ -138,6 +138,8 @@ model Product {
   order          Int            @default(0)
   seoTitle       String?
   seoDescription String?
+  videoId        String?        @db.Uuid          // product video (D42), played from the gallery and the catalog card
+  video          Video?         @relation("ProductVideo", fields: [videoId], references: [id], onDelete: SetNull)
   images         ProductImage[]
   programItems   ProgramItem[]
   routineSteps   ProgramStep[]
@@ -278,6 +280,7 @@ model Video {
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
   programs     Program[]   @relation("ProgramVideo")
+  products     Product[]   @relation("ProductVideo")
 
   @@index([status])
 }

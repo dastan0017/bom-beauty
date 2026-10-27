@@ -93,7 +93,7 @@ export class VideosService {
     return toAdminVideo(video);
   }
 
-  /** 409 while a program or a page uses it. */
+  /** 409 while a program, a product or a page uses it. */
   async remove(id: string): Promise<void> {
     const video = await this.prisma.video.findUnique({
       where: { id },
@@ -101,9 +101,10 @@ export class VideosService {
     });
     if (!video) throw notFound('Видео не найдено');
     const programs = await this.prisma.program.count({ where: { videoId: id } });
+    const products = await this.prisma.product.count({ where: { videoId: id } });
     const blocks = await this.prisma.contentBlock.findMany({ select: { data: true } });
     const inContent = blocks.some((block) => JSON.stringify(block.data).includes(id));
-    if (programs || inContent) {
+    if (programs || products || inContent) {
       throw new ApiException('conflict', HttpStatus.CONFLICT, 'Видео используется на сайте', {
         id: 'video.in_use',
       });
@@ -155,7 +156,7 @@ export class VideosService {
       },
     });
     if (status === 'ready') {
-      this.revalidator.revalidate([SITE_TAGS.programs, SITE_TAGS.content]);
+      this.revalidator.revalidate([SITE_TAGS.programs, SITE_TAGS.products, SITE_TAGS.content]);
       return;
     }
     if (status !== 'failed' && attempt > 0 && attempt < SYNC_MAX_ATTEMPTS) {

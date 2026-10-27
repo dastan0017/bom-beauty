@@ -190,6 +190,8 @@ Requests from Нурайым while filling the admin, plus the developer's follo
 - [x] «Оптовикам»: second PDF «Готовые протоколы от производителя» (admin slot, site button once uploaded)
 - [x] «О бренде» (2026-10-27): one text per brand, edited in the product form above «Описание», shown on every product
       page of the brand (migration `brand_description`, additive) (D41)
+- [x] Product video (2026-10-27): «Видео» slot in the product editor (Bunny), play badge on catalog cards, «Видео» pill
+      on the gallery, player end card «Заказать» (migration `product_video`, additive) (D42)
 - [x] Tests: search helper, photo limit, wholesale content defaults, delete with programs and featured list, protocols
       PDF refs; e2e for the filter sheet, brand and search (with and without JS), admin list delete
 - [x] Gate + `feat: catalog search and brand filter, product delete, 10 photos, wholesale protocols`

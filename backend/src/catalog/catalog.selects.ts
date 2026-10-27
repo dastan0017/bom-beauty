@@ -1,6 +1,6 @@
 import { displayBadge, type ProductCard } from '@bom/shared';
 import type { Prisma } from '../generated/prisma/client';
-import { imageMediaSelect, toImageRef } from '../common/media-refs';
+import { imageMediaSelect, toImageRef, toVideoRef, videoSelect } from '../common/media-refs';
 
 export const productCardSelect = {
   id: true,
@@ -18,6 +18,7 @@ export const productCardSelect = {
   brand: { select: { name: true } },
   category: { select: { slug: true, name: true } },
   images: { orderBy: { order: 'asc' }, take: 1, select: { alt: true, media: { select: imageMediaSelect } } },
+  video: { select: videoSelect },
 } satisfies Prisma.ProductSelect;
 export type ProductCardRow = Prisma.ProductGetPayload<{ select: typeof productCardSelect }>;
 
@@ -39,6 +40,7 @@ export function toProductCard(row: ProductCardRow): ProductCard {
     seoulChoice: row.seoulChoice,
     isNew: row.isNew,
     image: toImageRef(main?.media, main?.alt || row.name),
+    video: toVideoRef(row.video),
   };
 }
 

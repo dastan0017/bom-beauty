@@ -1,15 +1,16 @@
 'use client';
 
-import type { ImageRef } from '@bom/shared';
+import type { ImageRef, VideoRef } from '@bom/shared';
 import { LINE_QTY_MAX } from '@bom/shared/web';
 import type { Route } from 'next';
-import { useRef, useState } from 'react';
+import { useRef, useState, type MouseEvent } from 'react';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
+import { formatDuration } from '@/lib/words';
 import { BbImage, PhotoPlaceholder } from '../bb-image';
 import { useCart, type CartProduct } from '../cart/cart';
 import { useCurrency } from '../currency';
-import { MinusIcon, PlusIcon, TrashIcon } from '../icons';
+import { MinusIcon, PlayIcon, PlusIcon, TrashIcon } from '../icons';
 import { useOverlays } from '../overlays/site-overlays';
 import { QtyStepper } from '../overlays/form-parts';
 import { StickyBar } from '../sticky-bar';
@@ -26,45 +27,124 @@ export function ProductBackLink() {
   );
 }
 
-/** Swipeable photo gallery with dots (design: gallery / gdots). */
-export function ProductGallery({ images, name }: { images: ImageRef[]; name: string }) {
+/**
+ * Product video (owner request 2026-10-27). A plain link to the MP4, so it plays without JavaScript; with it, the
+ * site's full-screen player, whose end card orders the product. `card` is the play badge on a catalog card,
+ * `gallery` the «Видео» pill on the product photos.
+ */
+export function ProductVideoButton({
+  product,
+  video,
+  variant,
+}: {
+  product: CartProduct;
+  video: VideoRef;
+  variant: 'card' | 'gallery';
+}) {
+  const { openVideo, openCart } = useOverlays();
+  const cart = useCart();
+  const { format } = useCurrency();
+  const href = video.mp4 ?? video.hls;
+  if (!href) return null;
+  const duration = formatDuration(video.durationSec);
+  const play = (event: MouseEvent) => {
+    event.preventDefault();
+    openVideo({
+      title: product.name,
+      video,
+      end: {
+        title: product.name,
+        text: `${product.brand} · ${format(product.priceKgs)}`,
+        ctaLabel: copy.video.orderProduct,
+        onCta: () => {
+          if (!cart.qtyOf(product.slug)) cart.add(product.slug, 1);
+          openCart();
+        },
+      },
+    });
+  };
+
+  if (variant === 'card') {
+    return (
+      <a
+        href={href}
+        onClick={play}
+        aria-label={copy.video.watchProduct(product.name)}
+        className="absolute top-2 right-2 z-[2] flex size-11 items-center justify-center"
+      >
+        <span className="flex size-8 items-center justify-center rounded-full bg-surface text-accent shadow-[0_2px_8px_rgba(14,14,44,.18)]">
+          <PlayIcon size={12} className="ml-px" />
+        </span>
+      </a>
+    );
+  }
+  return (
+    <a
+      href={href}
+      onClick={play}
+      className="absolute bottom-3 left-3 z-[1] flex h-11 items-center gap-2 rounded-full bg-surface pr-4 pl-1.5 text-[15px] font-semibold text-ink shadow-[0_6px_18px_-6px_rgba(14,14,44,.35)]"
+    >
+      <span className="flex size-8 items-center justify-center rounded-full bg-accent text-white">
+        <PlayIcon size={12} className="ml-px" />
+      </span>
+      {copy.video.watch}
+      {duration && <span className="font-normal text-muted">{duration}</span>}
+    </a>
+  );
+}
+
+/** Swipeable photo gallery with dots (design: gallery / gdots); the product video's pill sits on the photos. */
+export function ProductGallery({
+  images,
+  name,
+  video = null,
+  product,
+}: {
+  images: ImageRef[];
+  name: string;
+  video?: VideoRef | null;
+  product?: CartProduct;
+}) {
   const track = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
   const slides: (ImageRef | null)[] = images.length ? images : [null];
 
   return (
     <div>
-      <div
-        ref={track}
-        onScroll={(event) => {
-          const { scrollLeft, clientWidth } = event.currentTarget;
-          const index = Math.round(scrollLeft / Math.max(1, clientWidth));
-          if (index !== active) setActive(index);
-        }}
-        className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto rounded-card border border-line bg-surface"
-        role="region"
-        aria-roledescription="carousel"
-        aria-label={copy.product.gallery}
-        // Arrow keys scroll the gallery (snapping to each photo) when it has focus.
-        tabIndex={slides.length > 1 ? 0 : undefined}
-      >
-        {slides.map((image, index) => (
-          <div
-            key={image?.id ?? 'empty'}
-            className="relative flex aspect-square flex-[0_0_100%] snap-start items-center justify-center bg-surface-2"
-            aria-label={copy.product.photoOf(index + 1)}
-            role="group"
-          >
-            <BbImage
-              image={image}
-              sizes="(min-width: 1024px) 520px, 100vw"
-              width={640}
-              alt={image?.alt || name}
-              priority={index === 0}
-              placeholder={<PhotoPlaceholder label={copy.common.productPhoto} className="text-xs" />}
-            />
-          </div>
-        ))}
+      <div className="relative">
+        <div
+          ref={track}
+          onScroll={(event) => {
+            const { scrollLeft, clientWidth } = event.currentTarget;
+            const index = Math.round(scrollLeft / Math.max(1, clientWidth));
+            if (index !== active) setActive(index);
+          }}
+          className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto rounded-card border border-line bg-surface"
+          role="region"
+          aria-roledescription="carousel"
+          aria-label={copy.product.gallery}
+          // Arrow keys scroll the gallery (snapping to each photo) when it has focus.
+          tabIndex={slides.length > 1 ? 0 : undefined}
+        >
+          {slides.map((image, index) => (
+            <div
+              key={image?.id ?? 'empty'}
+              className="relative flex aspect-square flex-[0_0_100%] snap-start items-center justify-center bg-surface-2"
+              aria-label={copy.product.photoOf(index + 1)}
+              role="group"
+            >
+              <BbImage
+                image={image}
+                sizes="(min-width: 1024px) 520px, 100vw"
+                width={640}
+                alt={image?.alt || name}
+                priority={index === 0}
+                placeholder={<PhotoPlaceholder label={copy.common.productPhoto} className="text-xs" />}
+              />
+            </div>
+          ))}
+        </div>
+        {video && product && <ProductVideoButton product={product} video={video} variant="gallery" />}
       </div>
       {slides.length > 1 && (
         <div className="flex justify-center gap-1.5 pt-3">

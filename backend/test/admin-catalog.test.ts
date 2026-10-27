@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import type {
@@ -9,6 +10,7 @@ import type {
   AdminReview,
   AdminUser,
   ErrorResponse,
+  ProductCard,
   ProductDetail,
   ProductInput,
   ProgramInput,
@@ -67,6 +69,7 @@ describe('admin: catalog, content, settings, users', () => {
     slug: '',
     brandName: 'Новый Бренд',
     brandDescription: null,
+    videoId: null,
     categoryId,
     volume: '150 мл',
     priceKgs: 1500,
@@ -278,6 +281,57 @@ describe('admin: catalog, content, settings, users', () => {
     expect(cleared.status).toBe(200);
     const firstPage = await request<ProductDetail>(ctx.url(`/v1/catalog/products/${first.body.slug}`));
     expect(firstPage.body.brandDescription).toBe('');
+  });
+
+  it('plays a product video: saved from the editor, on the catalog card once ready, kept while in use', async () => {
+    const video = await ctx.prisma.video.create({
+      data: { libraryId: '777', externalId: `guid-${randomUUID()}`, status: 'processing', title: 'Тонер' },
+    });
+    const created = await request<AdminProduct>(api('/products'), {
+      method: 'POST',
+      headers: manager.write,
+      json: product({ name: 'Тонер с видео', videoId: video.id }),
+    });
+    expect(created.status).toBe(201);
+    expect(created.body.video?.id).toBe(video.id);
+    // Still processing on Bunny: the site shows no video yet.
+    const before = await request<ProductDetail>(ctx.url(`/v1/catalog/products/${created.body.slug}`));
+    expect(before.body.video).toBeNull();
+
+    await ctx.prisma.video.update({
+      where: { id: video.id },
+      data: {
+        status: 'ready',
+        durationSec: 42,
+        thumbnailUrl: 'https://vz-test.b-cdn.net/x/thumbnail.jpg',
+        hlsUrl: 'https://vz-test.b-cdn.net/x/playlist.m3u8',
+        mp4Url: 'https://vz-test.b-cdn.net/x/play_720p.mp4',
+      },
+    });
+    const cards = await request<ProductCard[]>(ctx.url('/v1/catalog/products'));
+    expect(cards.body.find((card) => card.slug === created.body.slug)?.video).toMatchObject({
+      id: video.id,
+      durationSec: 42,
+      mp4: 'https://vz-test.b-cdn.net/x/play_720p.mp4',
+    });
+
+    const inUse = await request<ErrorResponse>(api(`/videos/${video.id}`), {
+      method: 'DELETE',
+      headers: manager.write,
+    });
+    expect(inUse.status).toBe(409);
+    const unknown = await request<ErrorResponse>(api(`/products/${created.body.id}`), {
+      method: 'PUT',
+      headers: manager.write,
+      json: product({ name: 'Тонер с видео', videoId: randomUUID() }),
+    });
+    expect(unknown.body.error.fields).toEqual({ videoId: 'video.not_found' });
+    const removed = await request<AdminProduct>(api(`/products/${created.body.id}`), {
+      method: 'PUT',
+      headers: manager.write,
+      json: product({ name: 'Тонер с видео', videoId: null }),
+    });
+    expect(removed.body.video).toBeNull();
   });
 
   it('serves the wholesale protocols PDF next to the brand catalog', async () => {

@@ -98,6 +98,8 @@ export const productInputSchema = z.object({
   isNew: z.boolean().default(false),
   /** Up to PRODUCT_IMAGES_MAX photos, the first is the main one. */
   imageIds: z.array(z.uuid()).max(PRODUCT_IMAGES_MAX, 'product.images.max'),
+  /** Bunny Stream video (owner request 2026-10-27); null removes it from the product. */
+  videoId: z.uuid().nullable().default(null),
   seoTitle: optionalText(200),
   seoDescription: optionalText(300),
 });
@@ -150,6 +152,7 @@ export const adminProductSchema = z.object({
   seoulChoice: z.boolean(),
   isNew: z.boolean(),
   images: z.array(adminMediaSchema),
+  video: adminVideoSchema.nullable(),
   seoTitle: z.string().nullable(),
   seoDescription: z.string().nullable(),
   programs: z.array(z.object({ id: z.uuid(), title: z.string() })),

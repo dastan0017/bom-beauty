@@ -336,6 +336,10 @@ export const copy = {
     seek: 'Перемотка',
     replay: 'Смотреть ещё раз',
     orderProgram: 'Заказать программу',
+    // Product videos (owner request 2026-10-27).
+    watch: 'Видео',
+    watchProduct: (name: string) => `Видео: ${name}`,
+    orderProduct: 'Заказать',
     greetingEnd: 'Найдите программу для своей кожи',
     greetingCta: 'Выбрать программу ухода',
     wholesaleEnd: 'Давайте сотрудничать',

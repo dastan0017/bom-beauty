@@ -974,6 +974,17 @@ export interface components {
                 blurDataUrl: string | null;
                 widths: number[];
             } | null;
+            /** @default null */
+            video: {
+                /** Format: uuid */
+                id: string;
+                durationSec: number | null;
+                width: number | null;
+                height: number | null;
+                poster: string | null;
+                hls: string | null;
+                mp4: string | null;
+            } | null;
         };
         ProductDetailDto_Output: {
             /** Format: uuid */
@@ -1002,6 +1013,17 @@ export interface components {
                 alt: string;
                 blurDataUrl: string | null;
                 widths: number[];
+            } | null;
+            /** @default null */
+            video: {
+                /** Format: uuid */
+                id: string;
+                durationSec: number | null;
+                width: number | null;
+                height: number | null;
+                poster: string | null;
+                hls: string | null;
+                mp4: string | null;
             } | null;
             /** @default  */
             brandDescription: string;
@@ -1048,6 +1070,17 @@ export interface components {
                     alt: string;
                     blurDataUrl: string | null;
                     widths: number[];
+                } | null;
+                /** @default null */
+                video: {
+                    /** Format: uuid */
+                    id: string;
+                    durationSec: number | null;
+                    width: number | null;
+                    height: number | null;
+                    poster: string | null;
+                    hls: string | null;
+                    mp4: string | null;
                 } | null;
             }[];
             seo: {
@@ -1174,6 +1207,17 @@ export interface components {
                     blurDataUrl: string | null;
                     widths: number[];
                 } | null;
+                /** @default null */
+                video: {
+                    /** Format: uuid */
+                    id: string;
+                    durationSec: number | null;
+                    width: number | null;
+                    height: number | null;
+                    poster: string | null;
+                    hls: string | null;
+                    mp4: string | null;
+                } | null;
             }[];
             sumKgs: number;
             steps: {
@@ -1283,6 +1327,17 @@ export interface components {
                         alt: string;
                         blurDataUrl: string | null;
                         widths: number[];
+                    } | null;
+                    /** @default null */
+                    video: {
+                        /** Format: uuid */
+                        id: string;
+                        durationSec: number | null;
+                        width: number | null;
+                        height: number | null;
+                        poster: string | null;
+                        hls: string | null;
+                        mp4: string | null;
                     } | null;
                 }[];
             };
@@ -1734,6 +1789,8 @@ export interface components {
             /** @default false */
             isNew: boolean;
             imageIds: string[];
+            /** @default null */
+            videoId: string | null;
             seoTitle: string | null;
             seoDescription: string | null;
         };
@@ -1779,6 +1836,20 @@ export interface components {
                     bytes: number | null;
                 } | null;
             }[];
+            video: {
+                /** Format: uuid */
+                id: string;
+                /** @enum {string} */
+                status: "created" | "uploading" | "processing" | "ready" | "failed";
+                title: string;
+                durationSec: number | null;
+                thumbnailUrl: string | null;
+                hlsUrl: string | null;
+                mp4Url: string | null;
+                bytes: number | null;
+                /** Format: date-time */
+                createdAt: string;
+            } | null;
             seoTitle: string | null;
             seoDescription: string | null;
             programs: {
