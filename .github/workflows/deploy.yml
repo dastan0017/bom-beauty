@@ -181,7 +181,7 @@ jobs:
             echo "The admin does not send Referrer-Policy: strict-origin, so its video previews would not load"
             exit 1
           fi
-          echo "ok admin Referrer-Policy
+          echo "ok admin Referrer-Policy"
 
   # Private GHCR storage is small on free plans: keep the running release and two to roll back to.
   prune-images:
