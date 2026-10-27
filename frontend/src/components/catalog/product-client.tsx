@@ -29,8 +29,8 @@ export function ProductBackLink() {
 
 /**
  * Product video (owner request 2026-10-27). A plain link to the MP4, so it plays without JavaScript; with it, the
- * site's full-screen player, whose end card orders the product. `card` is the play badge on a catalog card,
- * `gallery` the «Видео» pill on the product photos.
+ * site's full-screen player, whose end card orders the product. `card` is the play badge on a catalog card, `thumb`
+ * the last tile of the product gallery's thumbnail row.
  */
 export function ProductVideoButton({
   product,
@@ -39,7 +39,7 @@ export function ProductVideoButton({
 }: {
   product: CartProduct;
   video: VideoRef;
-  variant: 'card' | 'gallery';
+  variant: 'card' | 'thumb';
 }) {
   const { openVideo, openCart } = useOverlays();
   const cart = useCart();
@@ -82,18 +82,37 @@ export function ProductVideoButton({
     <a
       href={href}
       onClick={play}
-      className="absolute bottom-3 left-3 z-[1] flex h-11 items-center gap-2 rounded-full bg-surface pr-4 pl-1.5 text-[15px] font-semibold text-ink shadow-[0_6px_18px_-6px_rgba(14,14,44,.35)]"
+      aria-label={copy.video.watchProduct(product.name)}
+      className={cn(thumbClass, 'flex-col gap-[3px] border-transparent bg-ink text-white')}
     >
-      <span className="flex size-8 items-center justify-center rounded-full bg-accent text-white">
-        <PlayIcon size={12} className="ml-px" />
+      {video.poster && (
+        // eslint-disable-next-line @next/next/no-img-element -- Bunny poster, already sized by the CDN
+        <img
+          src={video.poster}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 size-full object-cover"
+        />
+      )}
+      <span className="absolute inset-0 bg-[rgba(14,14,44,.45)]" />
+      <span className="relative flex size-[26px] items-center justify-center rounded-full bg-surface text-accent">
+        <PlayIcon size={10} className="ml-0.5" />
       </span>
-      {copy.video.watch}
-      {duration && <span className="font-normal text-muted">{duration}</span>}
+      {duration && <span className="relative text-[11px] leading-none font-semibold">{duration}</span>}
     </a>
   );
 }
 
-/** Swipeable photo gallery with dots (design: gallery / gdots); the product video's pill sits on the photos. */
+/** One tile of the thumbnail row. */
+const thumbClass =
+  'relative flex size-[62px] flex-none items-center justify-center overflow-hidden rounded-xl border bg-surface-2';
+
+/**
+ * Product photos (design: gallery): a swipeable main photo and, under it, a row of thumbnails with the video last
+ * (owner's pick, 2026-10-27, «D · Лента миниатюр»). The row replaces the design's dots; a thumbnail shows its photo,
+ * a swipe moves the highlight. Without JavaScript the thumbnails are anchors to the slides.
+ */
 export function ProductGallery({
   images,
   name,
@@ -106,71 +125,98 @@ export function ProductGallery({
   product?: CartProduct;
 }) {
   const track = useRef<HTMLDivElement>(null);
+  const strip = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
   const slides: (ImageRef | null)[] = images.length ? images : [null];
+  const playable = video && product && (video.mp4 ?? video.hls) ? { video, product } : null;
+  const withStrip = images.length > 1 || playable !== null;
+
+  const show = (index: number) => {
+    const element = track.current;
+    if (element) element.scrollTo({ left: index * element.clientWidth, behavior: 'smooth' });
+  };
+  // Keeps the highlighted thumbnail in view when a swipe goes past the visible ones.
+  const follow = (index: number) => {
+    const row = strip.current;
+    const thumb = row?.children[index];
+    if (!row || !(thumb instanceof HTMLElement)) return;
+    row.scrollTo({ left: thumb.offsetLeft - (row.clientWidth - thumb.clientWidth) / 2, behavior: 'smooth' });
+  };
 
   return (
     <div>
-      <div className="relative">
-        <div
-          ref={track}
-          onScroll={(event) => {
-            const { scrollLeft, clientWidth } = event.currentTarget;
-            const index = Math.round(scrollLeft / Math.max(1, clientWidth));
-            if (index !== active) setActive(index);
-          }}
-          className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto rounded-card border border-line bg-surface"
-          role="region"
-          aria-roledescription="carousel"
-          aria-label={copy.product.gallery}
-          // Arrow keys scroll the gallery (snapping to each photo) when it has focus.
-          tabIndex={slides.length > 1 ? 0 : undefined}
-        >
-          {slides.map((image, index) => (
-            <div
-              key={image?.id ?? 'empty'}
-              className="relative flex aspect-square flex-[0_0_100%] snap-start items-center justify-center bg-surface-2"
-              aria-label={copy.product.photoOf(index + 1)}
-              role="group"
-            >
-              <BbImage
-                image={image}
-                sizes="(min-width: 1024px) 520px, 100vw"
-                width={640}
-                alt={image?.alt || name}
-                priority={index === 0}
-                placeholder={<PhotoPlaceholder label={copy.common.productPhoto} className="text-xs" />}
-              />
-            </div>
-          ))}
-        </div>
-        {video && product && <ProductVideoButton product={product} video={video} variant="gallery" />}
+      <div
+        ref={track}
+        onScroll={(event) => {
+          const { scrollLeft, clientWidth } = event.currentTarget;
+          const index = Math.round(scrollLeft / Math.max(1, clientWidth));
+          if (index !== active) {
+            setActive(index);
+            follow(index);
+          }
+        }}
+        className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto rounded-card border border-line bg-surface"
+        role="region"
+        aria-roledescription="carousel"
+        aria-label={copy.product.gallery}
+        // Arrow keys scroll the gallery (snapping to each photo) when it has focus.
+        tabIndex={slides.length > 1 ? 0 : undefined}
+      >
+        {slides.map((image, index) => (
+          <div
+            key={image?.id ?? 'empty'}
+            id={`photo-${index + 1}`}
+            className="relative flex aspect-square flex-[0_0_100%] snap-start items-center justify-center bg-surface-2"
+            aria-label={copy.product.photoOf(index + 1)}
+            role="group"
+          >
+            <BbImage
+              image={image}
+              sizes="(min-width: 1024px) 520px, 100vw"
+              width={640}
+              alt={image?.alt || name}
+              priority={index === 0}
+              placeholder={<PhotoPlaceholder label={copy.common.productPhoto} className="text-xs" />}
+            />
+          </div>
+        ))}
       </div>
-      {slides.length > 1 && (
-        <div className="flex justify-center gap-1.5 pt-3">
-          {/* Dots are a pointer shortcut, as in the design; keyboards scroll the focused gallery. */}
-          {slides.map((image, index) => (
-            <span
-              key={image?.id ?? index}
-              aria-hidden="true"
-              onClick={() => {
-                const element = track.current;
-                if (element) element.scrollTo({ left: index * element.clientWidth, behavior: 'smooth' });
-              }}
-              className="flex h-6 cursor-pointer items-center"
-            >
-              <span
+      {withStrip && (
+        <div
+          ref={strip}
+          role="group"
+          aria-label={copy.product.media}
+          className="mt-2.5 no-scrollbar flex snap-x gap-2 overflow-x-auto"
+        >
+          {images.length > 1 &&
+            images.map((image, index) => (
+              <a
+                key={image.id}
+                href={`#photo-${index + 1}`}
+                aria-label={copy.product.photoOf(index + 1)}
+                aria-current={index === active ? 'true' : undefined}
+                onClick={(event) => {
+                  event.preventDefault();
+                  show(index);
+                }}
                 className={cn(
-                  'block h-1.5 rounded-full transition-[width] duration-200',
-                  index === active ? 'w-[18px] bg-ink' : 'w-1.5 bg-line-hover',
+                  thumbClass,
+                  'snap-start',
+                  index === active ? 'border-2 border-ink' : 'border-line hover:border-line-hover',
                 )}
-              />
-            </span>
-          ))}
-          <span className="sr-only" aria-live="polite">
-            {copy.product.photoOf(active + 1)}
-          </span>
+              >
+                <BbImage image={image} sizes="62px" width={128} alt="" />
+              </a>
+            ))}
+          {playable && (
+            <ProductVideoButton product={playable.product} video={playable.video} variant="thumb" />
+          )}
         </div>
+      )}
+      {slides.length > 1 && (
+        <span className="sr-only" aria-live="polite">
+          {copy.product.photoOf(active + 1)}
+        </span>
       )}
     </div>
   );
