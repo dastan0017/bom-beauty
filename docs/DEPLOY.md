@@ -203,7 +203,10 @@ running one. On the server the order is fixed, and the running release keeps ser
 2. **Migrate database**: `prisma migrate status`; when migrations are pending, first a database dump to
    `db/<date>-pre-migrate-<sha>/` in the backup bucket (it never replaces a nightly dump), then `prisma migrate deploy`.
    A failed backup or migration stops the deploy here, with the old release still up.
-3. **Restart services** on the new images (`up -d --wait`), reload Caddy, then the health checks.
+3. **Restart services** on the new images (`up -d --wait`), reload Caddy, then the health checks. Caddy reads the
+   Caddyfile through a single-file bind mount, which keeps the file the container started with: when the copy it sees
+   differs from `/opt/bom/Caddyfile`, the deploy recreates the proxy instead (a few seconds). The health checks also
+   require the admin's `Referrer-Policy: strict-origin`, without which Bunny refuses its video previews.
 
 To undo a release whose migration damaged data, restore its `pre-migrate` dump (`infra/scripts/restore.md`).
 

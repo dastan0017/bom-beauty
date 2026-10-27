@@ -155,8 +155,16 @@ jobs:
           export IMAGE_TAG="$TAG"
           compose() { docker compose -f docker-compose.prod.yml "$@"; }
           compose up -d --remove-orphans --wait
-          # The Caddyfile is a bind mount: apply a changed one without restarting the proxy.
-          compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --force </dev/null
+          # The Caddyfile is a single-file bind mount: the container keeps the file it started with, so a Caddyfile that
+          # was ever replaced instead of rewritten in place stays invisible to it (on 2026-10-18 that left the admin on
+          # `Referrer-Policy: no-referrer`, and Bunny refuses video requests without a referrer). When the copy the
+          # proxy sees differs from the one on disk, recreate the proxy (a few seconds); otherwise reload it in place.
+          if compose exec -T caddy cat /etc/caddy/Caddyfile </dev/null | cmp -s - Caddyfile; then
+            compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --force </dev/null
+          else
+            echo "The proxy sees an old Caddyfile: recreating it"
+            compose up -d --no-deps --force-recreate --wait caddy
+          fi
           # Keep the previous release's images for a quick rollback; drop older ones.
           docker image prune -f --filter "until=168h" >/dev/null
           echo "IMAGE_TAG=$TAG" > .deployed
@@ -168,6 +176,12 @@ jobs:
             curl -fsS --retry 10 --retry-delay 6 --retry-all-errors -o /dev/null "$url"
             echo "ok $url"
           done
+          # Bunny refuses video and poster requests without a referrer: the admin must send its origin.
+          if ! curl -fsSI "${{ vars.ADMIN_URL }}/" | grep -qi '^referrer-policy: strict-origin'; then
+            echo "The admin does not send Referrer-Policy: strict-origin, so its video previews would not load"
+            exit 1
+          fi
+          echo "ok admin Referrer-Policy
 
   # Private GHCR storage is small on free plans: keep the running release and two to roll back to.
   prune-images:
