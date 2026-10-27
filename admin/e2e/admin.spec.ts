@@ -88,7 +88,7 @@ test('catalog: create a product, see it on the site, find it in the list, delete
   await page.getByRole('link', { name: 'Товары' }).first().click();
   await page.getByRole('button', { name: 'Добавить товар' }).click();
   await page.getByLabel('Название', { exact: true }).fill(name);
-  await page.getByLabel('Бренд').fill('Dr. SGN');
+  await page.getByLabel('Бренд', { exact: true }).fill('Dr. SGN');
   await page.getByLabel('Цена, сом').fill('2500');
   await page.getByLabel('Коротко, для карточки').fill('Проверка e2e');
   await page.getByRole('button', { name: 'Сохранить' }).click();

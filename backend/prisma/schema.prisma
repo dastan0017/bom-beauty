@@ -148,10 +148,12 @@ model Category {
 }
 
 model Brand {
-  id       String    @id @default(uuid(7)) @db.Uuid
-  slug     String    @unique
-  name     String    @unique
-  products Product[]
+  id          String    @id @default(uuid(7)) @db.Uuid
+  slug        String    @unique
+  name        String    @unique
+  /// «О бренде» on every product page of the brand, above «Описание»; empty hides the block.
+  description String    @default("")
+  products    Product[]
 
   @@map("brands")
 }

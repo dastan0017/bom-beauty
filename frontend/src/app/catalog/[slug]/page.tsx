@@ -107,7 +107,7 @@ export default async function ProductPage({ params }: Params) {
             buttonLabel={copy.cart.addRelated}
           />
 
-          {/* README §6: «Входит в программы» → «Описание» → «Состав» → «Как использовать». */}
+          {/* README §6: «Входит в программы» → «Описание» → «Состав» → «Как использовать»; «О бренде» (ours) before «Описание». */}
           <section className="flex flex-col gap-2.5 px-4 pt-[26px] lg:px-0">
             {product.programs.length > 0 && (
               <div className={cn(card, 'flex flex-col gap-3 p-[18px]')}>
@@ -128,6 +128,9 @@ export default async function ProductPage({ params }: Params) {
                   ))}
                 </div>
               </div>
+            )}
+            {product.brandDescription && (
+              <TextCard title={copy.product.aboutBrand(product.brand)} text={product.brandDescription} />
             )}
             {product.description && <TextCard title={copy.product.description} text={product.description} />}
             {product.inci && <TextCard title={copy.product.composition} text={product.inci} />}

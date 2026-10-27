@@ -9,6 +9,7 @@ import type {
   AdminReview,
   AdminUser,
   ErrorResponse,
+  ProductDetail,
   ProductInput,
   ProgramInput,
   RedirectTarget,
@@ -65,6 +66,7 @@ describe('admin: catalog, content, settings, users', () => {
     name: 'Тестовый тонер',
     slug: '',
     brandName: 'Новый Бренд',
+    brandDescription: null,
     categoryId,
     volume: '150 мл',
     priceKgs: 1500,
@@ -240,6 +242,42 @@ describe('admin: catalog, content, settings, users', () => {
       json: { data: reread.body.data },
     });
     expect(resaved.status).toBe(200);
+  });
+
+  it('keeps «О бренде» on the brand: one save shows it on every product of the brand', async () => {
+    const text = 'Корейский бренд профессиональной косметики с 2010 года';
+    const first = await request<AdminProduct>(api('/products'), {
+      method: 'POST',
+      headers: manager.write,
+      json: product({ name: 'Первый товар бренда', brandName: 'Бренд О', brandDescription: text }),
+    });
+    expect(first.status).toBe(201);
+    expect(first.body.brandDescription).toBe(text);
+
+    // A product that sends no text (null) leaves the brand's text as it is.
+    const second = await request<AdminProduct>(api('/products'), {
+      method: 'POST',
+      headers: manager.write,
+      json: product({ name: 'Второй товар бренда', brandName: 'бренд о' }),
+    });
+    expect(second.body.brandDescription).toBe(text);
+    const page = await request<ProductDetail>(ctx.url(`/v1/catalog/products/${second.body.slug}`));
+    expect(page.body.brandDescription).toBe(text);
+    const brands = await request<{ name: string; description: string }[]>(
+      api(`/brands?q=${encodeURIComponent('Бренд О')}`),
+      { headers: manager.read },
+    );
+    expect(brands.body.find((brand) => brand.name === 'Бренд О')?.description).toBe(text);
+
+    // An empty text clears it for the whole brand.
+    const cleared = await request<AdminProduct>(api(`/products/${second.body.id}`), {
+      method: 'PUT',
+      headers: manager.write,
+      json: product({ name: 'Второй товар бренда', brandName: 'Бренд О', brandDescription: '' }),
+    });
+    expect(cleared.status).toBe(200);
+    const firstPage = await request<ProductDetail>(ctx.url(`/v1/catalog/products/${first.body.slug}`));
+    expect(firstPage.body.brandDescription).toBe('');
   });
 
   it('serves the wholesale protocols PDF next to the brand catalog', async () => {

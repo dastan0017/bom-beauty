@@ -25,6 +25,9 @@ import { productCardSelect, productOrder, toProductCard, type ProductCardRow } f
 
 const RELATED_MAX = 6;
 
+/** The product page also shows «О бренде». */
+const brandWithDescription = { select: { name: true, description: true } } as const;
+
 const programCardSelect = {
   id: true,
   slug: true,
@@ -84,6 +87,7 @@ export class CatalogService {
       where: { slug, published: true },
       select: {
         ...productCardSelect,
+        brand: brandWithDescription,
         description: true,
         howToUse: true,
         inci: true,
@@ -121,6 +125,7 @@ export class CatalogService {
     });
     return {
       ...toProductCard(row),
+      brandDescription: row.brand.description,
       description: row.description,
       howToUse: row.howToUse,
       inci: row.inci,

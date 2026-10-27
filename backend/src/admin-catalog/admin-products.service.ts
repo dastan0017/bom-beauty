@@ -61,7 +61,7 @@ const detailSelect = {
   seoTitle: true,
   seoDescription: true,
   updatedAt: true,
-  brand: { select: { name: true } },
+  brand: { select: { name: true, description: true } },
   images: { orderBy: { order: 'asc' }, select: { media: { select: adminMediaSelect } } },
   programItems: { select: { program: { select: { id: true, title: true } } } },
 } satisfies Prisma.ProductSelect;
@@ -152,7 +152,7 @@ export class AdminProductsService {
       where: q ? { name: { contains: q, mode: 'insensitive' } } : {},
       orderBy: { name: 'asc' },
       take: 20,
-      select: { id: true, slug: true, name: true },
+      select: { id: true, slug: true, name: true, description: true },
     });
   }
 
@@ -200,6 +200,7 @@ export class AdminProductsService {
       name: row.name,
       shortName: row.shortName,
       brandName: row.brand.name,
+      brandDescription: row.brand.description,
       categoryId: row.categoryId,
       volume: row.volume,
       priceKgs: row.priceKgs,
@@ -225,6 +226,7 @@ export class AdminProductsService {
     const slug = await resolveSlug(input.slug, input.name, (candidate) => this.slugTaken(candidate));
     await this.checkImages(input.imageIds);
     const brandId = await this.brandId(input.brandName);
+    const brandText = await this.setBrandDescription(brandId, input.brandDescription);
     const last = await this.prisma.product.aggregate({
       where: { categoryId: input.categoryId },
       _max: { order: true },
@@ -244,7 +246,7 @@ export class AdminProductsService {
       entity: 'product',
       entityId: row.id,
       action: 'create',
-      diff: { slug },
+      diff: { slug, ...(brandText ? { brandDescription: input.brandName } : {}) },
     });
     this.revalidator.revalidate([...productTags(slug), SITE_TAGS.categories]);
     this.revalidator.indexNow([`/catalog/${slug}`, '/catalog']);
@@ -260,6 +262,7 @@ export class AdminProductsService {
         : current.slug;
     await this.checkImages(input.imageIds);
     const brandId = await this.brandId(input.brandName);
+    const brandText = await this.setBrandDescription(brandId, input.brandDescription);
     await this.prisma.$transaction([
       this.prisma.productImage.deleteMany({ where: { productId: id } }),
       this.prisma.product.update({
@@ -278,7 +281,14 @@ export class AdminProductsService {
       entity: 'product',
       entityId: id,
       action: 'update',
-      ...(slug !== current.slug ? { diff: { slug: { from: current.slug, to: slug } } } : {}),
+      ...(slug !== current.slug || brandText
+        ? {
+            diff: {
+              ...(slug !== current.slug ? { slug: { from: current.slug, to: slug } } : {}),
+              ...(brandText ? { brandDescription: input.brandName } : {}),
+            },
+          }
+        : {}),
     });
     this.revalidator.revalidate([
       ...productTags(current.slug, slug),
@@ -396,6 +406,19 @@ export class AdminProductsService {
       select: { id: true },
     });
     return created.id;
+  }
+
+  /**
+   * «О бренде» lives on the brand: a product save that sends it rewrites it for every product of the brand (the
+   * `products` tag the save revalidates covers their pages). Returns whether the text changed.
+   */
+  private async setBrandDescription(brandId: string, description: string | null): Promise<boolean> {
+    if (description === null) return false;
+    const changed = await this.prisma.brand.updateMany({
+      where: { id: brandId, description: { not: description } },
+      data: { description },
+    });
+    return changed.count > 0;
   }
 
   private async checkImages(ids: string[]): Promise<void> {

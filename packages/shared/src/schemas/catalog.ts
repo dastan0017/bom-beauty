@@ -32,6 +32,8 @@ export type ProductCard = z.infer<typeof productCardSchema>;
 const seoSchema = z.object({ title: z.string().nullable(), description: z.string().nullable() });
 
 export const productDetailSchema = productCardSchema.extend({
+  /** «О бренде» above «Описание»; the same for every product of the brand, empty hides it. */
+  brandDescription: z.string().default(''),
   description: z.string(),
   howToUse: z.string(),
   inci: z.string().nullable(),

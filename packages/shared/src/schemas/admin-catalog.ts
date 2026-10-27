@@ -59,7 +59,13 @@ export const categoryInputSchema = z.object({
 });
 export type CategoryInput = z.infer<typeof categoryInputSchema>;
 
-export const brandOptionSchema = z.object({ id: z.uuid(), slug: z.string(), name: z.string() });
+export const brandOptionSchema = z.object({
+  id: z.uuid(),
+  slug: z.string(),
+  name: z.string(),
+  /** «О бренде», shared by every product of the brand. */
+  description: z.string(),
+});
 export const brandQuerySchema = z.object({ q: z.string().trim().max(60).optional() });
 
 // Products
@@ -71,6 +77,11 @@ export const productInputSchema = z.object({
   shortName: optionalText(60),
   /** Created when it does not exist yet (autocomplete in the editor). */
   brandName: z.string().trim().min(1, 'product.brand.required').max(60, 'text.too_long'),
+  /**
+   * «О бренде»: stored on the brand, so every product of the brand shows it. Null leaves the brand's text as it is;
+   * a string (also empty) replaces it.
+   */
+  brandDescription: z.string().trim().max(2000, 'text.too_long').nullable().default(null),
   categoryId: z.uuid('product.category.required'),
   volume: text(40),
   priceKgs: price,
@@ -124,6 +135,7 @@ export const adminProductSchema = z.object({
   name: z.string(),
   shortName: z.string().nullable(),
   brandName: z.string(),
+  brandDescription: z.string(),
   categoryId: z.uuid(),
   volume: z.string(),
   priceKgs: z.number().int(),

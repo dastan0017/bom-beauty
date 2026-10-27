@@ -151,6 +151,8 @@ export const copy = {
     chosen: 'Выбранные фильтры',
   },
   product: {
+    /** Owner request 2026-10-27: a short brand introduction above «Описание». */
+    aboutBrand: (brand: string) => `О бренде ${brand}`,
     description: 'Описание',
     howToUse: 'Как использовать',
     composition: 'Состав',

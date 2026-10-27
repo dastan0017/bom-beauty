@@ -15,6 +15,7 @@ export const keys = {
   leads: (kind?: LeadKind | 'all') => (kind ? (['leads', kind] as const) : (['leads'] as const)),
   customers: (q?: string) => (q === undefined ? (['customers'] as const) : (['customers', q] as const)),
   categories: ['categories'] as const,
+  brandsAll: ['brands'] as const,
   brands: (q: string) => ['brands', q] as const,
   products: {
     all: ['products'] as const,

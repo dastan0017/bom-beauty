@@ -3685,6 +3685,10 @@
               }
             ]
           },
+          "brandDescription": {
+            "type": "string",
+            "default": ""
+          },
           "description": {
             "type": "string"
           },
@@ -3954,6 +3958,7 @@
           "seoulChoice",
           "isNew",
           "image",
+          "brandDescription",
           "description",
           "howToUse",
           "inci",
@@ -4829,12 +4834,16 @@
           },
           "name": {
             "type": "string"
+          },
+          "description": {
+            "type": "string"
           }
         },
         "required": [
           "id",
           "slug",
-          "name"
+          "name",
+          "description"
         ],
         "additionalProperties": false
       },
@@ -7342,6 +7351,18 @@
             "minLength": 1,
             "maxLength": 60
           },
+          "brandDescription": {
+            "default": null,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "categoryId": {
             "type": "string",
             "format": "uuid",
@@ -7490,6 +7511,9 @@
             ]
           },
           "brandName": {
+            "type": "string"
+          },
+          "brandDescription": {
             "type": "string"
           },
           "categoryId": {
@@ -7727,6 +7751,7 @@
           "name",
           "shortName",
           "brandName",
+          "brandDescription",
           "categoryId",
           "volume",
           "priceKgs",

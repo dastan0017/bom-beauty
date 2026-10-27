@@ -1003,6 +1003,8 @@ export interface components {
                 blurDataUrl: string | null;
                 widths: number[];
             } | null;
+            /** @default  */
+            brandDescription: string;
             description: string;
             howToUse: string;
             inci: string | null;
@@ -1203,6 +1205,7 @@ export interface components {
             id: string;
             slug: string;
             name: string;
+            description: string;
         };
         SitemapDto_Output: {
             programs: {
@@ -1711,6 +1714,8 @@ export interface components {
             slug: string | "";
             shortName: string | null;
             brandName: string;
+            /** @default null */
+            brandDescription: string | null;
             /** Format: uuid */
             categoryId: string;
             volume: string;
@@ -1739,6 +1744,7 @@ export interface components {
             name: string;
             shortName: string | null;
             brandName: string;
+            brandDescription: string;
             /** Format: uuid */
             categoryId: string;
             volume: string;

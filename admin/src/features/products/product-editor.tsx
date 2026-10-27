@@ -31,6 +31,7 @@ const EMPTY: ProductInput = {
   slug: '',
   shortName: null,
   brandName: '',
+  brandDescription: null,
   categoryId: '',
   volume: '',
   priceKgs: 0,
@@ -55,6 +56,8 @@ function toInput(product: AdminProduct): ProductInput {
     slug: product.slug,
     shortName: product.shortName,
     brandName: product.brandName,
+    // Null until edited: «О бренде» belongs to the brand, and a save sends it only when it changed.
+    brandDescription: null,
     categoryId: product.categoryId,
     volume: product.volume,
     priceKgs: product.priceKgs,
@@ -107,8 +110,27 @@ function ProductForm({ product, initial }: { product: AdminProduct | null; initi
   const location = useLocation();
   const [saved, setSaved] = useState(Boolean((location.state as { saved?: boolean } | null)?.saved));
   const brands = useBrands(form.brandName.trim());
+  // «О бренде» as stored for the brand in the form: the saved product's brand first, other brands from the
+  // autocomplete (a new brand has none yet).
+  const [savedBrand, setSavedBrand] = useState({
+    name: product?.brandName ?? '',
+    text: product?.brandDescription ?? '',
+  });
+  const brandKey = form.brandName.trim().toLowerCase();
+  const brandText =
+    brandKey === savedBrand.name.toLowerCase()
+      ? savedBrand.text
+      : (brands.data?.find((brand) => brand.name.toLowerCase() === brandKey)?.description ?? '');
+  const editedBrandText =
+    form.brandDescription !== null && form.brandDescription.trim() !== brandText.trim()
+      ? form.brandDescription
+      : null;
   // The photo list is its own state (uploads append to it one by one); the form takes its ids.
-  const input: ProductInput = { ...form, imageIds: images.map((image) => image.id) };
+  const input: ProductInput = {
+    ...form,
+    brandDescription: editedBrandText,
+    imageIds: images.map((image) => image.id),
+  };
   const dirty = JSON.stringify(input) !== JSON.stringify(baseline);
   useUnsavedGuard(dirty && !save.isPending);
 
@@ -134,6 +156,7 @@ function ProductForm({ product, initial }: { product: AdminProduct | null; initi
           setBaseline(next);
           setForm(next);
           setImages(result.images);
+          setSavedBrand({ name: result.brandName, text: result.brandDescription });
           setSaved(true);
           setErrors({});
           // After the baseline update has rendered, so the unsaved-changes guard lets the redirect through.
@@ -246,6 +269,23 @@ function ProductForm({ product, initial }: { product: AdminProduct | null; initi
                 onChange={(e) => set('purpose', e.target.value)}
                 placeholder={copy.product.purposePlaceholder}
                 className={inputClass}
+              />
+            </Text>
+            <Text
+              label={copy.product.aboutBrand}
+              hint={
+                form.brandName.trim()
+                  ? copy.product.aboutBrandHint(form.brandName.trim())
+                  : copy.product.aboutBrandNoBrand
+              }
+              error={errors.brandDescription}
+            >
+              <textarea
+                value={form.brandDescription ?? brandText}
+                onChange={(e) => set('brandDescription', e.target.value)}
+                rows={3}
+                placeholder={copy.product.aboutBrandPlaceholder}
+                className={textareaClass}
               />
             </Text>
             <Text label={copy.product.description} error={errors.description}>

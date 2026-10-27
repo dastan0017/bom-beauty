@@ -110,6 +110,7 @@ model Brand {
   id       String    @id @default(uuid(7)) @db.Uuid
   slug     String    @unique
   name     String    @unique                       // created on the fly from the product form
+  description String @default("")               // «О бренде» on every product page of the brand, edited in the product form
   products Product[]
 }
 

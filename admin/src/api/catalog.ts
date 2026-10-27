@@ -30,6 +30,7 @@ export function useBrands(q: string) {
     queryKey: keys.brands(q),
     queryFn: () => unwrap(api.GET('/v1/admin/brands', { params: { query: q ? { q } : {} } })),
     staleTime: 60_000,
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -61,6 +62,8 @@ export function useSaveProduct(id: string | null) {
       void queryClient.invalidateQueries({ queryKey: keys.products.all });
       void queryClient.invalidateQueries({ queryKey: keys.categories });
       void queryClient.invalidateQueries({ queryKey: keys.programs.all });
+      // A save may create a brand or change its «О бренде».
+      void queryClient.invalidateQueries({ queryKey: keys.brandsAll });
     },
   });
 }
