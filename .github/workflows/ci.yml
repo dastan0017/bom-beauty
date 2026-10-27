@@ -35,7 +35,7 @@ jobs:
       - name: Dev services (Postgres, Redis, S3, Mailpit) and the dev .env
         run: |
           cp infra/.env.example .env
-          docker compose -f infra/docker-compose.yml up -d --wait
+          pnpm infra:up
 
       - name: Format
         run: pnpm format:check

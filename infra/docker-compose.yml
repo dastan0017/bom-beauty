@@ -1,4 +1,5 @@
-# Local development services. `pnpm dev` runs `docker compose up -d --wait` with this file.
+# Local development services. `pnpm dev` (and CI) run `pnpm infra:up`: `up -d --wait` for the long-running services,
+# then `run --rm s3-init`. Newer Compose versions fail `up --wait` when a one-shot container exits, even with 0.
 # Production services live in docker-compose.prod.yml (M7).
 name: bom-beauty
 

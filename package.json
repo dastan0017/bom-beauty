@@ -13,7 +13,7 @@
     "test": "turbo run test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "infra:up": "docker compose -f infra/docker-compose.yml up -d --wait",
+    "infra:up": "docker compose -f infra/docker-compose.yml up -d --wait postgres redis s3 mailpit && docker compose -f infra/docker-compose.yml run --rm s3-init",
     "infra:down": "docker compose -f infra/docker-compose.yml down",
     "db:migrate": "pnpm --filter @bom/backend db:migrate",
     "db:seed": "pnpm --filter @bom/backend db:seed",
