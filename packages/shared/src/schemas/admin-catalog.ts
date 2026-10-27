@@ -121,6 +121,26 @@ export const productPatchSchema = z
   .object({ inStock: z.boolean().optional(), published: z.boolean().optional() })
   .refine((value) => value.inStock !== undefined || value.published !== undefined, 'patch.empty');
 
+/** Actions on the products the owner ticked in the list (owner request 2026-10-27). */
+export const PRODUCT_BULK_ACTIONS = ['delete', 'show', 'hide', 'inStock', 'outOfStock', 'category'] as const;
+export type ProductBulkAction = (typeof PRODUCT_BULK_ACTIONS)[number];
+
+export const productBulkSchema = z
+  .object({
+    ids: z.array(z.uuid()).min(1, 'bulk.empty').max(500, 'bulk.too_many'),
+    action: z.enum(PRODUCT_BULK_ACTIONS),
+    /** Target of `category`. */
+    categoryId: z.uuid().optional(),
+  })
+  .refine((value) => value.action !== 'category' || Boolean(value.categoryId), {
+    message: 'product.category.required',
+    path: ['categoryId'],
+  });
+export type ProductBulkInput = z.infer<typeof productBulkSchema>;
+
+export const productBulkResultSchema = z.object({ count: z.number().int() });
+export type ProductBulkResult = z.infer<typeof productBulkResultSchema>;
+
 export const adminProductQuerySchema = z.object({
   category: z.uuid().optional(),
   q: z.string().trim().max(100).optional(),

@@ -195,6 +195,9 @@ Requests from Нурайым while filling the admin, plus the developer's follo
       as its last tile (the owner chose mockup «D» of four)
 - [x] Unique categories and brands (2026-10-27): names compared without case, spaces and punctuation; «⋯» on every
       chip to rename, merge into another or delete; a hint lists likely duplicates (D43)
+- [x] Admin usability pass (2026-10-27): product checkboxes with a bulk bar (stock, visibility, category, delete),
+      quick filters «Без фото» / «Скрытые» / «Нет в наличии», «Сделать копию», rows open the product, phone cards for
+      products and orders, lead delete, programs table fits 1280 px (D44)
 - [x] Tests: search helper, photo limit, wholesale content defaults, delete with programs and featured list, protocols
       PDF refs; e2e for the filter sheet, brand and search (with and without JS), admin list delete
 - [x] Gate + `feat: catalog search and brand filter, product delete, 10 photos, wholesale protocols`

@@ -1,4 +1,11 @@
-import type { AdminProductRow, AdminProgramRow, AdminReview, ProductInput, ProgramInput } from '@bom/shared';
+import type {
+  AdminProductRow,
+  AdminProgramRow,
+  AdminReview,
+  ProductBulkInput,
+  ProductInput,
+  ProgramInput,
+} from '@bom/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, unwrap } from '@/lib/api';
 import { keys } from './keys';
@@ -115,6 +122,21 @@ export function useSaveProduct(id: string | null) {
       void queryClient.invalidateQueries({ queryKey: keys.programs.all });
       // A save may create a brand or change its «О бренде».
       void queryClient.invalidateQueries({ queryKey: keys.brandsAll });
+    },
+  });
+}
+
+/** Bulk actions on the ticked products; deleting also touches programs and the wholesale page. */
+export function useBulkProducts() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: ProductBulkInput) => unwrap(api.POST('/v1/admin/products/bulk', { body })),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: keys.products.all });
+      void queryClient.invalidateQueries({ queryKey: keys.categories });
+      void queryClient.invalidateQueries({ queryKey: keys.brandsAll });
+      void queryClient.invalidateQueries({ queryKey: keys.programs.all });
+      void queryClient.invalidateQueries({ queryKey: keys.content('wholesale') });
     },
   });
 }

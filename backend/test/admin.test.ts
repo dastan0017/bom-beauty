@@ -293,6 +293,28 @@ describe('admin: orders, leads, customers, overview', () => {
     expect(res.body.items[0]?.recommended[0]?.slug).toBe('acne');
   });
 
+  it('deletes a lead, owner only', async () => {
+    const lead = await ctx.prisma.lead.create({
+      data: { kind: 'wholesale', answers: {}, recommended: [], message: 'Тест', clientRef: randomUUID() },
+    });
+    const forbidden = await request(ctx.url(`/v1/admin/leads/${lead.id}`), {
+      method: 'DELETE',
+      headers: manager.write,
+    });
+    expect(forbidden.status).toBe(403);
+    const removed = await request(ctx.url(`/v1/admin/leads/${lead.id}`), {
+      method: 'DELETE',
+      headers: owner.write,
+    });
+    expect(removed.status).toBe(204);
+    expect(await ctx.prisma.lead.count({ where: { id: lead.id } })).toBe(0);
+    const again = await request(ctx.url(`/v1/admin/leads/${lead.id}`), {
+      method: 'DELETE',
+      headers: owner.write,
+    });
+    expect(again.status).toBe(404);
+  });
+
   it('shows every line of a cart order and finds it by any of its products', async () => {
     const cart = await ctx.prisma.order.create({
       data: {

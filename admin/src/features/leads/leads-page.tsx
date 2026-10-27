@@ -9,8 +9,9 @@ import {
   type WholesaleBuyer,
   type WholesaleCountry,
 } from '@bom/shared';
-import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
 import { useState, type CSSProperties } from 'react';
+import { toast } from 'sonner';
+import { useDeleteLead, useLeads } from '@/api/leads';
 import {
   Button,
   Card,
@@ -22,13 +23,14 @@ import {
   TableRow,
 } from '@/components/ui';
 import { copy } from '@/content/copy';
-import { keys } from '@/api/keys';
-import { api, unwrap } from '@/lib/api';
+import { useUser } from '@/features/auth/auth';
+import { ConfirmDelete } from '@/features/products/product-editor';
+import { errorText } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 type Tab = 'all' | LeadKind;
 const TABS: Tab[] = ['all', 'quiz', 'wholesale'];
-const COLUMNS = '150px 90px 2.2fr 1.6fr 1fr';
+const COLUMNS = '150px 90px 2.2fr 1.6fr 1fr 44px';
 function answersText(lead: LeadRow): string[] {
   if (lead.kind === 'quiz') return quizLeadAnswers(lead.answers);
   const buyer = lead.answers.buyer as WholesaleBuyer | undefined;
@@ -42,24 +44,9 @@ function answersText(lead: LeadRow): string[] {
 /** Quiz and wholesale hand-offs (gap: the design has no leads screen). */
 export function LeadsPage() {
   const [tab, setTab] = useState<Tab>('all');
-  const leads = useInfiniteQuery({
-    queryKey: keys.leads(tab),
-    queryFn: ({ pageParam }) =>
-      unwrap(
-        api.GET('/v1/admin/leads', {
-          params: {
-            query: {
-              limit: 50,
-              ...(tab !== 'all' ? { kind: tab } : {}),
-              ...(pageParam ? { cursor: pageParam } : {}),
-            },
-          },
-        }),
-      ),
-    initialPageParam: null as string | null,
-    getNextPageParam: (last) => last.nextCursor,
-    placeholderData: keepPreviousData,
-  });
+  const leads = useLeads(tab);
+  const remove = useDeleteLead();
+  const owner = useUser().role === 'owner';
   const rows = leads.data?.pages.flatMap((page) => page.items) ?? [];
   const counts = leads.data?.pages[0]?.counts;
   const now = new Date();
@@ -87,6 +74,7 @@ export function LeadsPage() {
             <span>{copy.leads.answers}</span>
             <span>{copy.leads.recommended}</span>
             <span>{copy.leads.source}</span>
+            <span />
           </TableHead>
           {rows.map((lead) => (
             <TableRow
@@ -121,6 +109,44 @@ export function LeadsPage() {
                 )}
               </span>
               <span className="truncate text-sm text-muted">{lead.utm?.source ?? copy.leads.direct}</span>
+              {owner ? (
+                <ConfirmDelete
+                  label={copy.leads.delete}
+                  title={copy.leads.deleteTitle}
+                  text={copy.leads.deleteText}
+                  pending={remove.isPending}
+                  onConfirm={() =>
+                    remove.mutate(lead.id, {
+                      onSuccess: () => toast.success(copy.leads.deleted),
+                      onError: (error) => toast.error(errorText(error)),
+                    })
+                  }
+                  trigger={
+                    <button
+                      type="button"
+                      aria-label={copy.leads.delete}
+                      title={copy.leads.delete}
+                      className="flex size-9 items-center justify-center rounded-control text-muted hover:bg-red-hover hover:text-red"
+                    >
+                      <svg
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />
+                      </svg>
+                    </button>
+                  }
+                />
+              ) : (
+                <span />
+              )}
             </TableRow>
           ))}
           {leads.isPending && <TableMessage>{copy.loading}</TableMessage>}

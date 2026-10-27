@@ -118,6 +118,37 @@ test('catalog: create a product, see it on the site, find it in the list, delete
   await expect(page.getByRole('row').filter({ hasText: name })).toHaveCount(0);
 });
 
+test('catalog: tick products in the list, hide them and delete them in one go', async () => {
+  const tag = `E2E пакет ${Date.now().toString().slice(-6)}`;
+  for (const n of [1, 2]) {
+    await page.getByRole('link', { name: 'Товары' }).first().click();
+    await page.getByRole('button', { name: 'Добавить товар' }).click();
+    await page.getByLabel('Название', { exact: true }).fill(`${tag} ${n}`);
+    await page.getByLabel('Бренд', { exact: true }).fill('Dr. SGN');
+    await page.getByLabel('Цена, сом').fill('1000');
+    await page.getByRole('button', { name: 'Сохранить' }).click();
+    await expect(page.getByText('Изменения сохранены')).toBeVisible();
+  }
+
+  await page.getByRole('link', { name: 'Товары' }).first().click();
+  await page.getByRole('searchbox', { name: 'Поиск по названию или бренду' }).fill(tag);
+  await expect(page.getByRole('row').filter({ hasText: tag })).toHaveCount(2);
+  await page.getByRole('checkbox', { name: 'Выбрать все' }).first().check();
+  const bar = page.getByRole('region', { name: 'Действия с выбранными товарами' });
+  await expect(bar.getByText('Выбрано 2')).toBeVisible();
+
+  await bar.getByRole('button', { name: 'Скрыть с сайта' }).click();
+  await expect(page.getByText('Готово: 2 товара')).toBeVisible();
+  await expect(page.getByRole('row').filter({ hasText: tag }).getByText('скрыт')).toHaveCount(2);
+
+  await bar.getByRole('button', { name: 'Удалить' }).click();
+  const dialog = page.getByRole('alertdialog');
+  await expect(dialog.getByText('Удалить 2 товара?')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Удалить' }).click();
+  await expect(page.getByRole('row').filter({ hasText: tag })).toHaveCount(0);
+  await expect(bar).toHaveCount(0);
+});
+
 test('catalog: a category is renamed and deleted from its «⋯» settings; duplicate names are refused', async () => {
   const name = `E2E категория ${Date.now().toString().slice(-6)}`;
   const renamed = `${name} новая`;

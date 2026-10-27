@@ -10,7 +10,8 @@ import { copy } from '@/content/copy';
 import { PlusIcon } from '@/features/products/products-page';
 import { errorText } from '@/lib/format';
 
-const COLUMNS = 'minmax(280px,2.4fr) .6fr .8fr .9fr .9fr .7fr 110px';
+// Fits the ~930 px content column at 1280 px; narrower screens scroll the table.
+const COLUMNS = 'minmax(230px,2.4fr) .5fr .8fr .9fr .9fr .6fr 104px';
 
 function StatusChip({ tone, children }: { tone: 'green' | 'grey'; children: string }) {
   return (
@@ -60,7 +61,7 @@ export function ProgramsPage() {
         </Button>
       </PageHeader>
       <Card className="mt-6 overflow-x-auto">
-        <div role="table" style={{ '--table-min': '1020px' } as CSSProperties}>
+        <div role="table" style={{ '--table-min': '900px' } as CSSProperties}>
           <TableHead columns={COLUMNS}>
             <span>{copy.programs.columns.program}</span>
             <span>{copy.programs.columns.count}</span>
@@ -73,8 +74,13 @@ export function ProgramsPage() {
           {programs.data?.map((program) => (
             <TableRow
               key={program.id}
+              onClick={(event) => {
+                const control =
+                  event.target instanceof Element && event.target.closest('a, button, input, label');
+                if (!control) void navigate(`/programs/${program.id}`);
+              }}
               style={{ gridTemplateColumns: COLUMNS }}
-              className="grid min-h-[72px] min-w-[1020px] items-center gap-3 border-b border-line-2 px-[22px] py-3.5 last:border-b-0"
+              className="grid min-h-[72px] min-w-[900px] cursor-pointer items-center gap-3 border-b border-line-2 px-[22px] py-3.5 last:border-b-0 hover:bg-table-head"
             >
               <span className="flex min-w-0 items-center gap-3.5">
                 <span className="flex flex-none pl-2">

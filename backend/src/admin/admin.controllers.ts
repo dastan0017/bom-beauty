@@ -124,6 +124,17 @@ export class AdminInsightsController {
     return this.insights.leads(query);
   }
 
+  @Delete('leads/:id')
+  @Roles('owner')
+  @HttpCode(204)
+  async removeLead(
+    @Param() params: IdParamsDto,
+    @CurrentSession() session: ActiveSession,
+    @Req() request: Request,
+  ) {
+    await this.insights.removeLead(params.id, actor(session, request));
+  }
+
   @Get('customers')
   @ZodResponse({ type: [CustomerDto] })
   customers(@Query() query: CustomerQueryDto) {

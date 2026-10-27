@@ -86,6 +86,7 @@ export function ProductEditorPage() {
   const isNew = !id || id === 'new';
   const product = useProduct(isNew ? null : id);
   const [params] = useSearchParams();
+  const location = useLocation();
   if (!isNew && !product.data) {
     return (
       <div className="flex items-center gap-2 text-[15px] text-muted">
@@ -93,13 +94,34 @@ export function ProductEditorPage() {
       </div>
     );
   }
+  // «Сделать копию» opens a new product filled from another one.
+  const copyOf = (location.state as { copy?: ProductInput; copyOf?: string } | null) ?? null;
   const initial = product.data
     ? toInput(product.data)
-    : { ...EMPTY, categoryId: params.get('category') ?? '', brandName: params.get('brand') ?? '' };
-  return <ProductForm key={product.data?.id ?? 'new'} product={product.data ?? null} initial={initial} />;
+    : (copyOf?.copy ?? {
+        ...EMPTY,
+        categoryId: params.get('category') ?? '',
+        brandName: params.get('brand') ?? '',
+      });
+  return (
+    <ProductForm
+      key={product.data?.id ?? `new-${copyOf?.copyOf ?? ''}`}
+      product={product.data ?? null}
+      initial={initial}
+      copyOf={product.data ? null : (copyOf?.copyOf ?? null)}
+    />
+  );
 }
 
-function ProductForm({ product, initial }: { product: AdminProduct | null; initial: ProductInput }) {
+function ProductForm({
+  product,
+  initial,
+  copyOf,
+}: {
+  product: AdminProduct | null;
+  initial: ProductInput;
+  copyOf: string | null;
+}) {
   const navigate = useNavigate();
   const categories = useCategories();
   const allProducts = useProducts({});
@@ -198,17 +220,47 @@ function ProductForm({ product, initial }: { product: AdminProduct | null; initi
         onSave={submit}
         extra={
           product && (
-            <a
-              href={`${env.VITE_SITE_URL}/catalog/${product.slug}`}
-              target="_blank"
-              rel="noopener"
-              className="text-sm font-semibold text-muted hover:text-ink"
-            >
-              {copy.editor.openOnSite}
-            </a>
+            <>
+              <button
+                type="button"
+                onClick={() =>
+                  void navigate('/products/new', {
+                    state: {
+                      copyOf: product.name,
+                      copy: {
+                        ...input,
+                        name: copy.product.copyName(input.name),
+                        slug: '',
+                        imageIds: [],
+                        videoId: null,
+                        brandDescription: null,
+                        seoTitle: null,
+                        seoDescription: null,
+                      } satisfies ProductInput,
+                    },
+                  })
+                }
+                className="text-sm font-semibold text-muted hover:text-ink"
+              >
+                {copy.product.makeCopy}
+              </button>
+              <a
+                href={`${env.VITE_SITE_URL}/catalog/${product.slug}`}
+                target="_blank"
+                rel="noopener"
+                className="text-sm font-semibold text-muted hover:text-ink"
+              >
+                {copy.editor.openOnSite}
+              </a>
+            </>
           )
         }
       />
+      {copyOf && (
+        <p className="mt-4 rounded-[14px] border border-blue-soft bg-blue-soft px-4 py-3 text-sm leading-normal text-blue">
+          {copy.product.copyNotice(copyOf)}
+        </p>
+      )}
 
       <div className="mt-[26px] flex flex-wrap items-start gap-4">
         <div className="flex min-w-0 flex-[999_1_560px] flex-col gap-4">

@@ -1,25 +1,23 @@
-import { formatKgs, matchesSearch, nameKey } from '@bom/shared';
-import { useState, type CSSProperties, type KeyboardEvent } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router';
+import { matchesSearch, nameKey, type AdminProductRow } from '@bom/shared';
+import { useState, type KeyboardEvent } from 'react';
+import { useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import {
-  useBrands,
-  useCategories,
-  useCreateCategory,
-  useDeleteProduct,
-  usePatchProduct,
-  useProducts,
-} from '@/api/catalog';
-import { Button, Card, inputClass, PageHeader, TableHead, TableMessage, TableRow } from '@/components/ui';
-import { Toggle } from '@/components/ui/editor';
-import { MediaPreview } from '@/components/ui/media';
+import { useBrands, useCategories, useCreateCategory, useProducts } from '@/api/catalog';
+import { Button, Card, inputClass, PageHeader, Segmented, TableMessage } from '@/components/ui';
 import { copy } from '@/content/copy';
-import { ConfirmDelete } from '@/features/products/product-editor';
+import { BulkBar, ProductList, type Selection } from '@/features/products/product-list';
 import { TaxonomyDialog, type TaxonomyChange, type TaxonomyItem } from '@/features/products/taxonomy-dialog';
 import { errorText } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
-const COLUMNS = '2.4fr 1fr .7fr .8fr .8fr 160px';
+/** Quick filters for filling the catalog: what still lacks a photo, what is hidden, what is out of stock. */
+const SHOWS = ['all', 'nophoto', 'hidden', 'out'] as const;
+type Show = (typeof SHOWS)[number];
+const SHOW_FILTERS: Record<Exclude<Show, 'all'>, (product: AdminProductRow) => boolean> = {
+  nophoto: (product) => !product.image,
+  hidden: (product) => !product.published,
+  out: (product) => !product.inStock,
+};
 
 /**
  * Товары (design: isProducts): category chips, add category, table with the stock switch. Brand chips and the search
@@ -32,20 +30,43 @@ export function ProductsPage() {
   const category = params.get('category') ?? undefined;
   const brand = params.get('brand') ?? undefined;
   const query = params.get('q') ?? '';
+  const showParam = params.get('show');
+  const show: Show = SHOWS.find((key) => key === showParam) ?? 'all';
   const categories = useCategories();
   const products = useProducts(category ? { category } : {});
   const allProducts = useProducts({});
-  const patch = usePatchProduct();
-  const remove = useDeleteProduct();
   const createCategory = useCreateCategory();
   const brandList = useBrands('');
   const [editing, setEditing] = useState<{ kind: 'category' | 'brand'; item: TaxonomyItem } | null>(null);
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState('');
+  const [selected, setSelected] = useState<ReadonlySet<string>>(() => new Set());
+  const selection: Selection = {
+    has: (id) => selected.has(id),
+    toggle: (id) =>
+      setSelected((current) => {
+        const next = new Set(current);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+      }),
+    toggleAll: (ids) =>
+      setSelected((current) => {
+        const next = new Set(current);
+        const all = ids.every((id) => next.has(id));
+        for (const id of ids) {
+          if (all) next.delete(id);
+          else next.add(id);
+        }
+        return next;
+      }),
+  };
+  // Ticks survive filter changes; products deleted meanwhile drop out.
+  const chosen = (allProducts.data ?? []).filter((product) => selected.has(product.id));
 
   const total = allProducts.data?.length ?? 0;
   const catCount = categories.data?.length ?? 0;
-  const setParam = (key: 'category' | 'brand' | 'q', value?: string) =>
+  const setParam = (key: 'category' | 'brand' | 'q' | 'show', value?: string) =>
     setParams(
       (current) => {
         const next = new URLSearchParams(current);
@@ -61,6 +82,7 @@ export function ProductsPage() {
   const rows = inCategory.filter(
     (product) =>
       (!brand || product.brand === brand) &&
+      (show === 'all' || SHOW_FILTERS[show](product)) &&
       matchesSearch(query, [product.name, product.brand, product.category.name]),
   );
   // Every brand, also those without products (so they can be deleted); counts follow the category filter.
@@ -86,7 +108,7 @@ export function ProductsPage() {
     name: c.name,
     count: c.count,
   }));
-  const filtered = Boolean(brand || query.trim());
+  const filtered = Boolean(brand || query.trim() || show !== 'all');
 
   const changed = (kind: 'category' | 'brand', item: TaxonomyItem, change: TaxonomyChange) => {
     if (kind === 'category' && item.id === category) {
@@ -234,7 +256,7 @@ export function ProductsPage() {
         onChanged={(item, change) => changed(editing?.kind ?? 'category', item, change)}
       />
 
-      <div className="mt-4 flex">
+      <div className="mt-4 flex flex-wrap items-center gap-2.5">
         <input
           type="search"
           value={query}
@@ -243,140 +265,59 @@ export function ProductsPage() {
           aria-label={copy.products.search}
           className={cn(inputClass, 'w-full sm:w-[340px]')}
         />
+        <Segmented
+          label={copy.products.showLabel}
+          value={show}
+          onChange={(key) => setParam('show', key === 'all' ? undefined : key)}
+          options={SHOWS.map((key) => ({
+            key,
+            label: copy.products.show[key],
+            ...(key === 'all' ? {} : { count: inCategory.filter(SHOW_FILTERS[key]).length }),
+          }))}
+        />
       </div>
 
-      <Card className="mt-4 overflow-x-auto">
-        <div role="table" style={{ '--table-min': '810px' } as CSSProperties}>
-          <TableHead columns={COLUMNS}>
-            <span>{copy.products.columns.product}</span>
-            <span>{copy.products.columns.category}</span>
-            <span>{copy.products.columns.volume}</span>
-            <span>{copy.products.columns.price}</span>
-            <span>{copy.products.columns.stock}</span>
-            <span />
-          </TableHead>
-          {rows.map((product) => (
-            <TableRow
-              key={product.id}
-              style={{ gridTemplateColumns: COLUMNS }}
-              className="grid min-h-[68px] min-w-[810px] items-center gap-3 border-b border-line-2 px-[22px] last:border-b-0"
-            >
-              <span className="flex min-w-0 items-center gap-3">
-                <MediaPreview
-                  image={product.image}
-                  label={copy.media.photo}
-                  size={88}
-                  className="size-11 flex-none rounded-control"
-                />
-                <span className="flex min-w-0 flex-col gap-0.5">
-                  <span className="flex items-center gap-2 text-[15px] font-semibold">
-                    <Link to={`/products/${product.id}`} className="hover:underline">
-                      {product.name}
-                    </Link>
-                    {!product.published && (
-                      <span className="rounded-full bg-subtle px-2 py-0.5 text-xs font-semibold text-muted">
-                        {copy.products.hidden}
-                      </span>
-                    )}
-                  </span>
-                  <span className="text-[13px] text-muted">{product.brand}</span>
-                </span>
-              </span>
-              <span className="text-sm text-muted">{product.category.name}</span>
-              <span className="text-sm text-muted">{product.volume}</span>
-              <span className="text-[15px] font-semibold whitespace-nowrap">
-                {formatKgs(product.priceKgs)}
-              </span>
-              <Toggle
-                checked={product.inStock}
-                label={`${copy.products.columns.stock}: ${product.name}`}
-                onChange={(inStock) =>
-                  patch.mutate(
-                    { id: product.id, change: { inStock } },
-                    {
-                      onSuccess: () => toast.success(copy.saved),
-                      onError: (error) => toast.error(errorText(error)),
-                    },
-                  )
-                }
-              />
-              <span className="flex items-center gap-1.5">
-                <Link
-                  to={`/products/${product.id}`}
-                  className="flex h-[38px] flex-1 items-center justify-center rounded-control border border-input bg-surface px-3.5 text-sm font-semibold hover:border-input-hover"
-                >
-                  {copy.products.edit}
-                </Link>
-                <ConfirmDelete
-                  label={copy.product.delete}
-                  title={copy.product.deleteNamed(product.name)}
-                  text={
-                    product.programCount > 0
-                      ? copy.product.deleteInProgramCount(product.programCount)
-                      : copy.product.deleteText
-                  }
-                  pending={remove.isPending}
-                  onConfirm={() =>
-                    remove.mutate(product.id, {
-                      onSuccess: () => toast.success(copy.product.deleted),
-                      onError: (error) => toast.error(errorText(error)),
-                    })
-                  }
-                  trigger={
-                    <button
-                      type="button"
-                      aria-label={`${copy.product.delete}: ${product.name}`}
-                      title={copy.product.delete}
-                      className="flex size-[38px] flex-none items-center justify-center rounded-control border border-red-border bg-surface text-red hover:bg-red-hover"
-                    >
-                      <svg
-                        width="17"
-                        height="17"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
+      <Card className="mt-4">
+        <ProductList
+          rows={rows}
+          selection={selection}
+          footer={
+            <>
+              {products.isPending && <TableMessage>{copy.loading}</TableMessage>}
+              {products.isError && !products.data && <TableMessage>{copy.errors.load}</TableMessage>}
+              {products.data && rows.length === 0 && (
+                <TableMessage>
+                  {filtered ? (
+                    <span className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+                      {copy.products.notFound}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setParams((current) => {
+                            const next = new URLSearchParams(current);
+                            next.delete('brand');
+                            next.delete('q');
+                            next.delete('show');
+                            return next;
+                          })
+                        }
+                        className="font-semibold text-ink underline underline-offset-2"
                       >
-                        <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />
-                      </svg>
-                    </button>
-                  }
-                />
-              </span>
-            </TableRow>
-          ))}
-          {products.isPending && <TableMessage>{copy.loading}</TableMessage>}
-          {products.isError && !products.data && <TableMessage>{copy.errors.load}</TableMessage>}
-          {products.data && rows.length === 0 && (
-            <TableMessage>
-              {filtered ? (
-                <span className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-                  {copy.products.notFound}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setParams((current) => {
-                        const next = new URLSearchParams(current);
-                        next.delete('brand');
-                        next.delete('q');
-                        return next;
-                      })
-                    }
-                    className="font-semibold text-ink underline underline-offset-2"
-                  >
-                    {copy.products.resetFilters}
-                  </button>
-                </span>
-              ) : (
-                copy.products.empty
+                        {copy.products.resetFilters}
+                      </button>
+                    </span>
+                  ) : (
+                    copy.products.empty
+                  )}
+                </TableMessage>
               )}
-            </TableMessage>
-          )}
-        </div>
+            </>
+          }
+        />
       </Card>
+      {chosen.length > 0 && (
+        <BulkBar chosen={chosen} categories={categoryItems} onClear={() => setSelected(new Set())} />
+      )}
     </>
   );
 }

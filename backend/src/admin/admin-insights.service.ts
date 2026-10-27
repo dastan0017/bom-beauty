@@ -10,6 +10,8 @@ import {
   type LeadListQuery,
 } from '@bom/shared';
 import { z } from 'zod';
+import { AuditService } from '../audit/audit.service';
+import { notFound } from '../common/errors';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { orderLinesInclude, toOrderRow } from './admin-orders.service';
@@ -19,7 +21,23 @@ const answersSchema = z.record(z.string(), z.unknown());
 /** Leads, customers and the overview (docs/API.md §6). Cancelled orders never count as sales. */
 @Injectable()
 export class AdminInsightsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
+
+  /** Test or spam hand-offs: the owner can remove them from «Заявки». */
+  async removeLead(id: string, actor: { userId: string; ip: string | null }): Promise<void> {
+    const deleted = await this.prisma.lead.deleteMany({ where: { id } });
+    if (deleted.count === 0) throw notFound('Заявка не найдена');
+    await this.audit.log({
+      userId: actor.userId,
+      ip: actor.ip,
+      entity: 'lead',
+      entityId: id,
+      action: 'delete',
+    });
+  }
 
   async leads(query: LeadListQuery & { limit: number }): Promise<LeadList> {
     const [rows, groups] = await Promise.all([

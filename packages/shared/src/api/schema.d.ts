@@ -436,6 +436,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/leads/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["AdminInsightsController_removeLead"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/admin/customers": {
         parameters: {
             query?: never;
@@ -558,6 +574,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["AdminCatalogController_mergeBrand"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/products/bulk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminCatalogController_bulkProducts"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1792,6 +1824,16 @@ export interface components {
         BrandInputDto: {
             name: string;
         };
+        ProductBulkDto: {
+            ids: string[];
+            /** @enum {string} */
+            action: "delete" | "show" | "hide" | "inStock" | "outOfStock" | "category";
+            /** Format: uuid */
+            categoryId?: string;
+        };
+        ProductBulkResultDto_Output: {
+            count: number;
+        };
         ProductRowDto_Output: {
             /** Format: uuid */
             id: string;
@@ -2990,6 +3032,28 @@ export interface operations {
             };
         };
     };
+    AdminInsightsController_removeLead: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     AdminInsightsController_customers: {
         parameters: {
             query?: {
@@ -3262,6 +3326,32 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BrandDto_Output"];
+                };
+            };
+        };
+    };
+    AdminCatalogController_bulkProducts: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductBulkDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductBulkResultDto_Output"];
                 };
             };
         };

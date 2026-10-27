@@ -14,6 +14,8 @@ import {
   categoryInputSchema,
   createReviewsSchema,
   mergeInputSchema,
+  productBulkResultSchema,
+  productBulkSchema,
   productInputSchema,
   productPatchSchema,
   programInputSchema,
@@ -43,6 +45,8 @@ class ProductRowDto extends createZodDto(adminProductRowSchema) {}
 class ProductDto extends createZodDto(adminProductSchema) {}
 class ProductInputDto extends createZodDto(productInputSchema) {}
 class ProductPatchDto extends createZodDto(productPatchSchema) {}
+class ProductBulkDto extends createZodDto(productBulkSchema) {}
+class ProductBulkResultDto extends createZodDto(productBulkResultSchema) {}
 class ProgramRowDto extends createZodDto(adminProgramRowSchema) {}
 class ProgramDto extends createZodDto(adminProgramSchema) {}
 class ProgramInputDto extends createZodDto(programInputSchema) {}
@@ -141,6 +145,13 @@ export class AdminCatalogController {
     @Req() r: Request,
   ) {
     return this.products.mergeBrand(params.id, body.intoId, actor(s, r));
+  }
+
+  @Post('products/bulk')
+  @HttpCode(200)
+  @ZodResponse({ type: ProductBulkResultDto })
+  bulkProducts(@Body() body: ProductBulkDto, @CurrentSession() s: ActiveSession, @Req() r: Request) {
+    return this.products.bulk(body, actor(s, r));
   }
 
   @Get('products')

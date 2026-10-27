@@ -248,6 +248,50 @@ describe('admin: catalog, content, settings, users', () => {
     expect(resaved.status).toBe(200);
   });
 
+  it('applies bulk actions to the ticked products', async () => {
+    const make = async (name: string) =>
+      (
+        await request<AdminProduct>(api('/products'), {
+          method: 'POST',
+          headers: manager.write,
+          json: product({ name }),
+        })
+      ).body;
+    const [a, b] = [await make('Пакет один'), await make('Пакет два')];
+    const ids = [a.id, b.id];
+    const bulk = (json: Record<string, unknown>) =>
+      request<{ count: number }>(api('/products/bulk'), { method: 'POST', headers: manager.write, json });
+    const state = async () =>
+      ctx.prisma.product.findMany({
+        where: { id: { in: ids } },
+        select: { published: true, inStock: true, categoryId: true },
+      });
+
+    expect((await bulk({ ids, action: 'hide' })).body).toEqual({ count: 2 });
+    expect((await state()).every((row) => !row.published)).toBe(true);
+    await bulk({ ids, action: 'show' });
+    await bulk({ ids, action: 'outOfStock' });
+    expect((await state()).every((row) => row.published && !row.inStock)).toBe(true);
+
+    const noTarget = await request<ErrorResponse>(api('/products/bulk'), {
+      method: 'POST',
+      headers: manager.write,
+      json: { ids, action: 'category' },
+    });
+    expect(noTarget.status).toBe(400);
+    const serums = await ctx.prisma.category.findUniqueOrThrow({ where: { slug: 'serums' } });
+    await bulk({ ids, action: 'category', categoryId: serums.id });
+    expect((await state()).every((row) => row.categoryId === serums.id)).toBe(true);
+
+    // Deleting also takes them out of programs; an unknown id is skipped.
+    const program = await ctx.prisma.program.findFirstOrThrow({ select: { id: true } });
+    await ctx.prisma.programItem.create({ data: { programId: program.id, productId: a.id, order: 98 } });
+    const deleted = await bulk({ ids: [...ids, randomUUID()], action: 'delete' });
+    expect(deleted.body).toEqual({ count: 2 });
+    expect(await ctx.prisma.product.count({ where: { id: { in: ids } } })).toBe(0);
+    expect(await ctx.prisma.programItem.count({ where: { productId: a.id } })).toBe(0);
+  });
+
   it('keeps brand and category names unique, and renames, merges and deletes them', async () => {
     // Categories: a name that differs only in case, spaces or punctuation is taken.
     const taken = await request<ErrorResponse>(api('/categories'), {

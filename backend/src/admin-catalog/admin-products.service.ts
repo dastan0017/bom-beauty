@@ -9,6 +9,8 @@ import {
   type AdminProductRow,
   type BrandInput,
   type CategoryInput,
+  type ProductBulkInput,
+  type ProductBulkResult,
 } from '@bom/shared';
 import type { z } from 'zod';
 import { AuditService } from '../audit/audit.service';
@@ -459,7 +461,7 @@ export class AdminProductsService {
     await this.prisma.$transaction(async (tx) => {
       await tx.programItem.deleteMany({ where: { productId: id } });
       await tx.product.delete({ where: { id } });
-      await this.unfeature(tx, id);
+      await this.unfeature(tx, [id]);
     });
     await this.audit.log({
       ...this.actorEntry(actor),
@@ -480,16 +482,88 @@ export class AdminProductsService {
     ]);
   }
 
-  /** Drops a deleted product from the wholesale page's featured list, which would otherwise refuse to save. */
-  private async unfeature(tx: Prisma.TransactionClient, productId: string): Promise<void> {
+  /**
+   * Bulk actions on the products ticked in the list: one request, one revalidation. Deleting follows `remove`
+   * (programs and the wholesale featured list lose them); unknown ids are skipped.
+   */
+  async bulk(input: ProductBulkInput, actor: Actor): Promise<ProductBulkResult> {
+    const rows = await this.prisma.product.findMany({
+      where: { id: { in: [...new Set(input.ids)] } },
+      select: { id: true, slug: true, programItems: { select: { program: { select: { slug: true } } } } },
+    });
+    if (!rows.length) return { count: 0 };
+    const ids = rows.map((row) => row.id);
+    const slugs = rows.map((row) => row.slug);
+    const where = { id: { in: ids } };
+    switch (input.action) {
+      case 'delete':
+        await this.prisma.$transaction(async (tx) => {
+          await tx.programItem.deleteMany({ where: { productId: { in: ids } } });
+          await tx.product.deleteMany({ where });
+          await this.unfeature(tx, ids);
+        });
+        break;
+      case 'category':
+        if (!input.categoryId || !(await this.prisma.category.count({ where: { id: input.categoryId } }))) {
+          throw invalidField('categoryId', 'product.category.required');
+        }
+        await this.prisma.product.updateMany({ where, data: { categoryId: input.categoryId } });
+        break;
+      case 'show':
+      case 'hide':
+        await this.prisma.product.updateMany({ where, data: { published: input.action === 'show' } });
+        break;
+      case 'inStock':
+      case 'outOfStock':
+        await this.prisma.product.updateMany({ where, data: { inStock: input.action === 'inStock' } });
+        break;
+    }
+    for (const row of rows) {
+      await this.audit.log({
+        ...this.actorEntry(actor),
+        entity: 'product',
+        entityId: row.id,
+        action: input.action === 'delete' ? 'delete' : 'update',
+        diff: {
+          bulk: input.action,
+          slug: row.slug,
+          ...(input.categoryId ? { categoryId: input.categoryId } : {}),
+        },
+      });
+    }
+    const programs = [...new Set(rows.flatMap((row) => row.programItems.map((item) => item.program.slug)))];
+    this.revalidator.revalidate([
+      ...productTags(...slugs),
+      SITE_TAGS.categories,
+      ...(input.action === 'delete' ? programs.map(SITE_TAGS.program) : []),
+    ]);
+    if (input.action === 'delete' || input.action === 'show' || input.action === 'hide') {
+      this.revalidator.indexNow(['/catalog', ...slugs.map((slug) => `/catalog/${slug}`)]);
+    }
+    return { count: rows.length };
+  }
+
+  /** Drops deleted products from the wholesale page's featured list, which would otherwise refuse to save. */
+  private async unfeature(tx: Prisma.TransactionClient, productIds: string[]): Promise<void> {
     const block = await tx.contentBlock.findUnique({ where: { key: 'wholesale' }, select: { data: true } });
     const data = block?.data;
     if (!data || typeof data !== 'object' || Array.isArray(data)) return;
     const featured = data.featuredProductIds;
-    if (!Array.isArray(featured) || !featured.includes(productId)) return;
+    if (
+      !Array.isArray(featured) ||
+      !featured.some((item) => typeof item === 'string' && productIds.includes(item))
+    )
+      return;
     await tx.contentBlock.update({
       where: { key: 'wholesale' },
-      data: { data: { ...data, featuredProductIds: featured.filter((item) => item !== productId) } },
+      data: {
+        data: {
+          ...data,
+          featuredProductIds: featured.filter(
+            (item) => !(typeof item === 'string' && productIds.includes(item)),
+          ),
+        },
+      },
     });
   }
 

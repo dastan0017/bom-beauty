@@ -134,7 +134,64 @@ export function OrdersPage() {
         />
       </div>
 
-      <Card className="mt-4 overflow-x-auto">
+      {/* Phones: cards with the sum, status and WhatsApp in view (the table needs sideways scrolling there). */}
+      <Card className="mt-4 sm:hidden">
+        <ul aria-label={copy.orders.title}>
+          {rows.map((order) => (
+            <li
+              key={order.id}
+              className={cn(
+                'flex flex-col gap-2 border-b border-line-2 px-4 py-3.5 last:border-b-0',
+                openId === order.id && 'bg-table-head',
+              )}
+            >
+              <button
+                type="button"
+                onClick={() => open(order.id)}
+                className="flex flex-col gap-1 text-left"
+                aria-label={copy.orders.openOrder(order.number, order.name)}
+              >
+                <span className="flex items-start justify-between gap-3">
+                  <span className="flex min-w-0 flex-col gap-0.5">
+                    <span className="text-[15px] font-semibold">{order.name}</span>
+                    <span className="text-[13px] text-muted">
+                      #{order.number} · {relativeDateTime(new Date(order.createdAt), now)}
+                    </span>
+                  </span>
+                  <span className="flex flex-none flex-col items-end gap-1">
+                    <span className="text-[15px] font-semibold whitespace-nowrap">
+                      {formatKgs(order.totalKgs)}
+                    </span>
+                    {(order.paymentMethod === 'finik' || order.paymentStatus !== 'unpaid') && (
+                      <PaymentChip status={order.paymentStatus} />
+                    )}
+                  </span>
+                </span>
+                <span className="text-sm leading-snug">
+                  {itemLabel(order)} <span className="text-muted">· {order.city}</span>
+                </span>
+              </button>
+              <span className="flex items-center justify-between gap-3">
+                <StatusSelect
+                  label={`${copy.table.status} #${order.number}`}
+                  status={order.status}
+                  onChange={(status) => changeStatus(order.id, status)}
+                />
+                <WhatsAppLink phone={order.phone} />
+              </span>
+            </li>
+          ))}
+        </ul>
+        {orders.isPending && <p className="px-4 py-10 text-center text-[15px] text-muted">{copy.loading}</p>}
+        {orders.isError && !orders.data && (
+          <p className="px-4 py-10 text-center text-[15px] text-muted">{copy.errors.load}</p>
+        )}
+        {orders.data && rows.length === 0 && (
+          <p className="px-4 py-10 text-center text-[15px] text-muted">{copy.nothingFound}</p>
+        )}
+      </Card>
+
+      <Card className="mt-4 hidden overflow-x-auto sm:block">
         <div role="table" style={{ '--table-min': '940px' } as CSSProperties}>
           <TableHead columns={COLUMNS}>
             <span>{copy.table.number}</span>
