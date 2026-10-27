@@ -1,4 +1,4 @@
-import { formatKgs } from '@bom/shared';
+import { formatKgs, matchesSearch } from '@bom/shared';
 import { useState, type CSSProperties, type KeyboardEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
@@ -6,27 +6,35 @@ import {
   useCategories,
   useCreateCategory,
   useDeleteCategory,
+  useDeleteProduct,
   usePatchProduct,
   useProducts,
 } from '@/api/catalog';
-import { Button, Card, PageHeader, TableHead, TableMessage, TableRow } from '@/components/ui';
+import { Button, Card, inputClass, PageHeader, TableHead, TableMessage, TableRow } from '@/components/ui';
 import { Toggle } from '@/components/ui/editor';
 import { MediaPreview } from '@/components/ui/media';
 import { copy } from '@/content/copy';
+import { ConfirmDelete } from '@/features/products/product-editor';
 import { errorText } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
-const COLUMNS = '2.4fr 1fr .7fr .8fr .8fr 110px';
+const COLUMNS = '2.4fr 1fr .7fr .8fr .8fr 160px';
 
-/** Товары (design: isProducts): category chips, add category, table with the stock switch. */
+/**
+ * Товары (design: isProducts): category chips, add category, table with the stock switch. Brand chips and the search
+ * box are ours (owner request 2026-10-26); they filter the loaded list, and the URL keeps them for the way back.
+ */
 export function ProductsPage() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const category = params.get('category') ?? undefined;
+  const brand = params.get('brand') ?? undefined;
+  const query = params.get('q') ?? '';
   const categories = useCategories();
   const products = useProducts(category ? { category } : {});
   const allProducts = useProducts({});
   const patch = usePatchProduct();
+  const remove = useDeleteProduct();
   const createCategory = useCreateCategory();
   const deleteCategory = useDeleteCategory();
   const [adding, setAdding] = useState(false);
@@ -34,13 +42,36 @@ export function ProductsPage() {
 
   const total = allProducts.data?.length ?? 0;
   const catCount = categories.data?.length ?? 0;
-  const setCategory = (id?: string) =>
-    setParams((current) => {
-      const next = new URLSearchParams(current);
-      if (id) next.set('category', id);
-      else next.delete('category');
-      return next;
-    });
+  const setParam = (key: 'category' | 'brand' | 'q', value?: string) =>
+    setParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        if (value) next.set(key, value);
+        else next.delete(key);
+        return next;
+      },
+      { replace: key === 'q' },
+    );
+  const setCategory = (id?: string) => setParam('category', id);
+
+  const inCategory = products.data ?? [];
+  const rows = inCategory.filter(
+    (product) =>
+      (!brand || product.brand === brand) &&
+      matchesSearch(query, [product.name, product.brand, product.category.name]),
+  );
+  const brandNames = [...new Set((allProducts.data ?? []).map((product) => product.brand))].sort((a, b) =>
+    a.localeCompare(b, 'ru'),
+  );
+  const brandChips = [
+    { name: undefined, label: copy.products.all, count: inCategory.length },
+    ...brandNames.map((name) => ({
+      name,
+      label: name,
+      count: inCategory.filter((product) => product.brand === name).length,
+    })),
+  ];
+  const filtered = Boolean(brand || query.trim());
 
   const addCategory = () => {
     const name = newName.trim();
@@ -68,7 +99,13 @@ export function ProductsPage() {
       >
         <Button
           onClick={() =>
-            void navigate({ pathname: '/products/new', search: category ? `?category=${category}` : '' })
+            void navigate({
+              pathname: '/products/new',
+              search: new URLSearchParams({
+                ...(category ? { category } : {}),
+                ...(brand ? { brand } : {}),
+              }).toString(),
+            })
           }
         >
           <PlusIcon />
@@ -174,10 +211,46 @@ export function ProductsPage() {
             </button>
           )}
         </div>
+        {brandNames.length > 0 && (
+          <>
+            <span className="mt-1 text-base font-semibold">{copy.products.brands}</span>
+            <div className="flex flex-wrap items-center gap-2">
+              {brandChips.map((chip) => {
+                const on = chip.name === brand;
+                return (
+                  <button
+                    key={chip.name ?? 'all'}
+                    type="button"
+                    onClick={() => setParam('brand', chip.name)}
+                    aria-pressed={on}
+                    className={cn(
+                      'inline-flex h-[38px] items-center gap-1.5 rounded-full border px-3.5 text-sm font-semibold',
+                      on ? 'border-ink bg-ink text-white' : 'border-input bg-surface text-ink',
+                    )}
+                  >
+                    {chip.label}
+                    <span className="font-normal opacity-70">{chip.count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
       </Card>
 
+      <div className="mt-4 flex">
+        <input
+          type="search"
+          value={query}
+          onChange={(event) => setParam('q', event.target.value)}
+          placeholder={copy.products.search}
+          aria-label={copy.products.search}
+          className={cn(inputClass, 'w-full sm:w-[340px]')}
+        />
+      </div>
+
       <Card className="mt-4 overflow-x-auto">
-        <div role="table" style={{ '--table-min': '760px' } as CSSProperties}>
+        <div role="table" style={{ '--table-min': '810px' } as CSSProperties}>
           <TableHead columns={COLUMNS}>
             <span>{copy.products.columns.product}</span>
             <span>{copy.products.columns.category}</span>
@@ -186,11 +259,11 @@ export function ProductsPage() {
             <span>{copy.products.columns.stock}</span>
             <span />
           </TableHead>
-          {products.data?.map((product) => (
+          {rows.map((product) => (
             <TableRow
               key={product.id}
               style={{ gridTemplateColumns: COLUMNS }}
-              className="grid min-h-[68px] min-w-[760px] items-center gap-3 border-b border-line-2 px-[22px] last:border-b-0"
+              className="grid min-h-[68px] min-w-[810px] items-center gap-3 border-b border-line-2 px-[22px] last:border-b-0"
             >
               <span className="flex min-w-0 items-center gap-3">
                 <MediaPreview
@@ -231,17 +304,81 @@ export function ProductsPage() {
                   )
                 }
               />
-              <Link
-                to={`/products/${product.id}`}
-                className="flex h-[38px] items-center justify-center rounded-control border border-input bg-surface px-3.5 text-sm font-semibold hover:border-input-hover"
-              >
-                {copy.products.edit}
-              </Link>
+              <span className="flex items-center gap-1.5">
+                <Link
+                  to={`/products/${product.id}`}
+                  className="flex h-[38px] flex-1 items-center justify-center rounded-control border border-input bg-surface px-3.5 text-sm font-semibold hover:border-input-hover"
+                >
+                  {copy.products.edit}
+                </Link>
+                <ConfirmDelete
+                  label={copy.product.delete}
+                  title={copy.product.deleteNamed(product.name)}
+                  text={
+                    product.programCount > 0
+                      ? copy.product.deleteInProgramCount(product.programCount)
+                      : copy.product.deleteText
+                  }
+                  pending={remove.isPending}
+                  onConfirm={() =>
+                    remove.mutate(product.id, {
+                      onSuccess: () => toast.success(copy.product.deleted),
+                      onError: (error) => toast.error(errorText(error)),
+                    })
+                  }
+                  trigger={
+                    <button
+                      type="button"
+                      aria-label={`${copy.product.delete}: ${product.name}`}
+                      title={copy.product.delete}
+                      className="flex size-[38px] flex-none items-center justify-center rounded-control border border-red-border bg-surface text-red hover:bg-red-hover"
+                    >
+                      <svg
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />
+                      </svg>
+                    </button>
+                  }
+                />
+              </span>
             </TableRow>
           ))}
           {products.isPending && <TableMessage>{copy.loading}</TableMessage>}
           {products.isError && !products.data && <TableMessage>{copy.errors.load}</TableMessage>}
-          {products.data?.length === 0 && <TableMessage>{copy.products.empty}</TableMessage>}
+          {products.data && rows.length === 0 && (
+            <TableMessage>
+              {filtered ? (
+                <span className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+                  {copy.products.notFound}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setParams((current) => {
+                        const next = new URLSearchParams(current);
+                        next.delete('brand');
+                        next.delete('q');
+                        return next;
+                      })
+                    }
+                    className="font-semibold text-ink underline underline-offset-2"
+                  >
+                    {copy.products.resetFilters}
+                  </button>
+                </span>
+              ) : (
+                copy.products.empty
+              )}
+            </TableMessage>
+          )}
         </div>
       </Card>
     </>

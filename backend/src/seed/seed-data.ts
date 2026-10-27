@@ -612,6 +612,7 @@ export const WHOLESALE_CONTENT: Omit<ContentValue<'wholesale'>, 'featuredProduct
     { region: 'Россия · Москва', flags: ['ru'], airDays: '10–14', seaDays: '20–30' },
   ],
   catalogMediaId: null,
+  protocolsMediaId: null,
   portraitMediaId: null,
   videoId: null,
 };

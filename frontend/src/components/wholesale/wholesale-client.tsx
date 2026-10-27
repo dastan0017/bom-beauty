@@ -255,20 +255,26 @@ export function PriceRequestButton({ className, children }: { className?: string
   );
 }
 
-/** "Скачать каталог брендов": the PDF when uploaded, otherwise a note (design: catalog / catHint). */
-export function CatalogButton({ file, hintClassName }: { file: FileRef | null; hintClassName?: string }) {
-  const [hint, setHint] = useState(false);
-  const className =
-    'flex h-14 items-center justify-center gap-2.5 self-stretch rounded-button border border-line bg-white px-5 text-base font-semibold text-ink hover:brightness-[.97]';
-  const content = (
+const downloadClass =
+  'flex min-h-14 items-center justify-center gap-2.5 self-stretch rounded-button border border-line bg-white px-5 py-2 text-base font-semibold text-ink hover:brightness-[.97]';
+
+function DownloadContent({ label }: { label: string }) {
+  return (
     <>
       <DownloadIcon size={18} className="flex-none" />
-      <span className="whitespace-nowrap">{copy.wholesale.downloadCatalog}</span>
-      <span className="rounded-md bg-surface-2 px-[7px] py-[3px] text-xs leading-[1.2] font-semibold text-muted">
+      <span className="text-center text-balance">{label}</span>
+      <span className="flex-none rounded-md bg-surface-2 px-[7px] py-[3px] text-xs leading-[1.2] font-semibold text-muted">
         PDF
       </span>
     </>
   );
+}
+
+/** "Скачать каталог брендов": the PDF when uploaded, otherwise a note (design: catalog / catHint). */
+export function CatalogButton({ file, hintClassName }: { file: FileRef | null; hintClassName?: string }) {
+  const [hint, setHint] = useState(false);
+  const className = downloadClass;
+  const content = <DownloadContent label={copy.wholesale.downloadCatalog} />;
   if (file) {
     return (
       <a
@@ -296,6 +302,24 @@ export function CatalogButton({ file, hintClassName }: { file: FileRef | null; h
         </span>
       )}
     </>
+  );
+}
+
+/**
+ * «Готовые протоколы от производителя» (owner request 2026-10-26, not in the design): a second download in the
+ * catalog button's style. Unlike the catalog it has no "coming soon" state; the page shows it once the PDF is uploaded.
+ */
+export function ProtocolsButton({ file, className }: { file: FileRef; className?: string }) {
+  return (
+    <a
+      href={file.url}
+      target="_blank"
+      rel="noopener"
+      className={cn(downloadClass, className)}
+      onClick={() => track('wholesale_protocols_download', { place: 'wholesale' })}
+    >
+      <DownloadContent label={copy.wholesale.downloadProtocols} />
+    </a>
   );
 }
 

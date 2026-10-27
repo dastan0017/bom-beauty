@@ -1,4 +1,4 @@
-import { plural } from '@bom/shared';
+import { plural, PRODUCT_IMAGES_MAX } from '@bom/shared';
 
 // Every static UI string of the admin (CLAUDE.md). Texts are verbatim from design/BomAdmin.dc.html where they exist;
 // texts for screens the design does not have (login, leads, order details) are ours and never use em-dashes.
@@ -242,6 +242,17 @@ export const copy = {
     uploaded: 'Загружено',
     attached: 'Прикреплён',
     noFile: 'Нет файла',
+    addPhotos: 'Добавить фото',
+    addPhotosHint: 'Можно выбрать несколько',
+    photosCount: (n: number) => `${n} из ${PRODUCT_IMAGES_MAX}`,
+    photosHint: 'Первое фото главное, оно на карточке в каталоге. Порядок меняется стрелками',
+    uploadingOf: (n: number, total: number) => `Загружаем ${n} из ${total}…`,
+    tooMany: `Можно не больше ${PRODUCT_IMAGES_MAX} фото, лишние не загрузили`,
+    moveLeft: 'Левее',
+    moveRight: 'Правее',
+    makeMain: 'Сделать главным',
+    photoActions: (n: number) => `Фото ${n}`,
+    failedOf: (n: number) => `Не удалось загрузить фото: ${n}. Попробуйте ещё раз`,
   },
   products: {
     title: 'Товары',
@@ -260,6 +271,9 @@ export const copy = {
     edit: 'Изменить',
     empty: 'В этой категории пока нет товаров',
     search: 'Поиск по названию или бренду',
+    brands: 'Бренды',
+    notFound: 'Ничего не нашлось. Измените поиск, бренд или категорию',
+    resetFilters: 'Сбросить фильтры',
     hidden: 'скрыт',
   },
   product: {
@@ -291,8 +305,12 @@ export const copy = {
     delete: 'Удалить товар',
     deleteTitle: 'Удалить товар?',
     deleteText: 'Товар пропадёт с сайта. Заказы с ним останутся в истории.',
-    inPrograms: (titles: string) =>
-      `Входит в программы: ${titles}. Чтобы удалить товар, уберите его из программ.`,
+    deleteInPrograms: (titles: string) =>
+      `Товар пропадёт с сайта и из программ ${titles}. Цены программ останутся прежними, их можно поправить в программах. Заказы с ним останутся в истории.`,
+    deleteHint: 'Чтобы убрать товар с сайта на время, выключите «Показывать на сайте»',
+    deleteNamed: (name: string) => `Удалить «${name}»?`,
+    deleteInProgramCount: (n: number) =>
+      `Товар пропадёт с сайта и из ${n} ${plural(n, 'программы', 'программ', 'программ')}. Цены программ останутся прежними, их можно поправить в программах. Заказы с ним останутся в истории.`,
     deleted: 'Товар удалён',
   },
   programs: {
@@ -366,7 +384,7 @@ export const copy = {
   },
   wholesale: {
     title: 'Страница «Оптовикам»',
-    lead: 'Главный экран, тексты, сроки поставки, каталог и видео',
+    lead: 'Главный экран, тексты, сроки поставки, каталог, протоколы и видео',
     contacts: 'Контакты',
     phone: 'Телефон для звонков',
     whatsapp: 'WhatsApp',
@@ -401,6 +419,9 @@ export const copy = {
     sea: 'Контейнер, дней',
     catalog: 'Каталог брендов',
     catalogHint: 'Файл скачается по кнопке «Скачать каталог брендов» на сайте',
+    protocols: 'Готовые протоколы',
+    protocolsHint:
+      'Файл скачается по кнопке «Готовые протоколы от производителя» на сайте. Пока файла нет, кнопки не будет',
     video: 'Видео о сотрудничестве',
     videoHint: 'Пока видео нет, в блоке «Обо мне» показывается фото Нурайым',
     portrait: 'Фото Нурайым',
@@ -686,7 +707,7 @@ export const copy = {
     'program.step.text.required': 'Напишите подсказку',
     'program.items.max': 'Не больше 12 средств',
     'program.fit.max': 'Не больше 8 пунктов',
-    'product.images.max': 'Не больше 3 фото',
+    'product.images.max': `Не больше ${PRODUCT_IMAGES_MAX} фото`,
     'colour.invalid': 'Цвет в формате #AABBCC',
     'rate.positive': 'Курс больше нуля',
     'phone.invalid': 'Проверьте номер телефона',

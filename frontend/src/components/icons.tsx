@@ -78,6 +78,15 @@ export const SearchIcon = stroke(
   </>,
 );
 export const DownloadIcon = stroke(<path d="M12 4v12M7 11l5 5 5-5M5 20h14" />);
+/** Catalog filters button (ours; the design has no filter sheet). */
+export const FiltersIcon = stroke(
+  <>
+    <path d="M4 7h9M17 7h3M4 17h3M11 17h9" />
+    <circle cx="15" cy="7" r="2" />
+    <circle cx="9" cy="17" r="2" />
+  </>,
+  2,
+);
 export const WandIcon = stroke(
   <>
     <path d="M4 20l9.5-9.5" />

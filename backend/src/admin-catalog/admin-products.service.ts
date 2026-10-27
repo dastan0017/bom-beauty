@@ -306,28 +306,53 @@ export class AdminProductsService {
     return this.detail(id);
   }
 
-  /** A product inside a program stays (remove it from the program first); ordered products keep their history. */
+  /**
+   * Deletes the product everywhere it is shown: its programs lose it (with its routine steps; program prices stay as
+   * the owner set them) and the wholesale page stops featuring it. Ordered products keep their history (order lines
+   * hold the title and price).
+   */
   async remove(id: string, actor: Actor): Promise<void> {
     const row = await this.prisma.product.findUnique({
       where: { id },
-      select: { slug: true, _count: { select: { programItems: true } } },
+      select: { slug: true, programItems: { select: { program: { select: { slug: true } } } } },
     });
     if (!row) throw notFound('Товар не найден');
-    if (row._count.programItems > 0) {
-      throw new ApiException('conflict', HttpStatus.CONFLICT, 'Товар входит в программу', {
-        id: 'product.in_program',
-      });
-    }
-    await this.prisma.product.delete({ where: { id } });
+    const programs = row.programItems.map((item) => item.program.slug);
+    await this.prisma.$transaction(async (tx) => {
+      await tx.programItem.deleteMany({ where: { productId: id } });
+      await tx.product.delete({ where: { id } });
+      await this.unfeature(tx, id);
+    });
     await this.audit.log({
       ...this.actorEntry(actor),
       entity: 'product',
       entityId: id,
       action: 'delete',
-      diff: { slug: row.slug },
+      diff: { slug: row.slug, ...(programs.length ? { programs } : {}) },
     });
-    this.revalidator.revalidate([...productTags(row.slug), SITE_TAGS.categories]);
-    this.revalidator.indexNow([`/catalog/${row.slug}`, '/catalog']);
+    this.revalidator.revalidate([
+      ...productTags(row.slug),
+      SITE_TAGS.categories,
+      ...programs.map(SITE_TAGS.program),
+    ]);
+    this.revalidator.indexNow([
+      `/catalog/${row.slug}`,
+      '/catalog',
+      ...programs.map((slug) => `/programs/${slug}`),
+    ]);
+  }
+
+  /** Drops a deleted product from the wholesale page's featured list, which would otherwise refuse to save. */
+  private async unfeature(tx: Prisma.TransactionClient, productId: string): Promise<void> {
+    const block = await tx.contentBlock.findUnique({ where: { key: 'wholesale' }, select: { data: true } });
+    const data = block?.data;
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return;
+    const featured = data.featuredProductIds;
+    if (!Array.isArray(featured) || !featured.includes(productId)) return;
+    await tx.contentBlock.update({
+      where: { key: 'wholesale' },
+      data: { data: { ...data, featuredProductIds: featured.filter((item) => item !== productId) } },
+    });
   }
 
   private fields(input: ProductData) {

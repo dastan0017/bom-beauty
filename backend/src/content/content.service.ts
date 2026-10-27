@@ -42,6 +42,7 @@ function refIds(key: ContentKey, data: ContentValue<ContentKey>): RefIds {
   if (key === 'wholesale') {
     const wholesale = data as ContentValue<'wholesale'>;
     if (wholesale.catalogMediaId) ids.files.push(wholesale.catalogMediaId);
+    if (wholesale.protocolsMediaId) ids.files.push(wholesale.protocolsMediaId);
     if (wholesale.portraitMediaId) ids.images.push(wholesale.portraitMediaId);
     if (wholesale.videoId) ids.videos.push(wholesale.videoId);
     ids.products.push(...wholesale.featuredProductIds);

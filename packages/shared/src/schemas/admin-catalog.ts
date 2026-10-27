@@ -1,6 +1,7 @@
 import { z } from '../zod';
 import { QUIZ_GOALS, SKIN_TYPES, USER_ROLES } from '../enums';
 import { BADGES } from '../labels';
+import { PRODUCT_IMAGES_MAX } from '../limits';
 import { fileRefSchema, imageRefSchema, slugSchema } from './common';
 
 // Admin catalog, content, settings and users (docs/API.md §6). Inputs use message codes; the admin maps them to text.
@@ -84,8 +85,8 @@ export const productInputSchema = z.object({
   bestseller: z.boolean().default(false),
   seoulChoice: z.boolean().default(false),
   isNew: z.boolean().default(false),
-  /** Up to three photos, the first is the main one. */
-  imageIds: z.array(z.uuid()).max(3, 'product.images.max'),
+  /** Up to PRODUCT_IMAGES_MAX photos, the first is the main one. */
+  imageIds: z.array(z.uuid()).max(PRODUCT_IMAGES_MAX, 'product.images.max'),
   seoTitle: optionalText(200),
   seoDescription: optionalText(300),
 });

@@ -176,3 +176,18 @@ Spec: `docs/finik/SPEC.md` (§0 final decisions win); implementation prompt `doc
 - [x] Go-live (2026-10-23): `FINIK_*` on the server, 1 сом check and the first real orders paid through Finik's webhook,
       Telegram bot `@bom_beauty_orders_bot` posting to the shop's group, «Принимать онлайн-оплату на сайте» on.
       Follow-ups (owner): Visa acceptance from Finik, payment wording in the texts (HANDOFF §3), delivery days abroad
+
+## M10 Owner feedback (2026-10-26)
+
+Requests from Нурайым while filling the admin, plus the developer's follow-ups.
+
+- [x] Site catalog: search (`?q=`, every word, Russian endings, works without JS) and «По бренду» (`?brand=`); one
+      sticky row with the search and «Фильтры», chip groups in a sheet, chosen filters as pills (D38)
+- [x] Admin «Товары»: brand chips and search over the list; delete button with a confirmation in every row
+- [x] Product delete: in the editor at the end of the form; also allowed for products in programs, which lose it with
+      its steps; the wholesale featured list drops it too (D39)
+- [x] Up to 10 photos per product: multi-upload, order arrows, «Сделать главным» (D40)
+- [x] «Оптовикам»: second PDF «Готовые протоколы от производителя» (admin slot, site button once uploaded)
+- [x] Tests: search helper, photo limit, wholesale content defaults, delete with programs and featured list, protocols
+      PDF refs; e2e for the filter sheet, brand and search (with and without JS), admin list delete
+- [x] Gate + `feat: catalog search and brand filter, product delete, 10 photos, wholesale protocols`

@@ -324,6 +324,18 @@ function WholesaleForm({ content }: { content: AdminContent }) {
               onRemove={() => update({ catalogMediaId: null })}
             />
           </Panel>
+          <Panel title={copy.wholesale.protocols} aside={<span className="text-[13px] text-muted">PDF</span>}>
+            <PdfSlot
+              media={media(form.protocolsMediaId)}
+              hint={copy.wholesale.protocolsHint}
+              purpose="catalog"
+              onChange={(uploaded) => {
+                remember(uploaded);
+                update({ protocolsMediaId: uploaded.id });
+              }}
+              onRemove={() => update({ protocolsMediaId: null })}
+            />
+          </Panel>
           <Panel title={copy.wholesale.video} aside={<span className="text-[13px] text-muted">9:16</span>}>
             <VideoSlot
               video={video}

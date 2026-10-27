@@ -11,4 +11,5 @@ export * from './whatsapp';
 export * from './plural';
 export * from './slug';
 export * from './text';
+export * from './search';
 export * from './time';

@@ -54,6 +54,7 @@ function contentRefs(key: ContentKey, data: ContentValue<ContentKey>) {
   if (key === 'wholesale') {
     const wholesale = data as ContentValue<'wholesale'>;
     if (wholesale.catalogMediaId) media.push(wholesale.catalogMediaId);
+    if (wholesale.protocolsMediaId) media.push(wholesale.protocolsMediaId);
     if (wholesale.portraitMediaId) media.push(wholesale.portraitMediaId);
     if (wholesale.videoId) videos.push(wholesale.videoId);
     products.push(...wholesale.featuredProductIds);

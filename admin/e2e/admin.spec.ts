@@ -81,7 +81,9 @@ test('orders: status change, note, history; leads and customers render', async (
   await expect(page.getByRole('row').filter({ hasText: '+996 555 00 11 22' }).first()).toBeVisible();
 });
 
-test('catalog: create a product, see it on the site, delete it', async ({ request }) => {
+test('catalog: create a product, see it on the site, find it in the list, delete it there', async ({
+  request,
+}) => {
   const name = `E2E товар ${Date.now().toString().slice(-6)}`;
   await page.getByRole('link', { name: 'Товары' }).first().click();
   await page.getByRole('button', { name: 'Добавить товар' }).click();
@@ -98,10 +100,22 @@ test('catalog: create a product, see it on the site, delete it', async ({ reques
   expect(site.status()).toBe(200);
   expect(await site.text()).toContain(name);
 
-  await page.getByRole('button', { name: 'Удалить товар' }).click();
-  await page.getByRole('alertdialog').getByRole('button', { name: 'Удалить' }).click();
-  await expect(page).toHaveURL(/\/products$/);
-  await expect(page.getByText(name)).toHaveCount(0);
+  // The editor ends with the delete button.
+  await expect(page.getByRole('button', { name: 'Удалить товар' })).toBeVisible();
+
+  // The list: the brand chip and the search find it; the row's delete asks first.
+  await page.getByRole('link', { name: 'Товары' }).first().click();
+  await page.getByRole('button', { name: /^Dr\. SGN \d+$/ }).click();
+  await expect(page).toHaveURL(/brand=Dr\.\+SGN/);
+  await page.getByRole('searchbox', { name: 'Поиск по названию или бренду' }).fill(name);
+  const row = page.getByRole('row').filter({ hasText: name });
+  await expect(row).toHaveCount(1);
+  await row.getByRole('button', { name: `Удалить товар: ${name}` }).click();
+  const dialog = page.getByRole('alertdialog');
+  await expect(dialog.getByText(`Удалить «${name}»?`)).toBeVisible();
+  await dialog.getByRole('button', { name: 'Удалить' }).click();
+  await expect(page.getByText('Товар удалён')).toBeVisible();
+  await expect(page.getByRole('row').filter({ hasText: name })).toHaveCount(0);
 });
 
 test('payments: the link to send, a WhatsApp order marked paid, the «Оплата» settings', async ({

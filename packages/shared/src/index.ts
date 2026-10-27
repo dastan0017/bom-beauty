@@ -10,6 +10,7 @@ export * from './phone';
 export * from './plural';
 export * from './slug';
 export * from './text';
+export * from './search';
 export * from './schemas/common';
 export * from './schemas/orders';
 export * from './schemas/payments';

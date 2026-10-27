@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { splitAccent } from './text';
 import { createOrderSchema, orderLinesOf } from './schemas/orders';
-import { homeContentSchema } from './schemas/content';
-import { settingKeyParamsSchema } from './schemas/admin-catalog';
+import { homeContentSchema, wholesaleContentSchema } from './schemas/content';
+import { productInputSchema, settingKeyParamsSchema } from './schemas/admin-catalog';
 import { SETTING_DEFAULTS, SETTING_KEYS, SETTING_SCHEMAS } from './schemas/settings';
 
 const valid = {
@@ -117,6 +117,60 @@ describe('home content', () => {
     expect(parsed.comparison.mass.points).toEqual([{ title: 'Временный эффект', text: '' }]);
     expect(parsed.catalogImageMediaId).toBeNull();
     expect('heroBadge' in parsed).toBe(false);
+  });
+});
+
+describe('product photos', () => {
+  const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+  const input = (photos: number) => ({
+    name: 'Тонер',
+    slug: '',
+    shortName: null,
+    brandName: 'Dr. SGN',
+    categoryId: uuid(99),
+    volume: '150 мл',
+    priceKgs: 1500,
+    purpose: '',
+    description: '',
+    howToUse: '',
+    inci: null,
+    badge: null,
+    inStock: true,
+    published: true,
+    imageIds: Array.from({ length: photos }, (_, i) => uuid(i + 1)),
+    seoTitle: null,
+    seoDescription: null,
+  });
+
+  it('takes up to ten photos', () => {
+    expect(productInputSchema.safeParse(input(10)).success).toBe(true);
+    const result = productInputSchema.safeParse(input(11));
+    expect(result.error?.issues[0]?.message).toBe('product.images.max');
+  });
+});
+
+describe('wholesale content', () => {
+  it('reads rows saved before the protocols PDF', () => {
+    const parsed = wholesaleContentSchema.parse({
+      phone: '',
+      whatsapp: null,
+      eyebrow: '',
+      title: 'Опт',
+      subtitle: '',
+      facts: [],
+      quote: '',
+      intro: [],
+      stats: [],
+      expertise: [],
+      featuredProductIds: [],
+      benefits: [],
+      steps: [],
+      stockNote: '',
+      delivery: [],
+      catalogMediaId: null,
+      videoId: null,
+    });
+    expect(parsed.protocolsMediaId).toBeNull();
   });
 });
 

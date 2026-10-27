@@ -17,6 +17,7 @@ import {
   CatalogButton,
   Flag,
   PriceRequestButton,
+  ProtocolsButton,
   WholesaleProvider,
   WholesaleStickyBar,
   WholesaleVideo,
@@ -47,6 +48,7 @@ export default async function WholesalePage() {
   if (!content) throw new Error('Wholesale content is missing');
   const { data, refs } = content;
   const catalogFile = data.catalogMediaId ? (refs.files[data.catalogMediaId] ?? null) : null;
+  const protocolsFile = data.protocolsMediaId ? (refs.files[data.protocolsMediaId] ?? null) : null;
   const video = data.videoId ? (refs.videos[data.videoId] ?? null) : null;
   const portrait = data.portraitMediaId ? (refs.images[data.portraitMediaId] ?? null) : null;
   const products = data.featuredProductIds
@@ -113,6 +115,7 @@ export default async function WholesalePage() {
           </PriceRequestButton>
           <div className="mt-5 flex flex-col self-stretch">
             <CatalogButton file={catalogFile} hintClassName="text-[var(--whi,var(--ti))]" />
+            {protocolsFile && <ProtocolsButton file={protocolsFile} className="mt-2.5" />}
           </div>
           <span className="mt-3.5 self-stretch text-center text-sm leading-[1.4] text-[var(--whi,var(--ti))]">
             {copy.wholesale.personalReply}
@@ -364,6 +367,7 @@ export default async function WholesalePage() {
           </PriceRequestButton>
           <div className="mt-[18px] flex flex-col self-stretch">
             <CatalogButton file={catalogFile} hintClassName="text-hero-muted" />
+            {protocolsFile && <ProtocolsButton file={protocolsFile} className="mt-2.5" />}
           </div>
           <CallButton phone={data.phone} />
         </div>

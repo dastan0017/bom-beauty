@@ -53,6 +53,20 @@ test('first load leaves the order form code (zod, phone parsing) for later', asy
     .toBe(true);
 });
 
+/** Opens the filter sheet: script-driven, or through the anchor and :target without JavaScript. */
+async function openFilters(page: Page, javaScriptEnabled: boolean): Promise<void> {
+  const button = page.getByRole('button', { name: /^Фильтры/ });
+  await (javaScriptEnabled ? await whenHydrated(button) : button).click();
+  await expect(page.getByRole('dialog', { name: 'Фильтры' })).toBeVisible();
+}
+
+/** With JavaScript a choice keeps the sheet open (its count follows); «Показать …» closes it. */
+async function showResults(page: Page, javaScriptEnabled: boolean): Promise<void> {
+  if (!javaScriptEnabled) return;
+  await page.getByRole('link', { name: /^Показать \d+/ }).click();
+  await expect(page.getByRole('dialog', { name: 'Фильтры' })).toBeHidden();
+}
+
 test.describe('catalog filter', () => {
   for (const javaScriptEnabled of [true, false]) {
     test.describe(javaScriptEnabled ? 'with JavaScript' : 'without JavaScript', () => {
@@ -61,15 +75,21 @@ test.describe('catalog filter', () => {
       test('category chips narrow the list', async ({ page }) => {
         await page.goto('/catalog');
         await expect(page.getByText('Пенка для умывания с центеллой')).toBeVisible();
+        await openFilters(page, javaScriptEnabled);
         await page
           .getByRole('navigation', { name: 'По типу средства' })
           .getByRole('link', { name: 'Сыворотки' })
           .click();
         await expect(page).toHaveURL(/\/catalog\?category=serums$/);
-        await expect(page.getByRole('link', { name: 'Сыворотки', exact: true })).toHaveAttribute(
-          'aria-current',
-          'page',
-        );
+        if (javaScriptEnabled) {
+          await expect(page.getByRole('link', { name: 'Сыворотки', exact: true })).toHaveAttribute(
+            'aria-current',
+            'page',
+          );
+        }
+        await showResults(page, javaScriptEnabled);
+        await expect(page.getByRole('link', { name: 'Сыворотки: убрать фильтр' })).toBeVisible();
+        await expect(page.getByRole('button', { name: /^Фильтры\s*, выбрано: 1$/ })).toBeVisible();
         await expect(page.getByText('Успокаивающая cica-сыворотка')).toBeVisible();
         await expect(page.getByText('Пенка для умывания с центеллой')).toHaveCount(0);
       });
@@ -77,11 +97,13 @@ test.describe('catalog filter', () => {
       test('problem chips show the program products and its banner', async ({ page }) => {
         await page.goto('/catalog');
         await expect(page.getByText('Гидрофильное масло')).toBeVisible();
+        await openFilters(page, javaScriptEnabled);
         await page
           .getByRole('navigation', { name: 'По проблеме' })
           .getByRole('link', { name: 'Акне и постакне' })
           .click();
         await expect(page).toHaveURL(/\/catalog\?problem=acne$/);
+        await showResults(page, javaScriptEnabled);
         await expect(page.getByRole('link', { name: /Весь уход — в одной программе/ })).toHaveAttribute(
           'href',
           '/programs/acne',
@@ -89,11 +111,36 @@ test.describe('catalog filter', () => {
         await expect(page.getByText('Успокаивающая cica-сыворотка')).toBeVisible();
         await expect(page.getByText('Гидрофильное масло')).toHaveCount(0);
         // Both filters combine; the type chips keep the problem.
+        await openFilters(page, javaScriptEnabled);
         await page
           .getByRole('navigation', { name: 'По типу средства' })
           .getByRole('link', { name: 'Сыворотки' })
           .click();
         await expect(page).toHaveURL(/\/catalog\?problem=acne&category=serums$/);
+      });
+
+      test('brand chips and the search narrow the list together', async ({ page }) => {
+        await page.goto('/catalog');
+        await openFilters(page, javaScriptEnabled);
+        await page
+          .getByRole('navigation', { name: 'По бренду' })
+          .getByRole('link', { name: 'Ronas' })
+          .click();
+        await expect(page).toHaveURL(/\/catalog\?brand=ronas$/);
+        await showResults(page, javaScriptEnabled);
+        await expect(page.getByText('Stem Cell Z Serum')).toBeVisible();
+        await expect(page.getByText('Успокаивающая cica-сыворотка')).toHaveCount(0);
+
+        // The search keeps the brand; nothing found offers the whole catalog.
+        const search = page.getByRole('searchbox', { name: 'Поиск по каталогу' });
+        await search.fill('cica');
+        await search.press('Enter');
+        await expect(page).toHaveURL(/\/catalog\?brand=ronas&q=cica$/);
+        await expect(page.getByText('По запросу «cica» ничего не нашлось')).toBeVisible();
+        await page.getByRole('link', { name: 'Искать во всём каталоге' }).click();
+        await expect(page).toHaveURL(/\/catalog\?q=cica$/);
+        await expect(page.getByText('Успокаивающая cica-сыворотка')).toBeVisible();
+        await expect(page.getByText('Stem Cell Z Serum')).toHaveCount(0);
       });
     });
   }

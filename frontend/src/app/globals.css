@@ -14,6 +14,20 @@
   }
 }
 
+/*
+ * Height of the sticky site header (site-header.tsx): a 56 px row, 44 px tabs, a 10 px gap and the 1 px border on
+ * phones; one 68 px row and the border from 1024 px. The catalog's sticky search bar sits under it.
+ */
+:root {
+  --header-h: 111px;
+  --catalog-bar-h: 60px;
+}
+@media (min-width: 1024px) {
+  :root {
+    --header-h: 69px;
+  }
+}
+
 /* Heading type from the design: size × --fhk, Cormorant via --fh. */
 @utility heading {
   font-family: var(--fh);

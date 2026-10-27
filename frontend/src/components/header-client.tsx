@@ -126,8 +126,15 @@ export function CurrencyPicker() {
  * «К результатам теста». The stack lets taps through except on the pills themselves.
  */
 export function HeaderPills() {
+  // The catalog's sticky search bar sits right under the header; the pills go below it.
+  const catalog = usePathname() === '/catalog';
   return (
-    <div className="pointer-events-none absolute top-[calc(100%+10px)] right-3 flex flex-col items-end gap-2 lg:right-6">
+    <div
+      className={cn(
+        'pointer-events-none absolute right-3 flex flex-col items-end gap-2 lg:right-6',
+        catalog ? 'top-[calc(100%+10px+var(--catalog-bar-h))]' : 'top-[calc(100%+10px)]',
+      )}
+    >
       <CartPill />
       <QuizPill />
     </div>

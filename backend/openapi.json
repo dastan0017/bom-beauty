@@ -7415,7 +7415,7 @@
             "type": "boolean"
           },
           "imageIds": {
-            "maxItems": 3,
+            "maxItems": 10,
             "type": "array",
             "items": {
               "type": "string",

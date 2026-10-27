@@ -188,14 +188,78 @@ describe('admin: catalog, content, settings, users', () => {
     });
   });
 
-  it('refuses to delete a product that is part of a program', async () => {
-    const cica = await ctx.prisma.product.findUniqueOrThrow({ where: { slug: 'dr-sgn-cica-serum' } });
-    const res = await request<ErrorResponse>(api(`/products/${cica.id}`), {
-      method: 'DELETE',
-      headers: owner.write,
+  it('deletes a product that is part of a program and featured on the wholesale page', async () => {
+    const created = await request<AdminProduct>(api('/products'), {
+      method: 'POST',
+      headers: manager.write,
+      json: product({ name: 'Тонер на удаление' }),
     });
-    expect(res.status).toBe(409);
-    expect(res.body.error.fields).toEqual({ id: 'product.in_program' });
+    const id = created.body.id;
+    const other = await ctx.prisma.product.findUniqueOrThrow({ where: { slug: 'dr-sgn-cica-serum' } });
+    const program = await ctx.prisma.program.findFirstOrThrow({
+      where: { items: { some: { productId: other.id } } },
+      select: { id: true, slug: true, priceKgs: true, items: { select: { productId: true } } },
+    });
+    await ctx.prisma.programItem.create({ data: { programId: program.id, productId: id, order: 99 } });
+    await ctx.prisma.programStep.create({
+      data: { programId: program.id, productId: id, period: 'am', order: 99, text: 'Шаг' },
+    });
+    const wholesale = await request<AdminContent>(api('/content/wholesale'), { headers: manager.read });
+    const featured = wholesale.body.data.featuredProductIds as string[];
+    const saved = await request(api('/content/wholesale'), {
+      method: 'PUT',
+      headers: manager.write,
+      json: { data: { ...wholesale.body.data, featuredProductIds: [id, ...featured] } },
+    });
+    expect(saved.status).toBe(200);
+
+    const res = await request(api(`/products/${id}`), { method: 'DELETE', headers: owner.write });
+    expect(res.status).toBe(204);
+    expect(await ctx.prisma.product.count({ where: { id } })).toBe(0);
+    const after = await ctx.prisma.program.findUniqueOrThrow({
+      where: { id: program.id },
+      select: {
+        priceKgs: true,
+        items: { select: { productId: true } },
+        steps: { select: { productId: true } },
+      },
+    });
+    expect(after.priceKgs).toBe(program.priceKgs);
+    expect(after.items.map((item) => item.productId).sort()).toEqual(
+      program.items.map((item) => item.productId).sort(),
+    );
+    expect(after.steps.some((step) => step.productId === id)).toBe(false);
+    await waitFor(() => web.calls.some((call) => call.tags.includes(`program:${program.slug}`)));
+
+    // The wholesale page still saves: the deleted product left its featured list.
+    const reread = await request<AdminContent>(api('/content/wholesale'), { headers: manager.read });
+    expect(reread.body.data.featuredProductIds).toEqual(featured);
+    const resaved = await request(api('/content/wholesale'), {
+      method: 'PUT',
+      headers: manager.write,
+      json: { data: reread.body.data },
+    });
+    expect(resaved.status).toBe(200);
+  });
+
+  it('serves the wholesale protocols PDF next to the brand catalog', async () => {
+    const pdf = await ctx.prisma.media.create({
+      data: { bucket: 'public', kind: 'pdf', status: 'ready', key: 'd/protocols.pdf', bytes: 2048 },
+    });
+    const current = await request<AdminContent>(api('/content/wholesale'), { headers: manager.read });
+    const saved = await request<AdminContent>(api('/content/wholesale'), {
+      method: 'PUT',
+      headers: manager.write,
+      json: { data: { ...current.body.data, protocolsMediaId: pdf.id } },
+    });
+    expect(saved.status).toBe(200);
+    expect(saved.body.media.map((item) => item.id)).toContain(pdf.id);
+    const site = await request<{
+      data: { protocolsMediaId: string };
+      refs: { files: Record<string, unknown> };
+    }>(ctx.url('/v1/content/wholesale'));
+    expect(site.body.data.protocolsMediaId).toBe(pdf.id);
+    expect(site.body.refs.files[pdf.id]).toBeDefined();
   });
 
   it('saves programs with ordered items, steps limited to those items, savings and slug redirects', async () => {

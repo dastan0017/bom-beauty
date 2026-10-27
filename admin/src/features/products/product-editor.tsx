@@ -21,10 +21,10 @@ import {
   Toggle,
   useUnsavedGuard,
 } from '@/components/ui/editor';
-import { ImageSlot } from '@/components/ui/media';
 import { copy } from '@/content/copy';
 import { env } from '@/env';
 import { errorText, fieldErrors } from '@/lib/format';
+import { ProductPhotos } from './product-photos';
 
 const EMPTY: ProductInput = {
   name: '',
@@ -89,7 +89,7 @@ export function ProductEditorPage() {
   }
   const initial = product.data
     ? toInput(product.data)
-    : { ...EMPTY, categoryId: params.get('category') ?? '' };
+    : { ...EMPTY, categoryId: params.get('category') ?? '', brandName: params.get('brand') ?? '' };
   return <ProductForm key={product.data?.id ?? 'new'} product={product.data ?? null} initial={initial} />;
 }
 
@@ -107,7 +107,9 @@ function ProductForm({ product, initial }: { product: AdminProduct | null; initi
   const location = useLocation();
   const [saved, setSaved] = useState(Boolean((location.state as { saved?: boolean } | null)?.saved));
   const brands = useBrands(form.brandName.trim());
-  const dirty = JSON.stringify(form) !== JSON.stringify(baseline);
+  // The photo list is its own state (uploads append to it one by one); the form takes its ids.
+  const input: ProductInput = { ...form, imageIds: images.map((image) => image.id) };
+  const dirty = JSON.stringify(input) !== JSON.stringify(baseline);
   useUnsavedGuard(dirty && !save.isPending);
 
   const categoryId = form.categoryId || categories.data?.[0]?.id || '';
@@ -116,10 +118,15 @@ function ProductForm({ product, initial }: { product: AdminProduct | null; initi
     setErrors(({ [key]: _removed, ...rest }) => rest);
     setSaved(false);
   };
+  const changePhotos = (change: (list: AdminMedia[]) => AdminMedia[]) => {
+    setImages(change);
+    setErrors(({ imageIds: _removed, ...rest }) => rest);
+    setSaved(false);
+  };
 
   const submit = () =>
     save.mutate(
-      { ...form, categoryId },
+      { ...input, categoryId },
       {
         onSuccess: (result) => {
           toast.success(copy.saved);
@@ -146,36 +153,6 @@ function ProductForm({ product, initial }: { product: AdminProduct | null; initi
   const badged =
     (allProducts.data ?? []).filter((p) => p.id !== product?.id && p.badge).length + (form.badge ? 1 : 0);
   const title = form.name.trim() || copy.product.new;
-  const removeImage = (id: string) => {
-    setImages((list) => list.filter((image) => image.id !== id));
-    set(
-      'imageIds',
-      form.imageIds.filter((imageId) => imageId !== id),
-    );
-  };
-  const setImageAt = (index: number, media: AdminMedia) => {
-    const next = [...images];
-    next[index] = media;
-    const compact = next.filter((image): image is AdminMedia => Boolean(image));
-    setImages(compact);
-    set(
-      'imageIds',
-      compact.map((image) => image.id),
-    );
-  };
-  const slot = (index: number, label: string, className?: string) => {
-    const media = images[index] ?? null;
-    return (
-      <ImageSlot
-        media={media}
-        label={label}
-        purpose="product"
-        onChange={(uploaded) => setImageAt(Math.min(index, images.length), uploaded)}
-        {...(media ? { onRemove: () => removeImage(media.id) } : {})}
-        {...(className ? { className } : {})}
-      />
-    );
-  };
 
   return (
     <>
@@ -339,13 +316,9 @@ function ProductForm({ product, initial }: { product: AdminProduct | null; initi
         <div className="flex max-w-[440px] min-w-0 flex-[1_1_320px] flex-col gap-4">
           <Panel
             title={copy.product.photos}
-            aside={<span className="text-[13px] text-muted">{copy.media.dropHint}</span>}
+            aside={<span className="text-[13px] text-muted">{copy.media.photosCount(images.length)}</span>}
           >
-            {slot(0, copy.media.mainPhoto)}
-            <div className="grid grid-cols-2 gap-2.5">
-              {slot(1, copy.media.photoN(2), 'rounded-xl')}
-              {slot(2, copy.media.photoN(3), 'rounded-xl')}
-            </div>
+            <ProductPhotos images={images} onChange={changePhotos} />
             <FieldError error={errors.imageIds} />
           </Panel>
           <SwitchRow label={copy.editor.inStock} checked={form.inStock} onChange={(v) => set('inStock', v)} />
@@ -390,30 +363,36 @@ function ProductForm({ product, initial }: { product: AdminProduct | null; initi
               onChange={(v) => set('seoulChoice', v)}
             />
           </Panel>
-          {product &&
-            (product.programs.length > 0 ? (
-              <p className="rounded-card border border-line bg-surface px-5 py-4 text-sm leading-normal text-muted">
-                {copy.product.inPrograms(product.programs.map((p) => `«${p.title}»`).join(', '))}
-              </p>
-            ) : (
-              <ConfirmDelete
-                label={copy.product.delete}
-                title={copy.product.deleteTitle}
-                text={copy.product.deleteText}
-                pending={remove.isPending}
-                onConfirm={() =>
-                  remove.mutate(product.id, {
-                    onSuccess: () => {
-                      toast.success(copy.product.deleted);
-                      void navigate('/products');
-                    },
-                    onError: (error) => toast.error(errorText(error)),
-                  })
-                }
-              />
-            ))}
         </div>
       </div>
+
+      {product && (
+        // At the end of the product's info, as the owner asked (2026-10-26).
+        <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2.5 border-t border-line pt-6">
+          <ConfirmDelete
+            label={copy.product.delete}
+            title={copy.product.deleteTitle}
+            text={
+              product.programs.length > 0
+                ? copy.product.deleteInPrograms(product.programs.map((p) => `«${p.title}»`).join(', '))
+                : copy.product.deleteText
+            }
+            pending={remove.isPending}
+            onConfirm={() =>
+              remove.mutate(product.id, {
+                onSuccess: () => {
+                  toast.success(copy.product.deleted);
+                  // After the baseline update has rendered, so the unsaved-changes guard lets the redirect through.
+                  setBaseline(input);
+                  setTimeout(() => void navigate('/products'), 0);
+                },
+                onError: (error) => toast.error(errorText(error)),
+              })
+            }
+          />
+          <span className="text-sm leading-normal text-muted">{copy.product.deleteHint}</span>
+        </div>
+      )}
     </>
   );
 }
@@ -478,17 +457,20 @@ export function ConfirmDelete({
   text,
   pending,
   onConfirm,
+  trigger,
 }: {
   label: string;
   title: string;
   text: string;
   pending: boolean;
   onConfirm: () => void;
+  /** Replaces the default «Удалить …» button (the products table uses an icon button). */
+  trigger?: ReactNode;
 }) {
   return (
     <AlertDialog.Root>
       <AlertDialog.Trigger asChild>
-        <Button variant="danger">{label}</Button>
+        {trigger ?? <Button variant="danger">{label}</Button>}
       </AlertDialog.Trigger>
       <AlertDialog.Portal>
         <AlertDialog.Overlay className="fixed inset-0 z-[60] bg-[rgba(20,20,43,.4)]" />

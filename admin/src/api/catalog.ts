@@ -93,6 +93,9 @@ export function useDeleteProduct() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: keys.products.all });
       void queryClient.invalidateQueries({ queryKey: keys.categories });
+      // The product also leaves its programs and the wholesale page's featured list.
+      void queryClient.invalidateQueries({ queryKey: keys.programs.all });
+      void queryClient.invalidateQueries({ queryKey: keys.content('wholesale') });
     },
   });
 }

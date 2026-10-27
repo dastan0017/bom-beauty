@@ -71,6 +71,8 @@ export const wholesaleContentSchema = z.object({
     )
     .max(6),
   catalogMediaId: z.uuid().nullable(),
+  /** «Готовые протоколы от производителя» PDF; its button shows only once uploaded (owner request 2026-10-26). */
+  protocolsMediaId: z.uuid().nullable().default(null),
   /** Portrait in the "Обо мне" block, shown until a video is uploaded. */
   portraitMediaId: z.uuid().nullable().default(null),
   videoId: z.uuid().nullable(),
