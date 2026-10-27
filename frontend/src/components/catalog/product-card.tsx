@@ -55,9 +55,7 @@ export function ProductCard({ product, priority = false }: { product: ProductCar
           </span>
         </span>
       </Link>
-      {product.video && (
-        <ProductVideoButton product={cartProduct(product)} video={product.video} variant="card" />
-      )}
+      {product.video && <ProductVideoButton product={cartProduct(product)} video={product.video} />}
       <AddToCart slug={product.slug} name={product.name} size="card" />
     </article>
   );

@@ -165,6 +165,7 @@ export const copy = {
     backTo: { catalog: 'Каталог', program: 'К программе' },
     gallery: 'Фото товара',
     media: 'Фото и видео товара',
+    videoSlide: 'Видео',
     photoOf: (n: number) => `Фото ${n}`,
   },
   wholesale: {

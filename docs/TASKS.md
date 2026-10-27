@@ -192,7 +192,8 @@ Requests from Нурайым while filling the admin, plus the developer's follo
       page of the brand (migration `brand_description`, additive) (D41)
 - [x] Product video (2026-10-27): «Видео» slot in the product editor (Bunny), play badge on catalog cards, player end
       card «Заказать» (migration `product_video`, additive) (D42); the product gallery has a thumbnail row with the video
-      as its last tile (the owner chose mockup «D» of four)
+      as its last tile (the owner chose mockup «D» of four); the video is the gallery's last slide, swiped to and played in
+      place
 - [x] Unique categories and brands (2026-10-27): names compared without case, spaces and punctuation; «⋯» on every
       chip to rename, merge into another or delete; a hint lists likely duplicates (D43)
 - [x] Admin usability pass (2026-10-27): product checkboxes with a bulk bar (stock, visibility, category, delete),

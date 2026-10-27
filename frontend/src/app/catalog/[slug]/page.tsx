@@ -69,12 +69,7 @@ export default async function ProductPage({ params }: Params) {
         <section className="flex flex-col px-4 pt-2.5 lg:sticky lg:top-[92px] lg:self-start lg:px-0">
           <ProductBackLink />
           <div className="mt-2">
-            <ProductGallery
-              images={images}
-              name={product.name}
-              video={product.video}
-              product={cartProduct(product)}
-            />
+            <ProductGallery images={images} name={product.name} video={product.video} />
           </div>
         </section>
 

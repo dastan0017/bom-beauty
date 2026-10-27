@@ -3,7 +3,7 @@
 import type { ImageRef, VideoRef } from '@bom/shared';
 import { LINE_QTY_MAX } from '@bom/shared/web';
 import type { Route } from 'next';
-import { useRef, useState, type MouseEvent } from 'react';
+import { useRef, useState, useSyncExternalStore, type MouseEvent } from 'react';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
 import { formatDuration } from '@/lib/words';
@@ -28,25 +28,15 @@ export function ProductBackLink() {
 }
 
 /**
- * Product video (owner request 2026-10-27). A plain link to the MP4, so it plays without JavaScript; with it, the
- * site's full-screen player, whose end card orders the product. `card` is the play badge on a catalog card, `thumb`
- * the last tile of the product gallery's thumbnail row.
+ * The play badge on a catalog card (owner request 2026-10-27): the site's full-screen player, whose end card orders
+ * the product. A plain link to the MP4, so it plays without JavaScript too.
  */
-export function ProductVideoButton({
-  product,
-  video,
-  variant,
-}: {
-  product: CartProduct;
-  video: VideoRef;
-  variant: 'card' | 'thumb';
-}) {
+export function ProductVideoButton({ product, video }: { product: CartProduct; video: VideoRef }) {
   const { openVideo, openCart } = useOverlays();
   const cart = useCart();
   const { format } = useCurrency();
   const href = video.mp4 ?? video.hls;
   if (!href) return null;
-  const duration = formatDuration(video.durationSec);
   const play = (event: MouseEvent) => {
     event.preventDefault();
     openVideo({
@@ -63,43 +53,16 @@ export function ProductVideoButton({
       },
     });
   };
-
-  if (variant === 'card') {
-    return (
-      <a
-        href={href}
-        onClick={play}
-        aria-label={copy.video.watchProduct(product.name)}
-        className="absolute top-2 right-2 z-[2] flex size-11 items-center justify-center"
-      >
-        <span className="flex size-8 items-center justify-center rounded-full bg-surface text-accent shadow-[0_2px_8px_rgba(14,14,44,.18)]">
-          <PlayIcon size={12} className="ml-px" />
-        </span>
-      </a>
-    );
-  }
   return (
     <a
       href={href}
       onClick={play}
       aria-label={copy.video.watchProduct(product.name)}
-      className={cn(thumbClass, 'flex-col gap-[3px] border-transparent bg-ink text-white')}
+      className="absolute top-2 right-2 z-[2] flex size-11 items-center justify-center"
     >
-      {video.poster && (
-        // eslint-disable-next-line @next/next/no-img-element -- Bunny poster, already sized by the CDN
-        <img
-          src={video.poster}
-          alt=""
-          loading="lazy"
-          decoding="async"
-          className="absolute inset-0 size-full object-cover"
-        />
-      )}
-      <span className="absolute inset-0 bg-[rgba(14,14,44,.45)]" />
-      <span className="relative flex size-[26px] items-center justify-center rounded-full bg-surface text-accent">
-        <PlayIcon size={10} className="ml-0.5" />
+      <span className="flex size-8 items-center justify-center rounded-full bg-surface text-accent shadow-[0_2px_8px_rgba(14,14,44,.18)]">
+        <PlayIcon size={12} className="ml-px" />
       </span>
-      {duration && <span className="relative text-[11px] leading-none font-semibold">{duration}</span>}
     </a>
   );
 }
@@ -108,28 +71,41 @@ export function ProductVideoButton({
 const thumbClass =
   'relative flex size-[62px] flex-none items-center justify-center overflow-hidden rounded-xl border bg-surface-2';
 
+const subscribeNothing = () => () => undefined;
+/** False on the server and during hydration, true afterwards. */
+const useHydrated = () =>
+  useSyncExternalStore(
+    subscribeNothing,
+    () => true,
+    () => false,
+  );
+
 /**
- * Product photos (design: gallery): a swipeable main photo and, under it, a row of thumbnails with the video last
- * (owner's pick, 2026-10-27, «D · Лента миниатюр»). The row replaces the design's dots; a thumbnail shows its photo,
- * a swipe moves the highlight. Without JavaScript the thumbnails are anchors to the slides.
+ * Product photos (design: gallery): a swipeable main photo and, under it, a row of thumbnails (owner's pick,
+ * 2026-10-27, «D · Лента миниатюр»; the row replaces the design's dots). The product video is the last slide: it plays
+ * in place, and leaving the slide pauses it. A thumbnail shows its slide; a swipe moves the highlight. Without
+ * JavaScript the thumbnails are anchors to the slides and the video has the browser's own controls.
  */
 export function ProductGallery({
   images,
   name,
   video = null,
-  product,
 }: {
   images: ImageRef[];
   name: string;
   video?: VideoRef | null;
-  product?: CartProduct;
 }) {
   const track = useRef<HTMLDivElement>(null);
   const strip = useRef<HTMLDivElement>(null);
+  const player = useRef<HTMLVideoElement>(null);
+  const hydrated = useHydrated();
   const [active, setActive] = useState(0);
-  const slides: (ImageRef | null)[] = images.length ? images : [null];
-  const playable = video && product && (video.mp4 ?? video.hls) ? { video, product } : null;
-  const withStrip = images.length > 1 || playable !== null;
+  const [started, setStarted] = useState(false);
+  const playable = video && (video.mp4 ?? video.hls) ? video : null;
+  // A product with a video and no photos shows just the video.
+  const photos: (ImageRef | null)[] = images.length ? images : playable ? [] : [null];
+  const videoIndex = playable ? photos.length : -1;
+  const count = photos.length + (playable ? 1 : 0);
 
   const show = (index: number) => {
     const element = track.current;
@@ -142,6 +118,12 @@ export function ProductGallery({
     if (!row || !(thumb instanceof HTMLElement)) return;
     row.scrollTo({ left: thumb.offsetLeft - (row.clientWidth - thumb.clientWidth) / 2, behavior: 'smooth' });
   };
+  const play = () => {
+    setStarted(true);
+    void player.current?.play().catch(() => undefined);
+  };
+  const label = (index: number) =>
+    index === videoIndex ? copy.product.videoSlide : copy.product.photoOf(index + 1);
 
   return (
     <div>
@@ -150,24 +132,25 @@ export function ProductGallery({
         onScroll={(event) => {
           const { scrollLeft, clientWidth } = event.currentTarget;
           const index = Math.round(scrollLeft / Math.max(1, clientWidth));
-          if (index !== active) {
-            setActive(index);
-            follow(index);
-          }
+          if (index === active) return;
+          setActive(index);
+          follow(index);
+          // Only leaving the video pauses it; a scroll that merely passes photos on its way to it does not.
+          if (active === videoIndex) player.current?.pause();
         }}
         className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto rounded-card border border-line bg-surface"
         role="region"
         aria-roledescription="carousel"
         aria-label={copy.product.gallery}
-        // Arrow keys scroll the gallery (snapping to each photo) when it has focus.
-        tabIndex={slides.length > 1 ? 0 : undefined}
+        // Arrow keys scroll the gallery (snapping to each slide) when it has focus.
+        tabIndex={count > 1 ? 0 : undefined}
       >
-        {slides.map((image, index) => (
+        {photos.map((image, index) => (
           <div
             key={image?.id ?? 'empty'}
             id={`photo-${index + 1}`}
             className="relative flex aspect-square flex-[0_0_100%] snap-start items-center justify-center bg-surface-2"
-            aria-label={copy.product.photoOf(index + 1)}
+            aria-label={label(index)}
             role="group"
           >
             <BbImage
@@ -180,42 +163,108 @@ export function ProductGallery({
             />
           </div>
         ))}
+        {playable && (
+          <div
+            id={`photo-${videoIndex + 1}`}
+            className="relative aspect-square flex-[0_0_100%] snap-start bg-ink"
+            aria-label={label(videoIndex)}
+            role="group"
+          >
+            <video
+              ref={player}
+              poster={playable.poster ?? undefined}
+              playsInline
+              preload="none"
+              controls={!hydrated || started}
+              onPlay={() => setStarted(true)}
+              className="absolute inset-0 size-full object-contain"
+            >
+              {playable.hls && <source src={playable.hls} type="application/vnd.apple.mpegurl" />}
+              {playable.mp4 && <source src={playable.mp4} type="video/mp4" />}
+            </video>
+            {hydrated && !started && (
+              <button
+                type="button"
+                onClick={play}
+                aria-label={copy.video.watchProduct(name)}
+                className="absolute inset-0 flex items-center justify-center"
+              >
+                <span className="flex size-16 items-center justify-center rounded-full bg-surface text-accent shadow-[0_12px_30px_rgba(14,14,44,.28)]">
+                  <PlayIcon size={22} className="ml-[3px]" />
+                </span>
+              </button>
+            )}
+          </div>
+        )}
       </div>
-      {withStrip && (
+      {count > 1 && (
         <div
           ref={strip}
           role="group"
           aria-label={copy.product.media}
           className="mt-2.5 no-scrollbar flex snap-x gap-2 overflow-x-auto"
         >
-          {images.length > 1 &&
-            images.map((image, index) => (
-              <a
-                key={image.id}
-                href={`#photo-${index + 1}`}
-                aria-label={copy.product.photoOf(index + 1)}
-                aria-current={index === active ? 'true' : undefined}
-                onClick={(event) => {
-                  event.preventDefault();
-                  show(index);
-                }}
-                className={cn(
-                  thumbClass,
-                  'snap-start',
-                  index === active ? 'border-2 border-ink' : 'border-line hover:border-line-hover',
-                )}
-              >
-                <BbImage image={image} sizes="62px" width={128} alt="" />
-              </a>
-            ))}
+          {images.map((image, index) => (
+            <a
+              key={image.id}
+              href={`#photo-${index + 1}`}
+              aria-label={label(index)}
+              aria-current={index === active ? 'true' : undefined}
+              onClick={(event) => {
+                event.preventDefault();
+                show(index);
+              }}
+              className={cn(
+                thumbClass,
+                'snap-start',
+                index === active ? 'border-2 border-ink' : 'border-line hover:border-line-hover',
+              )}
+            >
+              <BbImage image={image} sizes="62px" width={128} alt="" />
+            </a>
+          ))}
           {playable && (
-            <ProductVideoButton product={playable.product} video={playable.video} variant="thumb" />
+            <a
+              href={`#photo-${videoIndex + 1}`}
+              aria-label={copy.video.watchProduct(name)}
+              aria-current={videoIndex === active ? 'true' : undefined}
+              onClick={(event) => {
+                event.preventDefault();
+                show(videoIndex);
+                play();
+              }}
+              className={cn(
+                thumbClass,
+                'snap-start flex-col gap-[3px] bg-ink text-white',
+                videoIndex === active ? 'border-2 border-ink' : 'border-transparent',
+              )}
+            >
+              {playable.poster && (
+                // eslint-disable-next-line @next/next/no-img-element -- Bunny poster, already sized by the CDN
+                <img
+                  src={playable.poster}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  className="absolute inset-0 size-full object-cover"
+                />
+              )}
+              <span className="absolute inset-0 bg-[rgba(14,14,44,.45)]" />
+              <span className="relative flex size-[26px] items-center justify-center rounded-full bg-surface text-accent">
+                <PlayIcon size={10} className="ml-0.5" />
+              </span>
+              {formatDuration(playable.durationSec) && (
+                <span className="relative text-[11px] leading-none font-semibold">
+                  {formatDuration(playable.durationSec)}
+                </span>
+              )}
+            </a>
           )}
         </div>
       )}
-      {slides.length > 1 && (
+      {count > 1 && (
         <span className="sr-only" aria-live="polite">
-          {copy.product.photoOf(active + 1)}
+          {label(active)}
         </span>
       )}
     </div>
