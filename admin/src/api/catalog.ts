@@ -25,6 +25,57 @@ export function useDeleteCategory() {
   });
 }
 
+/** After a rename, merge or delete of a category or brand: every list that shows them. */
+function invalidateTaxonomy(queryClient: ReturnType<typeof useQueryClient>) {
+  void queryClient.invalidateQueries({ queryKey: keys.categories });
+  void queryClient.invalidateQueries({ queryKey: keys.brandsAll });
+  void queryClient.invalidateQueries({ queryKey: keys.products.all });
+}
+
+export function useRenameCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, name }: { id: string; name: string }) =>
+      unwrap(api.PUT('/v1/admin/categories/{id}', { params: { path: { id } }, body: { name } })),
+    onSuccess: () => invalidateTaxonomy(queryClient),
+  });
+}
+
+export function useMergeCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, intoId }: { id: string; intoId: string }) =>
+      unwrap(api.POST('/v1/admin/categories/{id}/merge', { params: { path: { id } }, body: { intoId } })),
+    onSuccess: () => invalidateTaxonomy(queryClient),
+  });
+}
+
+export function useRenameBrand() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, name }: { id: string; name: string }) =>
+      unwrap(api.PUT('/v1/admin/brands/{id}', { params: { path: { id } }, body: { name } })),
+    onSuccess: () => invalidateTaxonomy(queryClient),
+  });
+}
+
+export function useMergeBrand() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, intoId }: { id: string; intoId: string }) =>
+      unwrap(api.POST('/v1/admin/brands/{id}/merge', { params: { path: { id } }, body: { intoId } })),
+    onSuccess: () => invalidateTaxonomy(queryClient),
+  });
+}
+
+export function useDeleteBrand() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => unwrap(api.DELETE('/v1/admin/brands/{id}', { params: { path: { id } } })),
+    onSuccess: () => invalidateTaxonomy(queryClient),
+  });
+}
+
 export function useBrands(q: string) {
   return useQuery({
     queryKey: keys.brands(q),

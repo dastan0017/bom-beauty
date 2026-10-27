@@ -65,7 +65,19 @@ export const brandOptionSchema = z.object({
   name: z.string(),
   /** «О бренде», shared by every product of the brand. */
   description: z.string(),
+  /** Products of the brand (all of them, published or not). */
+  count: z.number().int(),
 });
+export type AdminBrand = z.infer<typeof brandOptionSchema>;
+
+export const brandInputSchema = z.object({
+  name: z.string().trim().min(1, 'brand.name.required').max(60, 'text.too_long'),
+});
+export type BrandInput = z.infer<typeof brandInputSchema>;
+
+/** Merge a category or brand into another: its products move there, then it is deleted. */
+export const mergeInputSchema = z.object({ intoId: z.uuid() });
+export type MergeInput = z.infer<typeof mergeInputSchema>;
 export const brandQuerySchema = z.object({ q: z.string().trim().max(60).optional() });
 
 // Products

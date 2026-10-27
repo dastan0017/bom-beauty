@@ -118,6 +118,37 @@ test('catalog: create a product, see it on the site, find it in the list, delete
   await expect(page.getByRole('row').filter({ hasText: name })).toHaveCount(0);
 });
 
+test('catalog: a category is renamed and deleted from its «⋯» settings; duplicate names are refused', async () => {
+  const name = `E2E категория ${Date.now().toString().slice(-6)}`;
+  const renamed = `${name} новая`;
+  await page.getByRole('link', { name: 'Товары' }).first().click();
+  await page.getByRole('button', { name: 'Категория', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Например: Маски' }).fill(name);
+  await page.getByRole('button', { name: 'Добавить', exact: true }).click();
+  await expect(page.getByText('Категория добавлена')).toBeVisible();
+
+  // The same name with other case and punctuation is the same category.
+  await page.getByRole('button', { name: 'Категория', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Например: Маски' }).fill(` ${name.toUpperCase()}. `);
+  await page.getByRole('button', { name: 'Добавить', exact: true }).click();
+  await expect(page.getByText('Такая категория уже есть')).toBeVisible();
+  await page.getByRole('button', { name: 'Отмена', exact: true }).click();
+
+  await page.getByRole('button', { name: `Настроить «${name}»` }).click();
+  const dialog = page.getByRole('dialog', { name: `Категория «${name}»` });
+  await dialog.getByLabel('Название').fill(renamed);
+  await dialog.getByRole('button', { name: 'Сохранить название' }).click();
+  await expect(page.getByText('Название сохранено')).toBeVisible();
+
+  await page.getByRole('button', { name: `Настроить «${renamed}»` }).click();
+  await page
+    .getByRole('dialog', { name: `Категория «${renamed}»` })
+    .getByRole('button', { name: 'Удалить' })
+    .click();
+  await expect(page.getByText('Категория удалена')).toBeVisible();
+  await expect(page.getByRole('button', { name: `Настроить «${renamed}»` })).toHaveCount(0);
+});
+
 test('payments: the link to send, a WhatsApp order marked paid, the «Оплата» settings', async ({
   request,
 }) => {

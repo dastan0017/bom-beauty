@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { matchesSearch, normalizeSearch } from './search';
+import { matchesSearch, nameKey, normalizeSearch } from './search';
 
 const cica = ['Cica-сыворотка восстанавливающая', 'Dr. SGN', 'Снимает покраснения', 'Сыворотки', '30 мл'];
 
@@ -41,5 +41,18 @@ describe('matchesSearch', () => {
 
   it('skips empty fields', () => {
     expect(matchesSearch('тонер', ['Тонер', null, undefined, ''])).toBe(true);
+  });
+});
+
+describe('nameKey', () => {
+  it('treats names that differ in case, spaces or punctuation as one', () => {
+    expect(nameKey('Dr. SGN')).toBe(nameKey('Dr.SGN'));
+    expect(nameKey('dr sgn')).toBe(nameKey('DR-SGN'));
+    expect(nameKey('Сыворотки')).toBe(nameKey(' сыворотки. '));
+  });
+
+  it('keeps different names apart', () => {
+    expect(nameKey('TUPS')).not.toBe(nameKey('TUPS Laboratories'));
+    expect(nameKey('Dr. SGN')).not.toBe(nameKey('Dr. SGNBIO'));
   });
 });

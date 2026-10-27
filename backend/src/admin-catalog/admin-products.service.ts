@@ -1,10 +1,13 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import {
+  nameKey,
   productInputSchema,
   slugify,
+  type AdminBrand,
   type AdminCategory,
   type AdminProduct,
   type AdminProductRow,
+  type BrandInput,
   type CategoryInput,
 } from '@bom/shared';
 import type { z } from 'zod';
@@ -102,15 +105,7 @@ export class AdminProductsService {
   }
 
   async createCategory(input: CategoryInput, actor: Actor): Promise<AdminCategory> {
-    const exists = await this.prisma.category.findFirst({
-      where: { name: { equals: input.name, mode: 'insensitive' } },
-      select: { id: true },
-    });
-    if (exists) {
-      throw new ApiException('conflict', HttpStatus.CONFLICT, 'Такая категория уже есть', {
-        name: 'category.name.taken',
-      });
-    }
+    await this.assertCategoryNameFree(input.name);
     const slug = await resolveSlug('', input.name, async (candidate) =>
       Boolean(await this.prisma.category.findUnique({ where: { slug: candidate }, select: { id: true } })),
     );
@@ -130,11 +125,15 @@ export class AdminProductsService {
   }
 
   async renameCategory(id: string, input: CategoryInput, actor: Actor): Promise<AdminCategory> {
-    const row = await this.prisma.category.update({
-      where: { id },
-      data: { name: input.name },
-      select: { id: true, slug: true, name: true, order: true, _count: { select: { products: true } } },
-    });
+    await this.assertCategoryNameFree(input.name, id);
+    const row = await this.prisma.category
+      .update({
+        where: { id },
+        data: { name: input.name },
+        select: { id: true, slug: true, name: true, order: true, _count: { select: { products: true } } },
+      })
+      .catch(() => null);
+    if (!row) throw notFound('Категория не найдена');
     await this.audit.log({ ...this.actorEntry(actor), entity: 'category', entityId: id, action: 'update' });
     this.revalidator.revalidate([SITE_TAGS.categories, SITE_TAGS.products]);
     const { _count, ...rest } = row;
@@ -155,13 +154,131 @@ export class AdminProductsService {
     this.revalidator.revalidate([SITE_TAGS.categories]);
   }
 
-  async brands(q?: string) {
-    return this.prisma.brand.findMany({
+  /** Moves every product of the category into another one, then deletes it (fixes duplicates). */
+  async mergeCategory(id: string, intoId: string, actor: Actor): Promise<AdminCategory> {
+    if (id === intoId) throw invalidField('intoId', 'merge.same');
+    const [from, into] = await Promise.all([
+      this.prisma.category.findUnique({ where: { id }, select: { name: true } }),
+      this.prisma.category.findUnique({ where: { id: intoId }, select: { name: true } }),
+    ]);
+    if (!from || !into) throw notFound('Категория не найдена');
+    const [moved] = await this.prisma.$transaction([
+      this.prisma.product.updateMany({ where: { categoryId: id }, data: { categoryId: intoId } }),
+      this.prisma.category.delete({ where: { id } }),
+    ]);
+    await this.audit.log({
+      ...this.actorEntry(actor),
+      entity: 'category',
+      entityId: id,
+      action: 'merge',
+      diff: { from: from.name, into: into.name, products: moved.count },
+    });
+    this.revalidator.revalidate([SITE_TAGS.categories, SITE_TAGS.products]);
+    const target = (await this.categories()).find((category) => category.id === intoId);
+    if (!target) throw notFound('Категория не найдена');
+    return target;
+  }
+
+  private async assertCategoryNameFree(name: string, exceptId?: string): Promise<void> {
+    const key = nameKey(name);
+    const rows = await this.prisma.category.findMany({ select: { id: true, name: true } });
+    if (rows.some((row) => row.id !== exceptId && nameKey(row.name) === key)) {
+      throw new ApiException('conflict', HttpStatus.CONFLICT, 'Такая категория уже есть', {
+        name: 'category.name.taken',
+      });
+    }
+  }
+
+  // Brands: created by product saves, managed (rename, merge, delete) from the products page.
+
+  async brands(q?: string): Promise<AdminBrand[]> {
+    const rows = await this.prisma.brand.findMany({
       where: q ? { name: { contains: q, mode: 'insensitive' } } : {},
       orderBy: { name: 'asc' },
-      take: 20,
-      select: { id: true, slug: true, name: true, description: true },
+      select: { id: true, slug: true, name: true, description: true, _count: { select: { products: true } } },
     });
+    return rows.map(({ _count, ...row }) => ({ ...row, count: _count.products }));
+  }
+
+  async renameBrand(id: string, input: BrandInput, actor: Actor): Promise<AdminBrand> {
+    const same = await this.brandByKey(input.name, id);
+    if (same) {
+      throw new ApiException('conflict', HttpStatus.CONFLICT, 'Такой бренд уже есть', {
+        name: 'brand.name.taken',
+      });
+    }
+    const row = await this.prisma.brand
+      .update({ where: { id }, data: { name: input.name }, select: { id: true } })
+      .catch(() => null);
+    if (!row) throw notFound('Бренд не найден');
+    await this.audit.log({ ...this.actorEntry(actor), entity: 'brand', entityId: id, action: 'update' });
+    this.revalidator.revalidate([SITE_TAGS.products, SITE_TAGS.content]);
+    return this.brand(id);
+  }
+
+  /** Only a brand without products can go; merge it into another one first. */
+  async deleteBrand(id: string, actor: Actor): Promise<void> {
+    const count = await this.prisma.product.count({ where: { brandId: id } });
+    if (count > 0) {
+      throw new ApiException('conflict', HttpStatus.CONFLICT, 'У бренда есть товары', {
+        id: 'brand.not_empty',
+      });
+    }
+    const deleted = await this.prisma.brand.deleteMany({ where: { id } });
+    if (deleted.count === 0) throw notFound('Бренд не найден');
+    await this.audit.log({ ...this.actorEntry(actor), entity: 'brand', entityId: id, action: 'delete' });
+    this.revalidator.revalidate([SITE_TAGS.products, SITE_TAGS.content]);
+  }
+
+  /** Moves every product to another brand (keeping «О бренде» if the target has none), then deletes the brand. */
+  async mergeBrand(id: string, intoId: string, actor: Actor): Promise<AdminBrand> {
+    if (id === intoId) throw invalidField('intoId', 'merge.same');
+    const [from, into] = await Promise.all([
+      this.prisma.brand.findUnique({ where: { id }, select: { name: true, description: true } }),
+      this.prisma.brand.findUnique({ where: { id: intoId }, select: { name: true, description: true } }),
+    ]);
+    if (!from || !into) throw notFound('Бренд не найден');
+    const [moved] = await this.prisma.$transaction([
+      this.prisma.product.updateMany({ where: { brandId: id }, data: { brandId: intoId } }),
+      ...(!into.description && from.description
+        ? [this.prisma.brand.update({ where: { id: intoId }, data: { description: from.description } })]
+        : []),
+      this.prisma.brand.delete({ where: { id } }),
+    ]);
+    await this.audit.log({
+      ...this.actorEntry(actor),
+      entity: 'brand',
+      entityId: id,
+      action: 'merge',
+      diff: { from: from.name, into: into.name, products: moved.count },
+    });
+    this.revalidator.revalidate([SITE_TAGS.products, SITE_TAGS.content]);
+    return this.brand(intoId);
+  }
+
+  private async brand(id: string): Promise<AdminBrand> {
+    const row = await this.prisma.brand.findUnique({
+      where: { id },
+      select: { id: true, slug: true, name: true, description: true, _count: { select: { products: true } } },
+    });
+    if (!row) throw notFound('Бренд не найден');
+    const { _count, ...rest } = row;
+    return { ...rest, count: _count.products };
+  }
+
+  /**
+   * The brand whose name matches up to case, spaces and punctuation. Of duplicates saved before names were compared
+   * this way, the one with the most products wins.
+   */
+  private async brandByKey(name: string, exceptId?: string): Promise<{ id: string } | null> {
+    const key = nameKey(name);
+    const rows = await this.prisma.brand.findMany({
+      select: { id: true, name: true, _count: { select: { products: true } } },
+    });
+    const same = rows
+      .filter((row) => row.id !== exceptId && nameKey(row.name) === key)
+      .sort((a, b) => b._count.products - a._count.products);
+    return same[0] ?? null;
   }
 
   // Products
@@ -405,10 +522,7 @@ export class AdminProductsService {
   }
 
   private async brandId(name: string): Promise<string> {
-    const existing = await this.prisma.brand.findFirst({
-      where: { name: { equals: name, mode: 'insensitive' } },
-      select: { id: true },
-    });
+    const existing = await this.brandByKey(name);
     if (existing) return existing.id;
     const slug = await resolveSlug('', name, async (candidate) =>
       Boolean(await this.prisma.brand.findUnique({ where: { slug: candidate }, select: { id: true } })),

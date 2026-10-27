@@ -500,6 +500,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/categories/{id}/merge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminCatalogController_mergeCategory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/admin/brands": {
         parameters: {
             query?: never;
@@ -510,6 +526,38 @@ export interface paths {
         get: operations["AdminCatalogController_brands"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/brands/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["AdminCatalogController_renameBrand"];
+        post?: never;
+        delete: operations["AdminCatalogController_deleteBrand"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/brands/{id}/merge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminCatalogController_mergeBrand"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1250,6 +1298,7 @@ export interface components {
             slug: string;
             name: string;
             description: string;
+            count: number;
         };
         SitemapDto_Output: {
             programs: {
@@ -1734,6 +1783,13 @@ export interface components {
             programOrdersTotal: number;
         };
         CategoryInputDto: {
+            name: string;
+        };
+        MergeInputDto: {
+            /** Format: uuid */
+            intoId: string;
+        };
+        BrandInputDto: {
             name: string;
         };
         ProductRowDto_Output: {
@@ -3080,6 +3136,34 @@ export interface operations {
             };
         };
     };
+    AdminCatalogController_mergeCategory: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MergeInputDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryDto_Output"];
+                };
+            };
+        };
+    };
     AdminCatalogController_brands: {
         parameters: {
             query?: {
@@ -3100,6 +3184,84 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BrandDto_Output"][];
+                };
+            };
+        };
+    };
+    AdminCatalogController_renameBrand: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrandInputDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandDto_Output"];
+                };
+            };
+        };
+    };
+    AdminCatalogController_deleteBrand: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminCatalogController_mergeBrand: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MergeInputDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrandDto_Output"];
                 };
             };
         };

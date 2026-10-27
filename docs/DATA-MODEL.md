@@ -101,7 +101,7 @@ model Session {
 model Category {
   id       String    @id @default(uuid(7)) @db.Uuid
   slug     String    @unique
-  name     String                                  // "Очищение"
+  name     String                                  // "Очищение"; unique up to case, spaces, punctuation (service, D43)
   order    Int       @default(0)
   products Product[]
 }
@@ -109,7 +109,7 @@ model Category {
 model Brand {
   id       String    @id @default(uuid(7)) @db.Uuid
   slug     String    @unique
-  name     String    @unique                       // created on the fly from the product form
+  name     String    @unique                       // created on the fly from the product form; unique up to case, spaces, punctuation (D43)
   description String @default("")               // «О бренде» on every product page of the brand, edited in the product form
   products Product[]
 }

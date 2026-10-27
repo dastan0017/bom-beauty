@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import type {
+  AdminBrand,
   AdminCategory,
   AdminContent,
   AdminProduct,
@@ -245,6 +246,104 @@ describe('admin: catalog, content, settings, users', () => {
       json: { data: reread.body.data },
     });
     expect(resaved.status).toBe(200);
+  });
+
+  it('keeps brand and category names unique, and renames, merges and deletes them', async () => {
+    // Categories: a name that differs only in case, spaces or punctuation is taken.
+    const taken = await request<ErrorResponse>(api('/categories'), {
+      method: 'POST',
+      headers: manager.write,
+      json: { name: ' тонеры. ' },
+    });
+    expect(taken.status).toBe(409);
+    expect(taken.body.error.fields).toEqual({ name: 'category.name.taken' });
+    const extra = await request<AdminCategory>(api('/categories'), {
+      method: 'POST',
+      headers: manager.write,
+      json: { name: 'Тонеры для лица' },
+    });
+    const moved = await request<AdminProduct>(api('/products'), {
+      method: 'POST',
+      headers: manager.write,
+      json: product({ name: 'Тонер в дубле', categoryId: extra.body.id }),
+    });
+    const renameTaken = await request<ErrorResponse>(api(`/categories/${extra.body.id}`), {
+      method: 'PUT',
+      headers: manager.write,
+      json: { name: 'ТОНЕРЫ' },
+    });
+    expect(renameTaken.body.error.fields).toEqual({ name: 'category.name.taken' });
+    const busy = await request<ErrorResponse>(api(`/categories/${extra.body.id}`), {
+      method: 'DELETE',
+      headers: manager.write,
+    });
+    expect(busy.status).toBe(409);
+    const merged = await request<AdminCategory>(api(`/categories/${extra.body.id}/merge`), {
+      method: 'POST',
+      headers: manager.write,
+      json: { intoId: categoryId },
+    });
+    expect(merged.status).toBe(200);
+    expect(merged.body.id).toBe(categoryId);
+    expect((await ctx.prisma.product.findUniqueOrThrow({ where: { id: moved.body.id } })).categoryId).toBe(
+      categoryId,
+    );
+    expect(await ctx.prisma.category.count({ where: { id: extra.body.id } })).toBe(0);
+
+    // Brands: «dr sgn» joins the existing «Dr. SGN» instead of making a new one.
+    const joined = await request<AdminProduct>(api('/products'), {
+      method: 'POST',
+      headers: manager.write,
+      json: product({ name: 'Тонер dr sgn', brandName: 'dr sgn' }),
+    });
+    expect(joined.body.brandName).toBe('Dr. SGN');
+    // A duplicate saved before names were compared this way merges into the right one and keeps its «О бренде».
+    const original = await ctx.prisma.brand.findUniqueOrThrow({ where: { slug: 'dr-sgn' } });
+    const dupe = await ctx.prisma.brand.create({
+      data: { name: 'Dr.SGN', slug: 'dr-sgn-dupe', description: 'Текст дубля' },
+    });
+    await ctx.prisma.product.update({ where: { id: joined.body.id }, data: { brandId: dupe.id } });
+    const notEmpty = await request<ErrorResponse>(api(`/brands/${dupe.id}`), {
+      method: 'DELETE',
+      headers: manager.write,
+    });
+    expect(notEmpty.body.error.fields).toEqual({ id: 'brand.not_empty' });
+    const brandTaken = await request<ErrorResponse>(api(`/brands/${dupe.id}`), {
+      method: 'PUT',
+      headers: manager.write,
+      json: { name: 'DR SGN' },
+    });
+    expect(brandTaken.body.error.fields).toEqual({ name: 'brand.name.taken' });
+    const same = await request<ErrorResponse>(api(`/brands/${dupe.id}/merge`), {
+      method: 'POST',
+      headers: manager.write,
+      json: { intoId: dupe.id },
+    });
+    expect(same.body.error.fields).toEqual({ intoId: 'merge.same' });
+    const mergedBrand = await request<AdminBrand>(api(`/brands/${dupe.id}/merge`), {
+      method: 'POST',
+      headers: manager.write,
+      json: { intoId: original.id },
+    });
+    expect(mergedBrand.body).toMatchObject({ id: original.id, name: 'Dr. SGN', description: 'Текст дубля' });
+    expect((await ctx.prisma.product.findUniqueOrThrow({ where: { id: joined.body.id } })).brandId).toBe(
+      original.id,
+    );
+    expect(await ctx.prisma.brand.count({ where: { id: dupe.id } })).toBe(0);
+
+    // The list carries product counts; an empty brand can be renamed and deleted.
+    const lonely = await ctx.prisma.brand.create({ data: { name: 'Пустой бренд', slug: 'pustoy-brend' } });
+    const brands = await request<AdminBrand[]>(api('/brands'), { headers: manager.read });
+    expect(brands.body.find((brand) => brand.id === lonely.id)?.count).toBe(0);
+    expect(brands.body.find((brand) => brand.id === original.id)?.count).toBeGreaterThan(1);
+    const renamed = await request<AdminBrand>(api(`/brands/${lonely.id}`), {
+      method: 'PUT',
+      headers: manager.write,
+      json: { name: 'Новое имя' },
+    });
+    expect(renamed.body.name).toBe('Новое имя');
+    const removed = await request(api(`/brands/${lonely.id}`), { method: 'DELETE', headers: manager.write });
+    expect(removed.status).toBe(204);
   });
 
   it('keeps «О бренде» on the brand: one save shows it on every product of the brand', async () => {

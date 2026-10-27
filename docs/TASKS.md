@@ -192,6 +192,8 @@ Requests from Нурайым while filling the admin, plus the developer's follo
       page of the brand (migration `brand_description`, additive) (D41)
 - [x] Product video (2026-10-27): «Видео» slot in the product editor (Bunny), play badge on catalog cards, «Видео» pill
       on the gallery, player end card «Заказать» (migration `product_video`, additive) (D42)
+- [x] Unique categories and brands (2026-10-27): names compared without case, spaces and punctuation; «⋯» on every
+      chip to rename, merge into another or delete; a hint lists likely duplicates (D43)
 - [x] Tests: search helper, photo limit, wholesale content defaults, delete with programs and featured list, protocols
       PDF refs; e2e for the filter sheet, brand and search (with and without JS), admin list delete
 - [x] Gate + `feat: catalog search and brand filter, product delete, 10 photos, wholesale protocols`

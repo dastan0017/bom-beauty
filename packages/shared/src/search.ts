@@ -34,3 +34,11 @@ export function matchesSearch(query: string, fields: readonly (string | null | u
     return text.includes(part) || joined.includes(part);
   });
 }
+
+/**
+ * Identity of a brand or category name: two names with the same key are the same thing ("Dr. SGN", "Dr.SGN" and
+ * "dr sgn" all give "drsgn"), so the admin cannot create such duplicates (owner request 2026-10-27).
+ */
+export function nameKey(name: string): string {
+  return normalizeSearch(name).replace(/ /g, '');
+}

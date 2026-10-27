@@ -1,11 +1,11 @@
-import { formatKgs, matchesSearch } from '@bom/shared';
+import { formatKgs, matchesSearch, nameKey } from '@bom/shared';
 import { useState, type CSSProperties, type KeyboardEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import {
+  useBrands,
   useCategories,
   useCreateCategory,
-  useDeleteCategory,
   useDeleteProduct,
   usePatchProduct,
   useProducts,
@@ -15,6 +15,7 @@ import { Toggle } from '@/components/ui/editor';
 import { MediaPreview } from '@/components/ui/media';
 import { copy } from '@/content/copy';
 import { ConfirmDelete } from '@/features/products/product-editor';
+import { TaxonomyDialog, type TaxonomyChange, type TaxonomyItem } from '@/features/products/taxonomy-dialog';
 import { errorText } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
@@ -22,7 +23,8 @@ const COLUMNS = '2.4fr 1fr .7fr .8fr .8fr 160px';
 
 /**
  * Товары (design: isProducts): category chips, add category, table with the stock switch. Brand chips and the search
- * box are ours (owner request 2026-10-26); they filter the loaded list, and the URL keeps them for the way back.
+ * box are ours (owner request 2026-10-26); they filter the loaded list, and the URL keeps them for the way back. The
+ * «⋯» on a chip opens its settings: rename, merge into another, delete (2026-10-27).
  */
 export function ProductsPage() {
   const navigate = useNavigate();
@@ -36,7 +38,8 @@ export function ProductsPage() {
   const patch = usePatchProduct();
   const remove = useDeleteProduct();
   const createCategory = useCreateCategory();
-  const deleteCategory = useDeleteCategory();
+  const brandList = useBrands('');
+  const [editing, setEditing] = useState<{ kind: 'category' | 'brand'; item: TaxonomyItem } | null>(null);
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState('');
 
@@ -60,18 +63,42 @@ export function ProductsPage() {
       (!brand || product.brand === brand) &&
       matchesSearch(query, [product.name, product.brand, product.category.name]),
   );
-  const brandNames = [...new Set((allProducts.data ?? []).map((product) => product.brand))].sort((a, b) =>
-    a.localeCompare(b, 'ru'),
-  );
+  // Every brand, also those without products (so they can be deleted); counts follow the category filter.
+  const brandItems: TaxonomyItem[] =
+    brandList.data?.map((item) => ({ id: item.id, name: item.name, count: item.count })) ??
+    [...new Set((allProducts.data ?? []).map((product) => product.brand))].map((name) => ({
+      id: '',
+      name,
+      count: 0,
+    }));
+  const brandNames = brandItems.map((item) => item.name).sort((a, b) => a.localeCompare(b, 'ru'));
   const brandChips = [
-    { name: undefined, label: copy.products.all, count: inCategory.length },
+    { name: undefined, label: copy.products.all, count: inCategory.length, item: null },
     ...brandNames.map((name) => ({
       name,
       label: name,
       count: inCategory.filter((product) => product.brand === name).length,
+      item: brandItems.find((item) => item.name === name && item.id) ?? null,
     })),
   ];
+  const categoryItems: TaxonomyItem[] = (categories.data ?? []).map((c) => ({
+    id: c.id,
+    name: c.name,
+    count: c.count,
+  }));
   const filtered = Boolean(brand || query.trim());
+
+  const changed = (kind: 'category' | 'brand', item: TaxonomyItem, change: TaxonomyChange) => {
+    if (kind === 'category' && item.id === category) {
+      if (change.type === 'merged') setCategory(change.into.id);
+      if (change.type === 'deleted') setCategory(undefined);
+    }
+    if (kind === 'brand' && item.name === brand) {
+      if (change.type === 'renamed') setParam('brand', change.name);
+      if (change.type === 'merged') setParam('brand', change.into.name);
+      if (change.type === 'deleted') setParam('brand');
+    }
+  };
 
   const addCategory = () => {
     const name = newName.trim();
@@ -120,54 +147,16 @@ export function ProductsPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {chips.map((chip) => {
-            const on = chip.id === category;
+            const item = categoryItems.find((c) => c.id === chip.id);
             return (
-              <span
+              <FilterChip
                 key={chip.id ?? 'all'}
-                className={cn(
-                  'inline-flex h-[38px] items-center gap-1 rounded-full border pr-1.5 pl-3.5 text-sm font-semibold',
-                  on ? 'border-ink bg-ink text-white' : 'border-input bg-surface text-ink',
-                )}
-              >
-                <button
-                  type="button"
-                  onClick={() => setCategory(chip.id)}
-                  aria-pressed={on}
-                  className="flex h-full items-center gap-1.5 pr-2"
-                >
-                  {chip.name}
-                  <span className="font-normal opacity-70">{chip.count}</span>
-                </button>
-                {chip.id && chip.count === 0 && (
-                  <button
-                    type="button"
-                    aria-label={`${copy.products.deleteCategory} ${chip.name}`}
-                    onClick={() =>
-                      deleteCategory.mutate(chip.id ?? '', {
-                        onSuccess: () => {
-                          toast.success(copy.products.categoryDeleted);
-                          if (on) setCategory(undefined);
-                        },
-                        onError: (error) => toast.error(errorText(error)),
-                      })
-                    }
-                    className="-ml-1 flex size-[26px] items-center justify-center rounded-full hover:bg-black/10"
-                  >
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.6"
-                      strokeLinecap="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M6 6l12 12M18 6L6 18" />
-                    </svg>
-                  </button>
-                )}
-              </span>
+                label={chip.name}
+                count={chip.count}
+                on={chip.id === category}
+                onSelect={() => setCategory(chip.id)}
+                {...(item ? { onManage: () => setEditing({ kind: 'category', item }) } : {})}
+              />
             );
           })}
           {adding ? (
@@ -211,32 +200,39 @@ export function ProductsPage() {
             </button>
           )}
         </div>
+        <DuplicatesNote items={categoryItems} />
         {brandNames.length > 0 && (
           <>
             <span className="mt-1 text-base font-semibold">{copy.products.brands}</span>
             <div className="flex flex-wrap items-center gap-2">
               {brandChips.map((chip) => {
-                const on = chip.name === brand;
+                const item = chip.item;
                 return (
-                  <button
+                  <FilterChip
                     key={chip.name ?? 'all'}
-                    type="button"
-                    onClick={() => setParam('brand', chip.name)}
-                    aria-pressed={on}
-                    className={cn(
-                      'inline-flex h-[38px] items-center gap-1.5 rounded-full border px-3.5 text-sm font-semibold',
-                      on ? 'border-ink bg-ink text-white' : 'border-input bg-surface text-ink',
-                    )}
-                  >
-                    {chip.label}
-                    <span className="font-normal opacity-70">{chip.count}</span>
-                  </button>
+                    label={chip.label}
+                    count={chip.count}
+                    on={chip.name === brand}
+                    onSelect={() => setParam('brand', chip.name)}
+                    {...(item ? { onManage: () => setEditing({ kind: 'brand', item }) } : {})}
+                  />
                 );
               })}
             </div>
+            <DuplicatesNote items={brandItems} />
           </>
         )}
       </Card>
+
+      <TaxonomyDialog
+        kind={editing?.kind ?? 'category'}
+        item={editing?.item ?? null}
+        others={(editing?.kind === 'brand' ? brandItems : categoryItems).filter(
+          (other) => other.id && other.id !== editing?.item.id,
+        )}
+        onClose={() => setEditing(null)}
+        onChanged={(item, change) => changed(editing?.kind ?? 'category', item, change)}
+      />
 
       <div className="mt-4 flex">
         <input
@@ -382,6 +378,74 @@ export function ProductsPage() {
         </div>
       </Card>
     </>
+  );
+}
+
+/** A filter chip; `onManage` adds the «⋯» that opens the category or brand settings. */
+function FilterChip({
+  label,
+  count,
+  on,
+  onSelect,
+  onManage,
+}: {
+  label: string;
+  count: number;
+  on: boolean;
+  onSelect: () => void;
+  onManage?: () => void;
+}) {
+  return (
+    <span
+      className={cn(
+        'inline-flex h-[38px] items-center rounded-full border text-sm font-semibold',
+        onManage ? 'pr-1 pl-3.5' : 'px-3.5',
+        on ? 'border-ink bg-ink text-white' : 'border-input bg-surface text-ink',
+      )}
+    >
+      <button
+        type="button"
+        onClick={onSelect}
+        aria-pressed={on}
+        className={cn('flex h-full items-center gap-1.5', onManage && 'pr-1.5')}
+      >
+        {label}
+        <span className="font-normal opacity-70">{count}</span>
+      </button>
+      {onManage && (
+        <button
+          type="button"
+          onClick={onManage}
+          aria-label={copy.products.manage(label)}
+          title={copy.products.manage(label)}
+          className="flex size-[30px] items-center justify-center rounded-full opacity-60 hover:bg-black/10 hover:opacity-100 focus-visible:opacity-100"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <circle cx="5" cy="12" r="1.8" />
+            <circle cx="12" cy="12" r="1.8" />
+            <circle cx="19" cy="12" r="1.8" />
+          </svg>
+        </button>
+      )}
+    </span>
+  );
+}
+
+/** Names that differ only in case, spaces or punctuation («Dr. SGN» / «Dr.SGN»): a hint to merge them. */
+function DuplicatesNote({ items }: { items: TaxonomyItem[] }) {
+  const groups = new Map<string, string[]>();
+  for (const item of items) {
+    const key = nameKey(item.name);
+    groups.set(key, [...(groups.get(key) ?? []), item.name]);
+  }
+  const duplicates = [...groups.values()].filter((names) => names.length > 1);
+  if (!duplicates.length) return null;
+  return (
+    <p className="rounded-[14px] border border-amber-border bg-amber-soft px-3.5 py-2.5 text-sm leading-normal text-amber-ink">
+      {copy.products.duplicates(
+        duplicates.map((names) => names.map((name) => `«${name}»`).join(' и ')).join('; '),
+      )}
+    </p>
   );
 }
 

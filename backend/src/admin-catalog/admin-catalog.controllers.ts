@@ -8,10 +8,12 @@ import {
   adminProgramRowSchema,
   adminProgramSchema,
   adminReviewSchema,
+  brandInputSchema,
   brandOptionSchema,
   brandQuerySchema,
   categoryInputSchema,
   createReviewsSchema,
+  mergeInputSchema,
   productInputSchema,
   productPatchSchema,
   programInputSchema,
@@ -33,6 +35,8 @@ class IdParamsDto extends createZodDto(z.object({ id: z.uuid() })) {}
 class CategoryDto extends createZodDto(adminCategorySchema) {}
 class CategoryInputDto extends createZodDto(categoryInputSchema) {}
 class BrandDto extends createZodDto(brandOptionSchema) {}
+class BrandInputDto extends createZodDto(brandInputSchema) {}
+class MergeInputDto extends createZodDto(mergeInputSchema) {}
 class BrandQueryDto extends createZodDto(brandQuerySchema) {}
 class ProductQueryDto extends createZodDto(adminProductQuerySchema) {}
 class ProductRowDto extends createZodDto(adminProductRowSchema) {}
@@ -92,10 +96,51 @@ export class AdminCatalogController {
     await this.products.deleteCategory(params.id, actor(s, r));
   }
 
+  @Post('categories/:id/merge')
+  @HttpCode(200)
+  @ZodResponse({ type: CategoryDto })
+  mergeCategory(
+    @Param() params: IdParamsDto,
+    @Body() body: MergeInputDto,
+    @CurrentSession() s: ActiveSession,
+    @Req() r: Request,
+  ) {
+    return this.products.mergeCategory(params.id, body.intoId, actor(s, r));
+  }
+
   @Get('brands')
   @ZodResponse({ type: [BrandDto] })
   brands(@Query() query: BrandQueryDto) {
     return this.products.brands(query.q);
+  }
+
+  @Put('brands/:id')
+  @ZodResponse({ type: BrandDto })
+  renameBrand(
+    @Param() params: IdParamsDto,
+    @Body() body: BrandInputDto,
+    @CurrentSession() s: ActiveSession,
+    @Req() r: Request,
+  ) {
+    return this.products.renameBrand(params.id, body, actor(s, r));
+  }
+
+  @Delete('brands/:id')
+  @HttpCode(204)
+  async deleteBrand(@Param() params: IdParamsDto, @CurrentSession() s: ActiveSession, @Req() r: Request) {
+    await this.products.deleteBrand(params.id, actor(s, r));
+  }
+
+  @Post('brands/:id/merge')
+  @HttpCode(200)
+  @ZodResponse({ type: BrandDto })
+  mergeBrand(
+    @Param() params: IdParamsDto,
+    @Body() body: MergeInputDto,
+    @CurrentSession() s: ActiveSession,
+    @Req() r: Request,
+  ) {
+    return this.products.mergeBrand(params.id, body.intoId, actor(s, r));
   }
 
   @Get('products')
