@@ -2,8 +2,8 @@ import 'server-only';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import fontkit from '@pdf-lib/fontkit';
-import type { ProgramDetail } from '@bom/shared';
-import { productsWord } from '@bom/shared/web';
+import type { ProgramDetail, ProgramVariant, ProgramVariantDetail } from '@bom/shared';
+import { PROGRAM_VARIANT_LABELS, productsWord } from '@bom/shared/web';
 import { PDFDocument, rgb, type PDFFont, type PDFPage, type RGB } from 'pdf-lib';
 import { copy } from '@/content/copy';
 
@@ -56,13 +56,23 @@ export interface SchemeOptions {
   whatsapp: string;
 }
 
-export async function buildSchemePdf(program: ProgramDetail, options: SchemeOptions): Promise<Uint8Array> {
+/**
+ * The scheme of one variant: its products, and the program's steps for those products (design: sAm / sPm). `named`
+ * is set for a program with a choice, which adds the variant to the subtitle and the title.
+ */
+export async function buildSchemePdf(
+  program: ProgramDetail,
+  variant: Pick<ProgramVariantDetail, 'items'>,
+  named: ProgramVariant | null,
+  options: SchemeOptions,
+): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   pdf.registerFontkit(fontkit);
   const [file400, file600, file700] = await readFonts();
   const embed = (file: Buffer) => pdf.embedFont(new Uint8Array(file), { subset: true });
   const [regular, semibold, bold] = await Promise.all([embed(file400), embed(file600), embed(file700)]);
-  pdf.setTitle(copy.program.scheme.fileName(program.title).replace(/\.pdf$/, ''));
+  const label = named && PROGRAM_VARIANT_LABELS[named];
+  pdf.setTitle(copy.program.scheme.fileName(program.title, label).replace(/\.pdf$/, ''));
   pdf.setAuthor(copy.program.scheme.brand);
   pdf.setLanguage('ru');
 
@@ -101,13 +111,18 @@ export async function buildSchemePdf(program: ProgramDetail, options: SchemeOpti
     text(page, line, LEFT, y, bold, 60, INK);
     y += 72;
   }
-  const count = program.items.length;
-  text(page, `${count} ${productsWord(count)} · ${program.course}`, LEFT, y, regular, 30, MUTED);
+  const count = variant.items.length;
+  const subtitle = `${count} ${productsWord(count)}${program.course ? ` · ${program.course}` : ''}`;
+  text(page, label ? `${label} · ${subtitle}` : subtitle, LEFT, y, regular, 30, MUTED);
   y += 44;
   rect(LEFT, y, RIGHT - LEFT, 4, accent);
   y += 84;
 
-  const nameOf = new Map(program.items.map((item) => [item.slug, item.name]));
+  const nameOf = new Map(variant.items.map((item) => [item.slug, item.name]));
+  // Steps of products outside the variant are left out.
+  const inVariant = (step: ProgramDetail['steps']['am'][number]) => nameOf.has(step.productSlug);
+  const am = program.steps.am.filter(inVariant);
+  const pm = program.steps.pm.filter(inVariant);
   const block = (title: string, steps: ProgramDetail['steps']['am']) => {
     if (!steps.length) return;
     text(page, title, LEFT, y, bold, 42, INK);
@@ -125,13 +140,13 @@ export async function buildSchemePdf(program: ProgramDetail, options: SchemeOpti
     });
     y += 36;
   };
-  block(copy.program.scheme.am, program.steps.am);
-  block(copy.program.scheme.pm, program.steps.pm);
+  block(copy.program.scheme.am, am);
+  block(copy.program.scheme.pm, pm);
   // Programs without steps list their products instead.
-  if (!program.steps.am.length && !program.steps.pm.length) {
+  if (!am.length && !pm.length) {
     text(page, copy.program.scheme.products, LEFT, y, bold, 42, INK);
     y += 60;
-    for (const item of program.items) {
+    for (const item of variant.items) {
       text(page, `•  ${item.name} — ${item.brand}, ${item.volume}`, LEFT, y, regular, 30, INK);
       y += 46;
     }

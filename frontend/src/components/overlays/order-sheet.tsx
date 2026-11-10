@@ -1,8 +1,8 @@
 'use client';
 
 import { orderContactSchema } from '@bom/shared/forms';
-import type { ImageRef, OrderItemType, PaymentMethod, PublicSettings } from '@bom/shared';
-import { buildOrderMessage, formatKgs, LINE_QTY_MAX, waLink } from '@bom/shared/web';
+import type { ImageRef, OrderItemType, PaymentMethod, ProgramVariant, PublicSettings } from '@bom/shared';
+import { buildOrderMessage, formatKgs, LINE_QTY_MAX, orderItemLabel, waLink } from '@bom/shared/web';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
@@ -33,6 +33,8 @@ export interface OrderItem {
   meta: string;
   priceKgs: number;
   image: ImageRef | null;
+  /** The chosen variant of a program that offers several; it goes into the label, the message and the order. */
+  variant?: ProgramVariant | null;
 }
 
 /** Cart mode shows and sends the cart; direct mode sends one program and leaves the cart as it is. */
@@ -44,6 +46,7 @@ interface SheetLine {
   type: OrderItemType;
   slug: string;
   title: string;
+  variant?: ProgramVariant | null;
   meta: string;
   priceKgs: number;
   qty: number;
@@ -177,6 +180,7 @@ export function OrderSheet({
       lines: lines.map((line) => ({
         type: line.type,
         title: line.title,
+        variant: line.variant ?? null,
         qty: line.qty,
         total: format(line.priceKgs * line.qty),
       })),
@@ -192,7 +196,12 @@ export function OrderSheet({
     const body = {
       ...submissionMeta(message),
       clientRef: clientRef.current,
-      items: lines.map((line) => ({ type: line.type, slug: line.slug, qty: line.qty })),
+      items: lines.map((line) => ({
+        type: line.type,
+        slug: line.slug,
+        qty: line.qty,
+        ...(line.variant ? { variant: line.variant } : {}),
+      })),
       name: parsed.data.name,
       phone: parsed.data.phone,
       address: parsed.data.address,
@@ -357,7 +366,7 @@ export function OrderSheet({
           <ul aria-label={copy.order.lines} className="mt-3.5 flex flex-col rounded-2xl bg-bg px-3 py-0.5">
             {lines.map((line, index) => (
               <li
-                key={`${line.type}:${line.slug}`}
+                key={`${line.type}:${line.slug}:${line.variant ?? ''}`}
                 className={cn('flex flex-col gap-2.5 py-3', index > 0 && 'border-t border-line-2')}
               >
                 <div className="flex items-center gap-3">
@@ -371,9 +380,7 @@ export function OrderSheet({
                     />
                   </span>
                   <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="text-[15px] leading-[1.3] font-semibold">
-                      {line.type === 'program' ? copy.order.programLabel(line.title) : line.title}
-                    </span>
+                    <span className="text-[15px] leading-[1.3] font-semibold">{orderItemLabel(line)}</span>
                     <span className="text-[13px] leading-[1.35] text-muted">{line.meta}</span>
                   </span>
                 </div>

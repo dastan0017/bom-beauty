@@ -1192,6 +1192,25 @@ export interface components {
                     widths: number[];
                 } | null;
             }[];
+            /** @default [] */
+            variants: {
+                /** @enum {string} */
+                variant: "mini" | "standard" | "max";
+                priceKgs: number;
+                itemCount: number;
+                thumbs: {
+                    slug: string;
+                    image: {
+                        /** Format: uuid */
+                        id: string;
+                        width: number;
+                        height: number;
+                        alt: string;
+                        blurDataUrl: string | null;
+                        widths: number[];
+                    } | null;
+                }[];
+            }[];
             cover: {
                 /** Format: uuid */
                 id: string;
@@ -1231,6 +1250,66 @@ export interface components {
                     blurDataUrl: string | null;
                     widths: number[];
                 } | null;
+            }[];
+            /** @default [] */
+            variants: {
+                /** @enum {string} */
+                variant: "mini" | "standard" | "max";
+                priceKgs: number;
+                itemCount: number;
+                thumbs: {
+                    slug: string;
+                    image: {
+                        /** Format: uuid */
+                        id: string;
+                        width: number;
+                        height: number;
+                        alt: string;
+                        blurDataUrl: string | null;
+                        widths: number[];
+                    } | null;
+                }[];
+                items: {
+                    /** Format: uuid */
+                    id: string;
+                    slug: string;
+                    name: string;
+                    shortName: string;
+                    brand: string;
+                    category: {
+                        slug: string;
+                        name: string;
+                    };
+                    volume: string;
+                    purpose: string;
+                    priceKgs: number;
+                    badge: string | null;
+                    inStock: boolean;
+                    bestseller: boolean;
+                    seoulChoice: boolean;
+                    isNew: boolean;
+                    image: {
+                        /** Format: uuid */
+                        id: string;
+                        width: number;
+                        height: number;
+                        alt: string;
+                        blurDataUrl: string | null;
+                        widths: number[];
+                    } | null;
+                    /** @default null */
+                    video: {
+                        /** Format: uuid */
+                        id: string;
+                        durationSec: number | null;
+                        width: number | null;
+                        height: number | null;
+                        poster: string | null;
+                        hls: string | null;
+                        mp4: string | null;
+                    } | null;
+                }[];
+                sumKgs: number;
             }[];
             cover: {
                 /** Format: uuid */
@@ -1463,6 +1542,8 @@ export interface components {
                 type: "product" | "program";
                 slug: string;
                 qty: number;
+                /** @enum {string} */
+                variant?: "mini" | "standard" | "max";
             }[];
             item?: {
                 /** @constant */
@@ -1507,6 +1588,8 @@ export interface components {
                 /** @enum {string} */
                 type: "product" | "program";
                 title: string;
+                /** @default null */
+                variant: ("mini" | "standard" | "max") | null;
                 qty: number;
                 totalKgs: number;
             }[];
@@ -1605,6 +1688,8 @@ export interface components {
                     /** @enum {string} */
                     type: "product" | "program";
                     title: string;
+                    /** @default null */
+                    variant: ("mini" | "standard" | "max") | null;
                     unitPriceKgs: number;
                     qty: number;
                     totalKgs: number;
@@ -1639,6 +1724,8 @@ export interface components {
                 /** @enum {string} */
                 type: "product" | "program";
                 title: string;
+                /** @default null */
+                variant: ("mini" | "standard" | "max") | null;
                 unitPriceKgs: number;
                 qty: number;
                 totalKgs: number;
@@ -1792,6 +1879,8 @@ export interface components {
                     /** @enum {string} */
                     type: "product" | "program";
                     title: string;
+                    /** @default null */
+                    variant: ("mini" | "standard" | "max") | null;
                     unitPriceKgs: number;
                     qty: number;
                     totalKgs: number;
@@ -1985,6 +2074,7 @@ export interface components {
                 blurDataUrl: string | null;
                 widths: number[];
             } | null)[];
+            variants: ("mini" | "standard" | "max")[];
         };
         ProgramInputDto: {
             title: string;
@@ -2002,6 +2092,24 @@ export interface components {
             published: boolean;
             inStock: boolean;
             itemIds: string[];
+            /**
+             * @default {
+             *       "mini": null,
+             *       "max": null
+             *     }
+             */
+            variants: {
+                /** @default null */
+                mini: {
+                    itemIds: string[];
+                    priceKgs: number;
+                } | null;
+                /** @default null */
+                max: {
+                    itemIds: string[];
+                    priceKgs: number;
+                } | null;
+            };
             steps: {
                 am: {
                     /** Format: uuid */
@@ -2055,6 +2163,50 @@ export interface components {
                     widths: number[];
                 } | null;
             }[];
+            variants: {
+                mini: {
+                    items: {
+                        /** Format: uuid */
+                        id: string;
+                        name: string;
+                        shortName: string;
+                        brand: string;
+                        volume: string;
+                        priceKgs: number;
+                        image: {
+                            /** Format: uuid */
+                            id: string;
+                            width: number;
+                            height: number;
+                            alt: string;
+                            blurDataUrl: string | null;
+                            widths: number[];
+                        } | null;
+                    }[];
+                    priceKgs: number;
+                } | null;
+                max: {
+                    items: {
+                        /** Format: uuid */
+                        id: string;
+                        name: string;
+                        shortName: string;
+                        brand: string;
+                        volume: string;
+                        priceKgs: number;
+                        image: {
+                            /** Format: uuid */
+                            id: string;
+                            width: number;
+                            height: number;
+                            alt: string;
+                            blurDataUrl: string | null;
+                            widths: number[];
+                        } | null;
+                    }[];
+                    priceKgs: number;
+                } | null;
+            };
             steps: {
                 am: {
                     /** Format: uuid */

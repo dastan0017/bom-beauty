@@ -7,6 +7,7 @@ export * from './money';
 export * from './currency';
 export * from './theme';
 export * from './quiz';
+export * from './variants';
 export * from './whatsapp';
 export * from './plural';
 export * from './slug';

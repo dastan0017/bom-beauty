@@ -26,6 +26,7 @@ enum MediaKind     { image pdf }
 enum MediaStatus   { pending processing ready failed }
 enum VideoStatus   { created uploading processing ready failed }
 enum RoutinePeriod { am pm }
+enum ProgramVariant { mini standard max }
 enum QuizGoal      { acne pigment age calm glow }
 enum SkinType      { oily combo dry sens normal }
 enum PaymentMethod      { whatsapp finik }
@@ -45,6 +46,7 @@ enum PaymentPurpose     { order check }
 | Wholesale countries   | kg: Кыргызстан · kz: Казахстан · uz: Узбекистан · ru: Россия                                                                                                                                                                                                                   |
 | Quiz experience       | pro · some · new (labels in `quiz.ts`, verbatim from the design)                                                                                                                                                                                                               |
 | Quiz age              | u25: До 25 лет · 25: 25–35 лет · 35: 35–45 лет · 45: 45+ лет                                                                                                                                                                                                                   |
+| ProgramVariant        | mini: Мини · standard: Стандарт · max: Максимум; notes «Самое необходимое, чтобы начать» · «Полная программа на весь курс» · «Полная программа и усилители для быстрого результата» (design: TIER_META)                                                                        |
 | PaymentMethod         | whatsapp: WhatsApp · finik: Онлайн (Finik)                                                                                                                                                                                                                                     |
 | OrderPaymentStatus    | unpaid: Не оплачен · pending: Ждёт оплаты · paid: Оплачен · refunded: Возврат                                                                                                                                                                                                  |
 | PaymentStatus         | created: Создаётся · pending: Ссылка выдана · succeeded: Оплачен · failed: Ошибка · expired: Истекла                                                                                                                                                                           |
@@ -172,7 +174,9 @@ model Program {
   description     String        @default("")       // meta description, OG
   course          String        @default("")       // "Утро и вечер, курс на 6–8 недель"
   fit             String[]                         // "Кому подходит"
-  priceKgs        Int
+  priceKgs        Int                              // «Стандарт»
+  miniPriceKgs    Int?                             // «Мини»; offered while set and the variant has items (D45)
+  maxPriceKgs     Int?                             // «Максимум», same rule
   badge           String?
   quizGoal        QuizGoal?                        // null = not in quiz results
   quizSkins       SkinType[]                       // empty = any skin
@@ -197,14 +201,16 @@ model Program {
 }
 
 model ProgramItem {
-  programId String  @db.Uuid
-  productId String  @db.Uuid
-  program   Program @relation(fields: [programId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
-  order     Int     @default(0)                    // "Порядок здесь = порядок на сайте"
+  programId String         @db.Uuid
+  productId String         @db.Uuid
+  program   Program        @relation(fields: [programId], references: [id], onDelete: Cascade)
+  product   Product        @relation(fields: [productId], references: [id], onDelete: Restrict)
+  variant   ProgramVariant @default(standard)      // which variant lists the product; one product may be in several
+  order     Int            @default(0)             // "Порядок здесь = порядок на сайте", per variant
 
-  @@id([programId, productId])
-  @@index([programId, order])
+  @@id([programId, variant, productId])
+  @@index([programId, variant, order])
+  // Raw SQL CHECK on programs: mini_price_kgs and max_price_kgs are > 0 when set.
 }
 
 model ProgramStep {
@@ -213,7 +219,7 @@ model ProgramStep {
   program   Program       @relation(fields: [programId], references: [id], onDelete: Cascade)
   period    RoutinePeriod
   order     Int           @default(0)
-  productId String        @db.Uuid                 // must be one of the program's items (checked in the service)
+  productId String        @db.Uuid                 // must be one of «Стандарт»'s items (checked in the service)
   product   Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
   text      String                                 // "Мягко очищает и не стягивает кожу"
 
@@ -416,7 +422,8 @@ model OrderLine {
   programId    String?       @db.Uuid
   program      Program?      @relation(fields: [programId], references: [id], onDelete: SetNull)
   title        String                              // snapshot: product name or program title
-  unitPriceKgs Int                                 // computed on the server
+  variant      ProgramVariant?                     // the chosen variant when the program offered several, else null
+  unitPriceKgs Int                                 // computed on the server (the variant's price)
   qty          Int                                 // 1–20
   totalKgs     Int
 
@@ -425,8 +432,8 @@ model OrderLine {
   @@index([productId])
   @@map("order_lines")
   // The service sets the id that matches `type` at creation; it may become null later when the item is deleted (title
-  // and prices keep the history). Raw SQL CHECKs: qty BETWEEN 1 AND 20, unit_price_kgs and total_kgs >= 0. The M8
-  // migration turned every older order into one line.
+  // and prices keep the history). Raw SQL CHECKs: qty BETWEEN 1 AND 20, unit_price_kgs and total_kgs >= 0, variant
+  // null unless type = program. The M8 migration turned every older order into one line.
 }
 
 model Lead {
@@ -540,6 +547,9 @@ unpaid ──► pending ──► paid ──► refunded        pending: a Fin
   the admin after deploy; the site shows placeholders until then.
 - Settings: shop (WhatsApp `+996706304803`), appearance defaults, currencies with the design's rates, notifications off.
 - Content: home, wholesale (`WS0`), delivery, placeholder privacy and offer texts marked `[...]`.
+- Dev only: the prototype's sample variants (`TIERS`): «Акне и постакне» Мини 3 900 сом (foam, cica, gel) and
+  Максимум 10 500 сом (oil, foam, bha, cica, pdrn, gel, spf), «Чёрные точки и поры» Мини 3 600 сом (foam, bha, gel);
+  added only to a program that has no variants yet. Production gets none: the owner sets her own.
 - Dev only: ~20 demo orders across statuses (the design's `ORDERS0`, one of them a 3-line cart) and a few leads; the
   `payments` setting on with WhatsApp preselected (mock Finik), and two online orders (one paid, one left unpaid).
 - Idempotent: upsert by slug/key.

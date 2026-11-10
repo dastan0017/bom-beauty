@@ -8,12 +8,14 @@ import type {
   AdminProduct,
   AdminProductRow,
   AdminProgram,
+  AdminProgramRow,
   AdminReview,
   AdminUser,
   ErrorResponse,
   ProductCard,
   ProductDetail,
   ProductInput,
+  ProgramDetail,
   ProgramInput,
   RedirectTarget,
 } from '@bom/shared';
@@ -515,6 +517,7 @@ describe('admin: catalog, content, settings, users', () => {
       published: false,
       inStock: true,
       itemIds: [b.id, a.id],
+      variants: { mini: null, max: null },
       steps: { am: [{ productId: a.id, text: 'Нанести утром' }], pm: [] },
       videoId: null,
       protocolMediaId: null,
@@ -573,6 +576,138 @@ describe('admin: catalog, content, settings, users', () => {
       ctx.url('/v1/redirects/resolve?path=%2Fprograms%2Fnovaya-programma'),
     );
     expect(gone.body).toEqual({ toPath: '/programs', statusCode: 302 });
+  });
+
+  it('saves «Мини» and «Максимум»; the site, product pages and orders follow them', async () => {
+    const [a, b, c] = await ctx.prisma.product.findMany({ take: 3, orderBy: { priceKgs: 'asc' } });
+    if (!a || !b || !c) throw new Error('seed products missing');
+    const input: ProgramInput = {
+      title: 'Варианты',
+      slug: 'varianty',
+      headline: null,
+      symptom: '',
+      description: '',
+      course: '',
+      fit: [],
+      priceKgs: 5000,
+      badge: null,
+      quizGoal: null,
+      quizSkins: [],
+      published: true,
+      inStock: true,
+      itemIds: [a.id, b.id],
+      variants: {
+        mini: { itemIds: [a.id], priceKgs: 1000 },
+        max: { itemIds: [a.id, b.id, c.id], priceKgs: 9000 },
+      },
+      steps: { am: [], pm: [] },
+      videoId: null,
+      protocolMediaId: null,
+      coverMediaId: null,
+      seoTitle: null,
+      seoDescription: null,
+    };
+    const save = (json: ProgramInput, id?: string) =>
+      request<AdminProgram & ErrorResponse>(api(id ? `/programs/${id}` : '/programs'), {
+        method: id ? 'PUT' : 'POST',
+        headers: manager.write,
+        json,
+      });
+
+    // A variant needs a price and its own products, each once.
+    const empty = await save({ ...input, variants: { mini: { itemIds: [], priceKgs: 0 }, max: null } });
+    expect(empty.status).toBe(400);
+    expect(empty.body.error.fields).toEqual({
+      'variants.mini.itemIds': 'program.variant.items.required',
+      'variants.mini.priceKgs': 'price.required',
+    });
+    const twice = await save({
+      ...input,
+      variants: { mini: { itemIds: [a.id, a.id], priceKgs: 1000 }, max: null },
+    });
+    expect(twice.body.error.fields).toEqual({ 'variants.mini.itemIds': 'program.items.duplicate' });
+    const unknown = await save({
+      ...input,
+      variants: { mini: null, max: { itemIds: [randomUUID()], priceKgs: 1 } },
+    });
+    expect(unknown.body.error.fields).toEqual({ 'variants.max.itemIds': 'product.not_found' });
+
+    const created = await save(input);
+    expect(created.status).toBe(201);
+    const id = created.body.id;
+    expect(created.body.items.map((item) => item.id)).toEqual([a.id, b.id]);
+    expect(created.body.variants.mini).toMatchObject({ priceKgs: 1000, items: [{ id: a.id }] });
+    expect(created.body.variants.max?.items.map((item) => item.id)).toEqual([a.id, b.id, c.id]);
+    const rows = await request<AdminProgramRow[]>(api('/programs'), { headers: manager.read });
+    expect(rows.body.find((row) => row.id === id)).toMatchObject({
+      itemCount: 2,
+      variants: ['mini', 'standard', 'max'],
+    });
+
+    // The site gets the variants in page order, each with its products and their sum.
+    const page = await request<ProgramDetail>(ctx.url('/v1/catalog/programs/varianty'));
+    expect(page.body.variants.map((v) => [v.variant, v.priceKgs, v.items.map((item) => item.slug)])).toEqual([
+      ['mini', 1000, [a.slug]],
+      ['standard', 5000, [a.slug, b.slug]],
+      ['max', 9000, [a.slug, b.slug, c.slug]],
+    ]);
+    expect(page.body.variants[2]?.sumKgs).toBe(a.priceKgs + b.priceKgs + c.priceKgs);
+    expect(page.body).toMatchObject({ itemCount: 2, priceKgs: 5000, sumKgs: a.priceKgs + b.priceKgs });
+    // A product in several variants lists the program once; one only in «Максимум» lists it too.
+    for (const product of [a, c]) {
+      const detail = await request<ProductDetail>(ctx.url(`/v1/catalog/products/${product.slug}`));
+      expect(detail.body.programs.filter((p) => p.slug === 'varianty')).toHaveLength(1);
+    }
+    const adminProduct = await request<AdminProduct>(api(`/products/${a.id}`), { headers: manager.read });
+    expect(adminProduct.body.programs.filter((p) => p.id === id)).toHaveLength(1);
+
+    // Orders cost what the chosen variant costs; no variant means «Стандарт».
+    const placeOrder = (
+      items: { type: 'program'; slug: string; qty: number; variant?: 'mini' | 'standard' | 'max' }[],
+    ) =>
+      request<{ id: string } & ErrorResponse>(ctx.url('/v1/orders'), {
+        method: 'POST',
+        json: {
+          clientRef: randomUUID(),
+          items,
+          name: 'Айгерим',
+          phone: '0555 12 34 56',
+          address: 'Бишкек, ул. Токтогула 1',
+          message: 'Здравствуйте!',
+          pageUrl: 'http://localhost:3100/programs/varianty',
+        },
+      });
+    const ordered = await placeOrder([
+      { type: 'program', slug: 'varianty', qty: 1, variant: 'mini' },
+      { type: 'program', slug: 'varianty', qty: 2, variant: 'max' },
+      { type: 'program', slug: 'varianty', qty: 1 },
+    ]);
+    expect(ordered.status).toBe(201);
+    const stored = await ctx.prisma.order.findUniqueOrThrow({
+      where: { id: ordered.body.id },
+      include: { lines: { orderBy: { position: 'asc' } } },
+    });
+    expect(stored.lines.map((line) => [line.variant, line.unitPriceKgs, line.totalKgs])).toEqual([
+      ['mini', 1000, 1000],
+      ['max', 9000, 18000],
+      ['standard', 5000, 5000],
+    ]);
+    expect(stored.totalKgs).toBe(24000);
+
+    // A variant the owner removed is gone like a deleted product.
+    await save({ ...input, variants: { mini: input.variants.mini, max: null } }, id);
+    const gone = await placeOrder([{ type: 'program', slug: 'varianty', qty: 1, variant: 'max' }]);
+    expect(gone.status).toBe(404);
+
+    // Without variants the program is as before: no switcher data, lines without a variant.
+    await save({ ...input, variants: { mini: null, max: null } }, id);
+    const plain = await request<ProgramDetail>(ctx.url('/v1/catalog/programs/varianty'));
+    expect(plain.body.variants.map((v) => v.variant)).toEqual(['standard']);
+    const single = await placeOrder([{ type: 'program', slug: 'varianty', qty: 1, variant: 'standard' }]);
+    const line = await ctx.prisma.orderLine.findFirstOrThrow({ where: { orderId: single.body.id } });
+    expect(line).toMatchObject({ variant: null, unitPriceKgs: 5000 });
+
+    await request(api(`/programs/${id}`), { method: 'DELETE', headers: manager.write });
   });
 
   it('orders, hides and deletes reviews; real ones hide the demo examples', async () => {

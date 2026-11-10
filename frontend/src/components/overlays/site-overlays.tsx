@@ -1,6 +1,7 @@
 'use client';
 
-import type { ProgramCard, PublicSettings, QuizKey } from '@bom/shared';
+import type { ProgramCard, ProgramVariant, PublicSettings, QuizKey } from '@bom/shared';
+import { recommendVariant } from '@bom/shared/web';
 import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -32,6 +33,8 @@ interface Overlays {
   quizDone: boolean;
   /** Program the visitor opened from the quiz results. */
   quizPickedSlug: string | null;
+  /** Variant the finished quiz suggests; the picked program's page opens on it when it offers it. */
+  quizVariant: ProgramVariant | null;
   quizPillHidden: boolean;
   hideQuizPill: () => void;
   openVideo: (spec: VideoSpec) => void;
@@ -92,6 +95,7 @@ export function SiteOverlays({
   if (paths.current !== pathname) setPaths({ current: pathname, previous: paths.current });
 
   const quizDone = QUIZ_TOTAL === Object.keys(quiz.answers).length;
+  const quizVariant = quizDone ? recommendVariant(quiz.answers) : null;
 
   useEffect(() => {
     captureAttribution();
@@ -205,6 +209,7 @@ export function SiteOverlays({
       returnToQuiz,
       quizDone,
       quizPickedSlug,
+      quizVariant,
       quizPillHidden,
       hideQuizPill: () => setQuizPillHidden(true),
       openVideo: (spec) => {
@@ -223,6 +228,7 @@ export function SiteOverlays({
       returnToQuiz,
       quizDone,
       quizPickedSlug,
+      quizVariant,
       quizPillHidden,
       orderOpen,
       quiz.open,

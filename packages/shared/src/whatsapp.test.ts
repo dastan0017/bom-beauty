@@ -10,6 +10,8 @@ import {
   buildSchemeRequestMessage,
   buildWholesaleMessage,
   DEFAULT_WHATSAPP_TEMPLATES,
+  orderItemLabel,
+  orderLineText,
   paidTemplateFor,
   renderWhatsappTemplate,
   upgradeWhatsappTemplates,
@@ -96,6 +98,31 @@ describe('WhatsApp messages', () => {
         'Сайт предложил: «Акне и постакне», 5\u00a0900\u00a0сом; «Чёрные точки и поры», 5\u00a0400\u00a0сом. Помогите выбрать, пожалуйста.',
       ].join('\n'),
     );
+  });
+
+  it('quiz message names the suggested variant of a program with a choice (design: quizWa)', () => {
+    const text = buildQuizMessage({ goal: 'acne', skin: 'combo', exp: 'new', age: '25' }, [
+      { title: 'Акне и постакне', price: formatKgs(3900), variant: 'mini' },
+      { title: 'Пигментация', price: formatKgs(6400), variant: null },
+    ]);
+    expect(text.split('\n').at(-1)).toBe(
+      'Сайт предложил: «Акне и постакне» — мини, 3\u00a0900\u00a0сом; «Пигментация», 6\u00a0400\u00a0сом. Помогите выбрать, пожалуйста.',
+    );
+  });
+
+  it('order message names the program variant (design: progItem)', () => {
+    const text = buildOrderMessage({
+      lines: [{ type: 'program', title: 'Акне и постакне', variant: 'max', qty: 1, total: formatKgs(10500) }],
+      total: formatKgs(10500),
+      name: 'Айгерим',
+      phone: '+996 555 12 34 56',
+      address: 'Бишкек',
+    });
+    expect(text).toContain('• Программа «Акне и постакне» · Максимум — 10\u00a0500\u00a0сом');
+    expect(orderItemLabel({ type: 'program', title: 'Пигментация' })).toBe('Программа «Пигментация»');
+    expect(
+      orderLineText({ type: 'program', title: 'Акне и постакне', variant: 'mini', qty: 1, totalKgs: 3900 }),
+    ).toBe('Программа «Акне и постакне» · Мини × 1 · 3\u00a0900\u00a0сом');
   });
 
   it('scheme request names the program', () => {

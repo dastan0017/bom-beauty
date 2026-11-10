@@ -86,6 +86,13 @@ enum RoutinePeriod {
   pm
 }
 
+// «Стандарт» is the program itself; «Мини» and «Максимум» are optional (docs/DATA-MODEL.md §3.4).
+enum ProgramVariant {
+  mini
+  standard
+  max
+}
+
 enum QuizGoal {
   acne
   pigment
@@ -221,6 +228,9 @@ model Program {
   course          String        @default("")
   fit             String[]
   priceKgs        Int           @map("price_kgs")
+  // Optional variants: offered while the price is set and the variant has items.
+  miniPriceKgs    Int?          @map("mini_price_kgs")
+  maxPriceKgs     Int?          @map("max_price_kgs")
   badge           String?
   quizGoal        QuizGoal?     @map("quiz_goal")
   quizSkins       SkinType[]    @map("quiz_skins")
@@ -247,14 +257,16 @@ model Program {
 }
 
 model ProgramItem {
-  programId String  @map("program_id") @db.Uuid
-  productId String  @map("product_id") @db.Uuid
-  program   Program @relation(fields: [programId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
-  order     Int     @default(0)
+  programId String         @map("program_id") @db.Uuid
+  productId String         @map("product_id") @db.Uuid
+  program   Program        @relation(fields: [programId], references: [id], onDelete: Cascade)
+  product   Product        @relation(fields: [productId], references: [id], onDelete: Restrict)
+  // Which variant lists the product; a product can be in several variants of one program.
+  variant   ProgramVariant @default(standard)
+  order     Int            @default(0)
 
-  @@id([programId, productId])
-  @@index([programId, order])
+  @@id([programId, variant, productId])
+  @@index([programId, variant, order])
   @@map("program_items")
 }
 
@@ -374,29 +386,29 @@ model Redirect {
 // ───────────── Orders and leads ─────────────
 
 model Order {
-  id              String        @id @default(uuid(7)) @db.Uuid
-  number          Int           @unique @default(autoincrement())
-  status          OrderStatus   @default(new)
+  id              String      @id @default(uuid(7)) @db.Uuid
+  number          Int         @unique @default(autoincrement())
+  status          OrderStatus @default(new)
   lines           OrderLine[]
-  totalKgs        Int           @map("total_kgs")
+  totalKgs        Int         @map("total_kgs")
   name            String
   phone           String
   address         String
   comment         String?
-  displayCurrency String        @default("KGS") @map("display_currency")
-  displayRate     Float?        @map("display_rate")
+  displayCurrency String      @default("KGS") @map("display_currency")
+  displayRate     Float?      @map("display_rate")
   message         String
-  fromQuiz        Boolean       @default(false) @map("from_quiz")
-  note            String        @default("")
-  pageUrl         String?       @map("page_url")
+  fromQuiz        Boolean     @default(false) @map("from_quiz")
+  note            String      @default("")
+  pageUrl         String?     @map("page_url")
   referrer        String?
   utm             Json?
-  clientRef       String        @unique @map("client_ref")
-  ipHash          String?       @map("ip_hash")
-  userAgent       String?       @map("user_agent")
-  statusChangedAt DateTime      @default(now()) @map("status_changed_at") @db.Timestamptz(3)
-  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(3)
+  clientRef       String      @unique @map("client_ref")
+  ipHash          String?     @map("ip_hash")
+  userAgent       String?     @map("user_agent")
+  statusChangedAt DateTime    @default(now()) @map("status_changed_at") @db.Timestamptz(3)
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   // Online payment (docs/finik/SPEC.md §0, §4). Payment state sits beside the fulfilment status above.
   paymentMethod    PaymentMethod      @default(whatsapp) @map("payment_method")
@@ -474,19 +486,21 @@ model PaymentEvent {
 
 // One product or program in an order: a cart order has several product lines, a program order has one line.
 model OrderLine {
-  id           String        @id @default(uuid(7)) @db.Uuid
-  orderId      String        @map("order_id") @db.Uuid
-  order        Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  position     Int           @default(0)
+  id           String          @id @default(uuid(7)) @db.Uuid
+  orderId      String          @map("order_id") @db.Uuid
+  order        Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  position     Int             @default(0)
   type         OrderItemType
-  productId    String?       @map("product_id") @db.Uuid
-  product      Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
-  programId    String?       @map("program_id") @db.Uuid
-  program      Program?      @relation(fields: [programId], references: [id], onDelete: SetNull)
+  productId    String?         @map("product_id") @db.Uuid
+  product      Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  programId    String?         @map("program_id") @db.Uuid
+  program      Program?        @relation(fields: [programId], references: [id], onDelete: SetNull)
   title        String
-  unitPriceKgs Int           @map("unit_price_kgs")
+  // Set when the program offered several variants at order time; null for products and single-variant programs.
+  variant      ProgramVariant?
+  unitPriceKgs Int             @map("unit_price_kgs")
   qty          Int
-  totalKgs     Int           @map("total_kgs")
+  totalKgs     Int             @map("total_kgs")
 
   @@index([orderId, position])
   @@index([programId])

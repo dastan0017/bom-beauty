@@ -202,3 +202,27 @@ Requests from Нурайым while filling the admin, plus the developer's follo
 - [x] Tests: search helper, photo limit, wholesale content defaults, delete with programs and featured list, protocols
       PDF refs; e2e for the filter sheet, brand and search (with and without JS), admin list delete
 - [x] Gate + `feat: catalog search and brand filter, product delete, 10 photos, wholesale protocols`
+
+## M11 Program variants and the picker search (2026-11-10)
+
+Design update (`design_handoff_bom_beauty_updates/PROMPT_variants.md` in the Claude Design project, prototype `tiersOf`,
+`tierPick`, `recTier`) and an owner request for the admin.
+
+- [x] Admin: search in «Выберите средство из каталога» (name, brand, category; text and focus stay after «Добавить»);
+      prices under the name on phones (D46)
+- [x] Data: `ProgramVariant` enum, `program_items.variant` (in the key), `programs.mini_price_kgs` / `max_price_kgs`,
+      `order_lines.variant`; additive migration with CHECKs, existing rows read as «Стандарт» (D45)
+- [x] Shared: variant labels and notes, `recommendVariant` (parity with `recTier`), `pickVariant`, variant-aware order
+      labels, order and quiz WhatsApp texts; `variant` on order lines, catalog responses and admin program DTOs
+- [x] API: catalog programs list their variants, product pages list a program once, orders price the chosen variant
+      (404 when it is no longer offered), admin saves and validates «Мини» / «Максимум»
+- [x] Site: Мини / Стандарт / Максимум switch on the program page (list, counts, price card, sticky bar, video end card,
+      order, generated scheme follow it); «от …» and count ranges on cards; quiz results and the program page open on
+      the suggested variant; problem filter over every variant
+- [x] Admin: «Варианты» panel (switches «Добавить «Мини»» / «Добавить «Максимум»», own products with the picker, price,
+      «Взять средства «Стандарт»»); variants in the programs list; order lines name the variant
+- [x] Seed: the prototype's sample variants in dev only
+- [x] Tests: shared (recTier parity, labels, merge per variant, input validation), backend (admin → catalog → orders),
+      e2e (switch with keyboard, no switch without variants, variant scheme PDF, quiz pre-selection, admin picker and
+      variants)
+- [x] Gate + `feat: program variants (Мини, Стандарт, Максимум) and search in the program product picker`

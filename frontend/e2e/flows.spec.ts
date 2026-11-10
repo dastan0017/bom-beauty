@@ -94,9 +94,11 @@ test.describe('catalog filter', () => {
         await expect(page.getByText('Пенка для умывания с центеллой')).toHaveCount(0);
       });
 
+      // A problem lists the products of every variant of its program (design: probSet); the moisturising toner is in
+      // none of «Акне и постакне».
       test('problem chips show the program products and its banner', async ({ page }) => {
         await page.goto('/catalog');
-        await expect(page.getByText('Гидрофильное масло')).toBeVisible();
+        await expect(page.getByText('Увлажняющий тонер')).toBeVisible();
         await openFilters(page, javaScriptEnabled);
         await page
           .getByRole('navigation', { name: 'По проблеме' })
@@ -109,7 +111,7 @@ test.describe('catalog filter', () => {
           '/programs/acne',
         );
         await expect(page.getByText('Успокаивающая cica-сыворотка')).toBeVisible();
-        await expect(page.getByText('Гидрофильное масло')).toHaveCount(0);
+        await expect(page.getByText('Увлажняющий тонер')).toHaveCount(0);
         // Both filters combine; the type chips keep the problem.
         await openFilters(page, javaScriptEnabled);
         await page
@@ -220,12 +222,86 @@ test('program order from the program page skips the cart', async ({ page }) => {
   await expect(sheet.getByText('Добавить ещё средства')).toHaveCount(0);
 });
 
+// Program variants: the dev seed gives «Акне и постакне» Мини / Стандарт / Максимум and «Чёрные точки и поры» Мини /
+// Стандарт (design 2026-11, TIERS); other programs have none.
+test('program variants: the switch changes the products, the price and the order', async ({ page }) => {
+  await page.goto('/programs/acne');
+  const variants = page.getByRole('radiogroup', { name: 'Вариант программы' });
+  const radio = (name: string) => variants.getByRole('radio', { name: new RegExp(`^${name}`) });
+  await expect(variants.getByRole('radio')).toHaveCount(3);
+  await expect(radio('Стандарт')).toHaveAttribute('aria-checked', 'true');
+  const contents = page
+    .locator('section')
+    .filter({ has: page.getByRole('heading', { name: 'Что входит в программу' }) })
+    .getByRole('listitem');
+  await expect(contents).toHaveCount(5);
+
+  await (await whenHydrated(radio('Мини'))).click();
+  await expect(radio('Мини')).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByText('Вариант «Мини» — Самое необходимое, чтобы начать')).toBeVisible();
+  await expect(contents).toHaveCount(3);
+  await expect(page.getByText('Цена программы · Вариант «Мини»')).toBeVisible();
+  await expect(page.getByText('Готовая программа из 3 средств')).toBeVisible();
+
+  // A radio group: the arrow keys move the choice.
+  await radio('Мини').press('ArrowRight');
+  await expect(radio('Стандарт')).toBeFocused();
+  await radio('Стандарт').press('ArrowRight');
+  await expect(radio('Максимум')).toHaveAttribute('aria-checked', 'true');
+  await expect(contents).toHaveCount(7);
+
+  await page.getByRole('button', { name: 'Заказать программу' }).filter({ visible: true }).first().click();
+  const sheet = page.getByRole('dialog', { name: 'Оформление заказа' });
+  await expect(sheet.getByText('Программа «Акне и постакне» · Максимум')).toBeVisible();
+  await expect(sheet.getByText('7 средств · курс')).toBeVisible();
+});
+
+test('a program without variants has no switch', async ({ page }) => {
+  await page.goto('/programs/pigmentation');
+  await expect(page.getByRole('heading', { name: 'Что входит в программу' })).toBeVisible();
+  await expect(page.getByRole('radiogroup')).toHaveCount(0);
+  await expect(page.getByText('Цена программы', { exact: true })).toBeVisible();
+});
+
 test('care scheme: the generated PDF downloads', async ({ request }) => {
   const response = await request.get('/programs/pores/scheme');
   expect(response.status()).toBe(200);
   expect(response.headers()['content-type']).toBe('application/pdf');
   expect(response.headers()['content-disposition']).toContain("filename*=UTF-8''");
   expect((await response.body()).subarray(0, 5).toString()).toBe('%PDF-');
+  // A program with a choice builds the chosen variant's scheme and names it in the file.
+  const mini = await request.get('/programs/pores/scheme?variant=mini');
+  expect(mini.status()).toBe(200);
+  expect(mini.headers()['content-disposition']).toContain('filename="scheme-pores-mini.pdf"');
+  expect(mini.headers()['content-disposition']).toContain(encodeURIComponent('(Мини).pdf'));
+});
+
+test('quiz: a beginner is offered «Мини» of a program with variants', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Подобрать программу ухода за 1 минуту' }).click();
+  const quiz = page.getByRole('dialog', { name: 'Подобрать программу ухода за 1 минуту' });
+  for (const answer of [
+    'Избавиться от высыпаний, чёрных точек и закрытых комедонов',
+    'Блестит только Т-зона (лоб, нос, подбородок), а на щеках комфортно',
+    'Почти не пользовалась / Кожа очень чувствительная, легко раздражается',
+    '25–35 лет',
+  ]) {
+    await quiz.getByRole('button', { name: answer }).click();
+  }
+  const recommended = quiz.getByRole('button', { name: /Рекомендуем для вас/ });
+  await expect(recommended).toContainText('Вариант «Мини» · ');
+  await expect(recommended).toContainText('3 средства');
+  await expectWhatsApp(
+    page,
+    () => quiz.getByRole('button', { name: 'Спросить Нурайым в WhatsApp' }).click(),
+    '«Акне и постакне» — мини',
+  );
+
+  await recommended.click();
+  await expect(page).toHaveURL(/\/programs\/acne$/);
+  await expect(
+    page.getByRole('radiogroup', { name: 'Вариант программы' }).getByRole('radio', { name: /^Мини/ }),
+  ).toHaveAttribute('aria-checked', 'true');
 });
 
 test('quiz: four answers, results, WhatsApp review lead', async ({ page }) => {

@@ -4,6 +4,7 @@ import {
   ORDER_ITEM_TYPE_LABELS,
   ORDER_PAYMENT_STATUS_LABELS,
   ORDER_STATUS_LABELS,
+  orderItemLabel,
   relativeDateTime,
   type OrderDetail,
 } from '@bom/shared';
@@ -129,9 +130,7 @@ function OrderBody({ order, onClose }: { order: OrderDetail; onClose: () => void
                 )}
               >
                 <div className="flex min-w-0 flex-col gap-0.5">
-                  <span className="text-[15px] font-semibold">
-                    {line.type === 'program' ? copy.order.programLine(line.title) : line.title}
-                  </span>
+                  <span className="text-[15px] font-semibold">{orderItemLabel(line)}</span>
                   <span className="text-[13px] text-muted">
                     {ORDER_ITEM_TYPE_LABELS[line.type]} · {formatKgs(line.unitPriceKgs)} × {line.qty}
                   </span>

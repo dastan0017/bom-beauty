@@ -1,4 +1,4 @@
-import { formatKgs, type AdminProgramRow } from '@bom/shared';
+import { formatKgs, PROGRAM_VARIANT_LABELS, type AdminProgramRow } from '@bom/shared';
 import type { CSSProperties } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { toast } from 'sonner';
@@ -109,8 +109,15 @@ export function ProgramsPage() {
                 </span>
               </span>
               <span className="text-[15px]">{program.itemCount}</span>
-              <span className="text-[15px] font-semibold whitespace-nowrap">
-                {formatKgs(program.priceKgs)}
+              <span className="flex flex-col gap-0.5">
+                <span className="text-[15px] font-semibold whitespace-nowrap">
+                  {formatKgs(program.priceKgs)}
+                </span>
+                {program.variants.length > 1 && (
+                  <span className="text-[13px] text-muted">
+                    {program.variants.map((variant) => PROGRAM_VARIANT_LABELS[variant]).join(' · ')}
+                  </span>
+                )}
               </span>
               <span className="flex">{videoChip(program)}</span>
               <span className="flex">{protocolChip(program)}</span>

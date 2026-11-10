@@ -323,7 +323,9 @@ describe('online payment (Finik beta, stubbed)', () => {
     expect(view.headers.get('cache-control')).toBe('no-store');
     expect(view.body).toEqual({
       number: order.number,
-      lines: [{ type: 'product', title: 'Успокаивающая cica-сыворотка', qty: 2, totalKgs: 3800 }],
+      lines: [
+        { type: 'product', title: 'Успокаивающая cica-сыворотка', qty: 2, totalKgs: 3800, variant: null },
+      ],
       totalKgs: 3800,
       adjustmentKgs: 0,
       adjustmentNote: null,

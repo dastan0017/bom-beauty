@@ -1,5 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { programInputSchema, type AdminProgram, type AdminProgramRow } from '@bom/shared';
+import {
+  EXTRA_PROGRAM_VARIANTS,
+  programInputSchema,
+  type AdminProgram,
+  type AdminProgramItem,
+  type AdminProgramRow,
+  type ExtraProgramVariant,
+  type ProgramVariant,
+} from '@bom/shared';
 import type { z } from 'zod';
 import { AuditService } from '../audit/audit.service';
 import { invalidField, notFound } from '../common/errors';
@@ -14,6 +22,7 @@ import {
 import type { Env } from '../config/env';
 import { ENV } from '../config/env.module';
 import type { Prisma } from '../generated/prisma/client';
+import { offeredVariants } from '../catalog/program-variants';
 import { PrismaService } from '../prisma/prisma.service';
 import { RevalidateService, SITE_TAGS } from '../revalidate/revalidate.service';
 import type { Actor } from './admin-products.service';
@@ -41,6 +50,8 @@ const detailSelect = {
   course: true,
   fit: true,
   priceKgs: true,
+  miniPriceKgs: true,
+  maxPriceKgs: true,
   badge: true,
   quizGoal: true,
   quizSkins: true,
@@ -49,7 +60,7 @@ const detailSelect = {
   seoTitle: true,
   seoDescription: true,
   updatedAt: true,
-  items: { orderBy: { order: 'asc' }, select: { product: { select: itemProductSelect } } },
+  items: { orderBy: { order: 'asc' }, select: { variant: true, product: { select: itemProductSelect } } },
   steps: {
     orderBy: [{ period: 'asc' }, { order: 'asc' }],
     select: { period: true, productId: true, text: true },
@@ -86,16 +97,18 @@ export class AdminProgramsService {
         symptom: true,
         badge: true,
         priceKgs: true,
+        miniPriceKgs: true,
+        maxPriceKgs: true,
         published: true,
         inStock: true,
         quizGoal: true,
         video: { select: { status: true } },
         protocol: { select: { status: true } },
-        _count: { select: { items: true } },
+        // Every variant's items: the row shows «Стандарт»'s and names the variants on offer.
         items: {
           orderBy: { order: 'asc' },
-          take: 3,
           select: {
+            variant: true,
             product: {
               select: {
                 name: true,
@@ -110,35 +123,48 @@ export class AdminProgramsService {
         },
       },
     });
-    return rows.map((row) => ({
-      id: row.id,
-      slug: row.slug,
-      title: row.title,
-      symptom: row.symptom,
-      badge: row.badge,
-      priceKgs: row.priceKgs,
-      itemCount: row._count.items,
-      published: row.published,
-      inStock: row.inStock,
-      quizGoal: row.quizGoal,
-      videoStatus: row.video?.status ?? null,
-      protocolStatus: row.protocol?.status ?? null,
-      thumbs: row.items.map((item) => toImageRef(item.product.images[0]?.media, item.product.name)),
-    }));
+    return rows.map((row) => {
+      const standard = row.items.filter((item) => item.variant === 'standard');
+      return {
+        id: row.id,
+        slug: row.slug,
+        title: row.title,
+        symptom: row.symptom,
+        badge: row.badge,
+        priceKgs: row.priceKgs,
+        itemCount: standard.length,
+        published: row.published,
+        inStock: row.inStock,
+        quizGoal: row.quizGoal,
+        videoStatus: row.video?.status ?? null,
+        protocolStatus: row.protocol?.status ?? null,
+        thumbs: standard
+          .slice(0, 3)
+          .map((item) => toImageRef(item.product.images[0]?.media, item.product.name)),
+        variants: offeredVariants(row, row.items).map((offered) => offered.variant),
+      };
+    });
   }
 
   async detail(id: string): Promise<AdminProgram> {
     const row = await this.prisma.program.findUnique({ where: { id }, select: detailSelect });
     if (!row) throw notFound('Программа не найдена');
-    const items = row.items.map(({ product }) => ({
-      id: product.id,
-      name: product.name,
-      shortName: product.shortName ?? product.name,
-      brand: product.brand.name,
-      volume: product.volume,
-      priceKgs: product.priceKgs,
-      image: toImageRef(product.images[0]?.media, product.name),
-    }));
+    const itemsOf = (variant: ProgramVariant): AdminProgramItem[] =>
+      row.items
+        .filter((item) => item.variant === variant)
+        .map(({ product }) => ({
+          id: product.id,
+          name: product.name,
+          shortName: product.shortName ?? product.name,
+          brand: product.brand.name,
+          volume: product.volume,
+          priceKgs: product.priceKgs,
+          image: toImageRef(product.images[0]?.media, product.name),
+        }));
+    const items = itemsOf('standard');
+    // A variant stays in the editor while it has a price, even if deleting products emptied it.
+    const variant = (key: ExtraProgramVariant, priceKgs: number | null) =>
+      priceKgs === null ? null : { items: itemsOf(key), priceKgs };
     const step = (period: 'am' | 'pm') =>
       row.steps.filter((s) => s.period === period).map(({ productId, text }) => ({ productId, text }));
     return {
@@ -157,6 +183,7 @@ export class AdminProgramsService {
       published: row.published,
       inStock: row.inStock,
       items,
+      variants: { mini: variant('mini', row.miniPriceKgs), max: variant('max', row.maxPriceKgs) },
       steps: { am: step('am'), pm: step('pm') },
       sumKgs: items.reduce((sum, item) => sum + item.priceKgs, 0),
       video: row.video ? toAdminVideo(row.video) : null,
@@ -177,7 +204,7 @@ export class AdminProgramsService {
         ...this.fields(input),
         slug,
         order: (last._max.order ?? -1) + 1,
-        items: { create: input.itemIds.map((productId, order) => ({ productId, order })) },
+        items: { create: this.itemRows(input) },
         steps: { create: this.stepRows(input) },
       },
       select: { id: true },
@@ -211,7 +238,7 @@ export class AdminProgramsService {
         data: {
           ...this.fields(input),
           slug,
-          items: { create: input.itemIds.map((productId, order) => ({ productId, order })) },
+          items: { create: this.itemRows(input) },
           steps: { create: this.stepRows(input) },
         },
       }),
@@ -282,6 +309,8 @@ export class AdminProgramsService {
       course: input.course,
       fit: input.fit.filter((line) => line.length > 0),
       priceKgs: input.priceKgs,
+      miniPriceKgs: input.variants.mini?.priceKgs ?? null,
+      maxPriceKgs: input.variants.max?.priceKgs ?? null,
       badge: input.badge,
       quizGoal: input.quizGoal,
       quizSkins: [...new Set(input.quizSkins)],
@@ -293,6 +322,16 @@ export class AdminProgramsService {
       seoTitle: input.seoTitle,
       seoDescription: input.seoDescription,
     };
+  }
+
+  /** «Стандарт»'s products, then those of «Мини» and «Максимум»; each list keeps its own order. */
+  private itemRows(input: ProgramData) {
+    const rows = (variant: ProgramVariant, ids: readonly string[]) =>
+      ids.map((productId, order) => ({ productId, variant, order }));
+    return [
+      ...rows('standard', input.itemIds),
+      ...EXTRA_PROGRAM_VARIANTS.flatMap((key) => rows(key, input.variants[key]?.itemIds ?? [])),
+    ];
   }
 
   private stepRows(input: ProgramData) {
@@ -307,10 +346,23 @@ export class AdminProgramsService {
   }
 
   private async check(input: ProgramData): Promise<void> {
-    if (new Set(input.itemIds).size !== input.itemIds.length)
-      throw invalidField('itemIds', 'program.items.duplicate');
-    const products = await this.prisma.product.count({ where: { id: { in: input.itemIds } } });
-    if (products !== input.itemIds.length) throw invalidField('itemIds', 'product.not_found');
+    const lists: [field: string, ids: string[]][] = [['itemIds', input.itemIds]];
+    for (const key of EXTRA_PROGRAM_VARIANTS) {
+      const variant = input.variants[key];
+      if (variant) lists.push([`variants.${key}.itemIds`, variant.itemIds]);
+    }
+    for (const [field, ids] of lists) {
+      if (new Set(ids).size !== ids.length) throw invalidField(field, 'program.items.duplicate');
+    }
+    const all = [...new Set(lists.flatMap(([, ids]) => ids))];
+    const found = new Set(
+      (await this.prisma.product.findMany({ where: { id: { in: all } }, select: { id: true } })).map(
+        (product) => product.id,
+      ),
+    );
+    for (const [field, ids] of lists) {
+      if (ids.some((id) => !found.has(id))) throw invalidField(field, 'product.not_found');
+    }
     const items = new Set(input.itemIds);
     for (const period of ['am', 'pm'] as const) {
       input.steps[period].forEach((step, index) => {

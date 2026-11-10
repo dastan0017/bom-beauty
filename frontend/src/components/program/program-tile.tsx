@@ -2,6 +2,7 @@ import type { ProgramCard } from '@bom/shared';
 import Link from 'next/link';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
+import { programSummary } from '@/lib/program-summary';
 import { formatDuration } from '@/lib/words';
 import { BbImage, PhotoPlaceholder } from '../bb-image';
 import { Price } from '../currency';
@@ -10,6 +11,7 @@ import { card } from '../ui';
 
 /** Program card of the home grid «Готовые программы ухода» (README §1.2): 5:4 cover, badge, video length, price. */
 export function ProgramTile({ program, priority = false }: { program: ProgramCard; priority?: boolean }) {
+  const summary = programSummary(program);
   const duration = formatDuration(program.video?.durationSec);
   return (
     <Link
@@ -46,7 +48,8 @@ export function ProgramTile({ program, priority = false }: { program: ProgramCar
         <span className="text-[13px] leading-[1.4] text-muted">{program.symptom}</span>
         <span className="mt-auto flex items-center justify-between gap-1.5 pt-2">
           <span className="text-[15px] font-semibold whitespace-nowrap">
-            <Price kgs={program.priceKgs} />
+            {summary.from && copy.program.priceFrom}
+            <Price kgs={summary.priceKgs} />
           </span>
           <span className="flex size-7 flex-none items-center justify-center rounded-full bg-surface-2">
             <ArrowRightIcon size={14} />

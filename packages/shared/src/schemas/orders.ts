@@ -1,5 +1,5 @@
 import { z } from '../zod';
-import { CURRENCY_CODES, PAYMENT_METHODS } from '../enums';
+import { CURRENCY_CODES, PAYMENT_METHODS, PROGRAM_VARIANTS } from '../enums';
 import { normalizePhone } from '../phone';
 import { LINE_QTY_MAX, ORDER_LINES_MAX } from '../limits';
 import { slugSchema, submissionMetaShape } from './common';
@@ -14,6 +14,8 @@ export const orderLineInputSchema = z.object({
   type: z.enum(['product', 'program']),
   slug: slugSchema,
   qty: z.number().int().min(1).max(LINE_QTY_MAX),
+  /** The program variant the visitor chose; none means «Стандарт». Products ignore it. */
+  variant: z.enum(PROGRAM_VARIANTS).optional(),
 });
 export type OrderLineInput = z.infer<typeof orderLineInputSchema>;
 
@@ -70,7 +72,7 @@ export function orderLinesOf(order: Pick<CreateOrder, 'items' | 'item' | 'qty'>)
   const raw = order.items ?? (order.item ? [{ ...order.item, qty: order.qty ?? 1 }] : []);
   const merged = new Map<string, OrderLineInput>();
   for (const line of raw) {
-    const key = `${line.type}:${line.slug}`;
+    const key = `${line.type}:${line.slug}:${line.type === 'program' ? (line.variant ?? 'standard') : ''}`;
     const seen = merged.get(key);
     merged.set(key, seen ? { ...seen, qty: Math.min(LINE_QTY_MAX, seen.qty + line.qty) } : { ...line });
   }

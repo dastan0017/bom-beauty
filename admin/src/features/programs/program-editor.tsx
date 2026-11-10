@@ -1,6 +1,8 @@
 import {
   BADGES,
-  formatKgs,
+  EXTRA_PROGRAM_VARIANTS,
+  PROGRAM_VARIANT_LABELS,
+  PROGRAM_VARIANT_NOTES,
   programsWord,
   QUIZ_GOAL_LABELS,
   QUIZ_GOALS,
@@ -8,13 +10,14 @@ import {
   SKIN_TYPES,
   type AdminProgram,
   type AdminProgramItem,
+  type ExtraProgramVariant,
   type ProgramInput,
 } from '@bom/shared';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
 import { useDeleteProgram, useProducts, useProgram, usePrograms, useSaveProgram } from '@/api/catalog';
-import { Button, CloseIcon, inputClass, Spinner } from '@/components/ui';
+import { CloseIcon, inputClass, Spinner } from '@/components/ui';
 import {
   EditorHeader,
   FieldError,
@@ -24,13 +27,16 @@ import {
   Toggle,
   useUnsavedGuard,
 } from '@/components/ui/editor';
-import { ImageSlot, MediaPreview, PdfSlot, VideoSlot } from '@/components/ui/media';
+import { ImageSlot, PdfSlot, VideoSlot } from '@/components/ui/media';
 import { copy } from '@/content/copy';
 import { env } from '@/env';
 import { ConfirmDelete, Text } from '@/features/products/product-editor';
 import { PlusIcon } from '@/features/products/products-page';
 import { errorText, fieldErrors } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { IconButton, moveItem, ProgramItemList, ProgramPriceField } from './program-items';
+
+type VariantInput = NonNullable<ProgramInput['variants'][ExtraProgramVariant]>;
 
 const EMPTY: ProgramInput = {
   title: '',
@@ -47,6 +53,7 @@ const EMPTY: ProgramInput = {
   published: false,
   inStock: true,
   itemIds: [],
+  variants: { mini: null, max: null },
   steps: { am: [], pm: [] },
   videoId: null,
   protocolMediaId: null,
@@ -71,6 +78,10 @@ function toInput(program: AdminProgram): ProgramInput {
     published: program.published,
     inStock: program.inStock,
     itemIds: program.items.map((item) => item.id),
+    variants: {
+      mini: variantInput(program.variants.mini),
+      max: variantInput(program.variants.max),
+    },
     steps: program.steps,
     videoId: program.video?.id ?? null,
     protocolMediaId: program.protocol?.id ?? null,
@@ -80,14 +91,9 @@ function toInput(program: AdminProgram): ProgramInput {
   };
 }
 
-const move = <T,>(list: T[], index: number, delta: number): T[] => {
-  const target = index + delta;
-  if (target < 0 || target >= list.length) return list;
-  const next = [...list];
-  const [item] = next.splice(index, 1);
-  if (item !== undefined) next.splice(target, 0, item);
-  return next;
-};
+function variantInput(variant: AdminProgram['variants'][ExtraProgramVariant]): VariantInput | null {
+  return variant ? { itemIds: variant.items.map((item) => item.id), priceKgs: variant.priceKgs } : null;
+}
 
 export function ProgramEditorPage() {
   const { id } = useParams();
@@ -120,7 +126,8 @@ function ProgramForm({ program }: { program: AdminProgram | null }) {
   // A just-created item arrives here with { saved: true } after the redirect to its own URL.
   const location = useLocation();
   const [saved, setSaved] = useState(Boolean((location.state as { saved?: boolean } | null)?.saved));
-  const [picker, setPicker] = useState(false);
+  // A variant switched off keeps its products and price here, so switching it back on restores them.
+  const [drafts, setDrafts] = useState<Partial<Record<ExtraProgramVariant, VariantInput>>>({});
   const dirty = JSON.stringify(form) !== JSON.stringify(baseline);
   useUnsavedGuard(dirty && !save.isPending);
 
@@ -131,7 +138,11 @@ function ProgramForm({ program }: { program: AdminProgram | null }) {
 
   // Item details come from the catalog list (covers items added in this session).
   const itemInfo = (id: string): AdminProgramItem | null => {
-    const fromProgram = current?.items.find((item) => item.id === id);
+    const fromProgram = [
+      ...(current?.items ?? []),
+      ...(current?.variants.mini?.items ?? []),
+      ...(current?.variants.max?.items ?? []),
+    ].find((item) => item.id === id);
     if (fromProgram) return fromProgram;
     const row = products.data?.find((p) => p.id === id);
     return row
@@ -146,14 +157,19 @@ function ProgramForm({ program }: { program: AdminProgram | null }) {
         }
       : null;
   };
-  const items = form.itemIds
-    .map((id) => itemInfo(id))
-    .filter((item): item is AdminProgramItem => item !== null);
-  const sum = items.reduce((total, item) => total + item.priceKgs, 0);
-  const saving =
-    sum > form.priceKgs && form.priceKgs > 0
-      ? `${formatKgs(sum - form.priceKgs)} · ${Math.round(((sum - form.priceKgs) / sum) * 100)}%`
-      : '—';
+  const itemsOf = (ids: readonly string[]) =>
+    ids.map((id) => itemInfo(id)).filter((item): item is AdminProgramItem => item !== null);
+  const sumOf = (list: readonly AdminProgramItem[]) => list.reduce((total, item) => total + item.priceKgs, 0);
+  const items = itemsOf(form.itemIds);
+  const hasVariants = EXTRA_PROGRAM_VARIANTS.some((key) => form.variants[key]);
+
+  const setVariant = (key: ExtraProgramVariant, value: VariantInput | null) =>
+    set('variants', { ...form.variants, [key]: value });
+  const toggleVariant = (key: ExtraProgramVariant, on: boolean) => {
+    const currentValue = form.variants[key];
+    if (!on && currentValue) setDrafts((d) => ({ ...d, [key]: currentValue }));
+    setVariant(key, on ? (drafts[key] ?? { itemIds: [], priceKgs: 0 }) : null);
+  };
   const sameGoal =
     (programs.data ?? []).filter((p) => p.id !== program?.id && p.quizGoal === form.quizGoal).length + 1;
   const badged =
@@ -300,97 +316,92 @@ function ProgramForm({ program }: { program: AdminProgram | null }) {
           </Panel>
 
           <Panel
-            title={copy.program.items(items.length)}
+            title={hasVariants ? copy.program.standardItems(items.length) : copy.program.items(items.length)}
             aside={<span className="text-sm text-muted">{copy.program.itemsHint}</span>}
           >
-            <div className="flex flex-col">
-              {items.map((item, index) => (
-                <div key={item.id} className="flex items-center gap-3.5 border-b border-line-2 py-3">
-                  <div className="flex flex-none flex-col">
-                    <ArrowButton
-                      label={copy.editor.up}
-                      dir="up"
-                      onClick={() => set('itemIds', move(form.itemIds, index, -1))}
-                    />
-                    <ArrowButton
-                      label={copy.editor.down}
-                      dir="down"
-                      onClick={() => set('itemIds', move(form.itemIds, index, 1))}
+            <ProgramItemList
+              items={items}
+              products={products.data}
+              error={errors.itemIds}
+              removeLabel={copy.program.removeItem}
+              onMove={(index, delta) => set('itemIds', moveItem(form.itemIds, index, delta))}
+              onRemove={removeItem}
+              onAdd={(id) => set('itemIds', [...form.itemIds, id])}
+            />
+          </Panel>
+
+          <Panel
+            title={copy.program.variants}
+            aside={<span className="text-sm text-muted">{copy.program.variantsAside}</span>}
+            hint={copy.program.variantsHint}
+          >
+            {EXTRA_PROGRAM_VARIANTS.map((key) => {
+              const variant = form.variants[key];
+              const label = PROGRAM_VARIANT_LABELS[key];
+              const variantItems = variant ? itemsOf(variant.itemIds) : [];
+              const field = (name: string) => errors[`variants.${key}.${name}`];
+              return (
+                <div
+                  key={key}
+                  data-variant={key}
+                  className="flex flex-col gap-4 border-t border-line-2 pt-[18px] first:border-t-0 first:pt-0"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 flex-col gap-0.5">
+                      <span className="text-[15px] font-semibold">{copy.program.addVariant(label)}</span>
+                      <span className="text-[13px] text-muted">{PROGRAM_VARIANT_NOTES[key]}</span>
+                    </div>
+                    <Toggle
+                      checked={Boolean(variant)}
+                      onChange={(on) => toggleVariant(key, on)}
+                      label={copy.program.addVariant(label)}
                     />
                   </div>
-                  <MediaPreview
-                    image={item.image}
-                    label={copy.media.photo}
-                    size={96}
-                    className="size-12 flex-none rounded-control"
-                  />
-                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="text-[15px] font-semibold">{item.name}</span>
-                    <span className="text-[13px] text-muted">
-                      {item.brand} · {item.volume}
-                    </span>
-                  </div>
-                  <span className="w-[90px] flex-none truncate text-right text-[15px] text-muted">
-                    {formatKgs(item.priceKgs)}
-                  </span>
-                  <IconButton label={copy.program.removeItem} onClick={() => removeItem(item.id)}>
-                    <CloseIcon width={16} height={16} />
-                  </IconButton>
-                </div>
-              ))}
-            </div>
-            <FieldError error={errors.itemIds} />
-            {picker ? (
-              <div className="flex flex-col rounded-xl border border-input">
-                <div className="flex items-center justify-between border-b border-line-2 px-3.5 py-3">
-                  <span className="text-[15px] font-semibold">{copy.program.pickTitle}</span>
-                  <button
-                    type="button"
-                    onClick={() => setPicker(false)}
-                    className="text-sm font-semibold text-muted"
-                  >
-                    {copy.program.close}
-                  </button>
-                </div>
-                <div className="flex max-h-[280px] flex-col overflow-y-auto">
-                  {products.data
-                    ?.filter((p) => !form.itemIds.includes(p.id))
-                    .map((p) => (
-                      <div
-                        key={p.id}
-                        className="flex items-center gap-3 border-b border-line-3 px-3.5 py-2.5"
-                      >
-                        <div className="flex min-w-0 flex-1 flex-col gap-px">
-                          <span className="text-[15px] font-semibold">{p.name}</span>
-                          <span className="text-[13px] text-muted">
-                            {p.brand} · {p.category.name}
-                          </span>
-                        </div>
-                        <span className="truncate text-sm text-muted">{formatKgs(p.priceKgs)}</span>
-                        <Button
-                          variant="outline"
-                          className="h-[34px] px-3 text-sm"
-                          onClick={() => set('itemIds', [...form.itemIds, p.id])}
-                        >
-                          {copy.editor.add}
-                        </Button>
+                  {variant && (
+                    <>
+                      <span className="text-sm font-semibold">
+                        {copy.program.variantItems(label, variantItems.length)}
+                      </span>
+                      <ProgramItemList
+                        items={variantItems}
+                        products={products.data}
+                        error={field('itemIds')}
+                        removeLabel={copy.program.removeVariantItem(label)}
+                        onMove={(index, delta) =>
+                          setVariant(key, { ...variant, itemIds: moveItem(variant.itemIds, index, delta) })
+                        }
+                        onRemove={(id) =>
+                          setVariant(key, { ...variant, itemIds: variant.itemIds.filter((i) => i !== id) })
+                        }
+                        onAdd={(id) => setVariant(key, { ...variant, itemIds: [...variant.itemIds, id] })}
+                        extra={
+                          variant.itemIds.length === 0 &&
+                          form.itemIds.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setVariant(key, { ...variant, itemIds: [...form.itemIds] })}
+                              className="flex h-[50px] items-center justify-center rounded-xl border border-input px-4 text-[15px] font-semibold hover:border-input-hover"
+                            >
+                              {copy.program.copyStandard}
+                            </button>
+                          )
+                        }
+                      />
+                      <div className="flex max-w-[360px] flex-col gap-3">
+                        <span className="text-sm font-semibold">{copy.program.variantPrice(label)}</span>
+                        <ProgramPriceField
+                          label={copy.program.variantPrice(label)}
+                          priceKgs={variant.priceKgs}
+                          sumKgs={sumOf(variantItems)}
+                          error={field('priceKgs')}
+                          onChange={(priceKgs) => setVariant(key, { ...variant, priceKgs })}
+                        />
                       </div>
-                    ))}
-                  {products.data?.every((p) => form.itemIds.includes(p.id)) && (
-                    <span className="px-3.5 py-5 text-sm text-muted">{copy.program.pickEmpty}</span>
+                    </>
                   )}
                 </div>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setPicker(true)}
-                className="flex h-[50px] items-center justify-center gap-2 rounded-xl border border-dashed text-[15px] font-semibold hover:border-dashed-hover"
-              >
-                <PlusIcon />
-                {copy.program.addItem}
-              </button>
-            )}
+              );
+            })}
           </Panel>
 
           <Panel title={copy.program.page}>
@@ -486,28 +497,14 @@ function ProgramForm({ program }: { program: AdminProgram | null }) {
               onRemove={() => set('protocolMediaId', null)}
             />
           </Panel>
-          <Panel title={copy.program.price}>
-            <div className="relative">
-              <input
-                value={form.priceKgs ? String(form.priceKgs) : ''}
-                onChange={(e) => set('priceKgs', Number(e.target.value.replace(/\D/g, '').slice(0, 8)) || 0)}
-                inputMode="numeric"
-                aria-label={copy.program.price}
-                className={cn(inputClass, 'h-[50px] pr-[54px] text-xl font-semibold')}
-              />
-              <span className="absolute top-[15px] right-4 text-[15px] text-muted">{copy.editor.som}</span>
-            </div>
-            <FieldError error={errors.priceKgs} />
-            <div className="flex flex-col gap-2 text-sm">
-              <div className="flex justify-between gap-3">
-                <span className="text-muted">{copy.program.separately}</span>
-                <span>{formatKgs(sum)}</span>
-              </div>
-              <div className="flex justify-between gap-3">
-                <span className="text-muted">{copy.program.saving}</span>
-                <span className="font-semibold text-green">{saving}</span>
-              </div>
-            </div>
+          <Panel title={hasVariants ? copy.program.standardPrice : copy.program.price}>
+            <ProgramPriceField
+              label={hasVariants ? copy.program.standardPrice : copy.program.price}
+              priceKgs={form.priceKgs}
+              sumKgs={sumOf(items)}
+              error={errors.priceKgs}
+              onChange={(priceKgs) => set('priceKgs', priceKgs)}
+            />
           </Panel>
           <Panel title={copy.program.quiz} hint={copy.program.quizHint}>
             <label className="flex flex-col gap-1.5">
@@ -614,53 +611,5 @@ function ProgramForm({ program }: { program: AdminProgram | null }) {
         </div>
       </div>
     </>
-  );
-}
-
-function IconButton({
-  label,
-  onClick,
-  children,
-}: {
-  label: string;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-      className="flex size-11 flex-none items-center justify-center rounded-control border border-line text-muted hover:border-[#c5c9da]"
-    >
-      {children}
-    </button>
-  );
-}
-
-function ArrowButton({ label, dir, onClick }: { label: string; dir: 'up' | 'down'; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-      className="flex h-[22px] w-7 items-center justify-center text-muted hover:text-ink"
-    >
-      <svg
-        width="14"
-        height="14"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <path d={dir === 'up' ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
-      </svg>
-    </button>
   );
 }

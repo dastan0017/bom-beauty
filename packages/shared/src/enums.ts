@@ -45,6 +45,17 @@ export type QuizExperience = (typeof QUIZ_EXPERIENCES)[number];
 export const QUIZ_AGES = ['u25', '25', '35', '45'] as const;
 export type QuizAge = (typeof QUIZ_AGES)[number];
 
+/**
+ * Variants of one program, in page order: «Мини», «Стандарт», «Максимум». «Стандарт» is the program itself; the
+ * other two are optional (design: TIERS, keys base / opt / max).
+ */
+export const PROGRAM_VARIANTS = ['mini', 'standard', 'max'] as const;
+export type ProgramVariant = (typeof PROGRAM_VARIANTS)[number];
+
+/** The optional variants the owner can add next to «Стандарт». */
+export const EXTRA_PROGRAM_VARIANTS = ['mini', 'max'] as const;
+export type ExtraProgramVariant = (typeof EXTRA_PROGRAM_VARIANTS)[number];
+
 export const ROUTINE_PERIODS = ['am', 'pm'] as const;
 export type RoutinePeriod = (typeof ROUTINE_PERIODS)[number];
 

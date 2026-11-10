@@ -92,6 +92,11 @@ export const copy = {
     contentsTitle: 'Что входит в программу',
     contentsLead: (count: string) => `${count} полного объёма — хватит на весь курс`,
     priceTitle: 'Цена программы',
+    // Program variants (design 2026-11: «Вариант «Мини»», the radiogroup under «Что входит в программу»).
+    variantName: (label: string) => `Вариант «${label}»`,
+    variantsLabel: 'Вариант программы',
+    /** «от 3 900 сом» on cards of programs with a choice (design: progSum). */
+    priceFrom: 'от ',
     separately: 'По отдельности — ',
     schemeTitle: 'Схема ухода',
     schemeMeta: (size: string) => `Пошаговая схема от Нурайым · PDF${size ? `, ${size}` : ''}`,
@@ -102,7 +107,9 @@ export const copy = {
     schemeAsk: 'Попросить в WhatsApp',
     /** Generated PDF (README §4); "—" in the file name and the WhatsApp line is the design's own text. */
     scheme: {
-      fileName: (title: string) => `Схема ухода — ${title}.pdf`,
+      /** A program with a choice adds the variant: «Схема ухода — Акне и постакне (Мини).pdf» (design). */
+      fileName: (title: string, variant?: string | null) =>
+        `Схема ухода — ${title}${variant ? ` (${variant})` : ''}.pdf`,
       brand: 'BOM BEAUTY',
       from: 'Схема ухода от Нурайым',
       am: 'Утро',

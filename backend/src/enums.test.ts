@@ -16,6 +16,7 @@ describe('enum parity', () => {
     ['QuizGoal', prisma.QuizGoal, shared.QUIZ_GOALS],
     ['SkinType', prisma.SkinType, shared.SKIN_TYPES],
     ['RoutinePeriod', prisma.RoutinePeriod, shared.ROUTINE_PERIODS],
+    ['ProgramVariant', prisma.ProgramVariant, shared.PROGRAM_VARIANTS],
   ] as const)('%s', (_name, prismaEnum, sharedValues) => {
     expect(Object.values(prismaEnum).sort()).toEqual([...sharedValues].sort());
   });

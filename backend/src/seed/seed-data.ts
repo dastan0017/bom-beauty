@@ -1,6 +1,6 @@
 // Demo catalog and texts taken verbatim from design/Bom Beauty Prototype.dc.html (P, PROGRAMS, page copy) and
 // design/BomAdmin.dc.html (PROGRAMS0 descriptions). The owner replaces it in the admin (docs/HANDOFF.md).
-import type { ContentValue, QuizGoal, SkinType } from '@bom/shared';
+import type { ContentValue, ExtraProgramVariant, QuizGoal, SkinType } from '@bom/shared';
 
 export const CATEGORIES = [
   { slug: 'cleansing', name: 'Очищение' },
@@ -267,6 +267,21 @@ export interface SeedProgram {
   am: [ProductKey, string][];
   pm: [ProductKey, string][];
 }
+
+/**
+ * Sample «Мини» and «Максимум» from the prototype (TIERS). Demo data: dev seeds them onto a program that has no
+ * variants yet; real variants are the owner's to set in the admin.
+ */
+export const DEMO_PROGRAM_VARIANTS: Record<
+  string,
+  Partial<Record<ExtraProgramVariant, { items: ProductKey[]; priceKgs: number }>>
+> = {
+  acne: {
+    mini: { items: ['foam', 'cica', 'gel'], priceKgs: 3900 },
+    max: { items: ['oil', 'foam', 'bha', 'cica', 'pdrn', 'gel', 'spf'], priceKgs: 10500 },
+  },
+  pores: { mini: { items: ['foam', 'bha', 'gel'], priceKgs: 3600 } },
+};
 
 /** The eight programs, in the design's admin order (P_ORDER). */
 export const PROGRAMS: SeedProgram[] = [

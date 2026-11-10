@@ -7,6 +7,7 @@ import {
   quizAnswerLabel,
   WHOLESALE_BUYER_LABELS,
   WHOLESALE_COUNTRY_LABELS,
+  type ProgramVariant,
   type QuizKey,
   type WholesaleBuyer,
   type WholesaleCountry,
@@ -21,7 +22,13 @@ export const escapeHtml = (text: string): string =>
 export interface OrderForMessage {
   id: string;
   number: number;
-  lines: { type: 'product' | 'program'; title: string; qty: number; totalKgs: number }[];
+  lines: {
+    type: 'product' | 'program';
+    title: string;
+    variant?: ProgramVariant | null;
+    qty: number;
+    totalKgs: number;
+  }[];
   totalKgs: number;
   name: string;
   phone: string;
@@ -119,7 +126,13 @@ export interface OutgoingMessage {
 export interface PaymentOrderForMessage {
   id: string;
   number: number;
-  lines: { type: 'product' | 'program'; title: string; qty: number; totalKgs: number }[];
+  lines: {
+    type: 'product' | 'program';
+    title: string;
+    variant?: ProgramVariant | null;
+    qty: number;
+    totalKgs: number;
+  }[];
   totalKgs: number;
   adjustmentKgs: number;
   adjustmentNote: string | null;

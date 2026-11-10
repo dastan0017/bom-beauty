@@ -49,7 +49,8 @@ const rowSelect = {
   brand: { select: { name: true } },
   category: { select: { id: true, name: true } },
   images: { orderBy: { order: 'asc' }, take: 1, select: { media: { select: imageMediaSelect } } },
-  _count: { select: { programItems: true } },
+  // One row per program variant that lists the product; programCount counts programs.
+  programItems: { select: { programId: true } },
 } satisfies Prisma.ProductSelect;
 
 const detailSelect = {
@@ -314,7 +315,7 @@ export class AdminProductsService {
       inStock: row.inStock,
       published: row.published,
       image: toImageRef(row.images[0]?.media, row.name),
-      programCount: row._count.programItems,
+      programCount: new Set(row.programItems.map((item) => item.programId)).size,
     }));
   }
 
@@ -345,7 +346,7 @@ export class AdminProductsService {
       video: row.video ? toAdminVideo(row.video) : null,
       seoTitle: row.seoTitle,
       seoDescription: row.seoDescription,
-      programs: row.programItems.map((item) => item.program),
+      programs: [...new Map(row.programItems.map(({ program }) => [program.id, program])).values()],
       updatedAt: row.updatedAt.toISOString(),
     };
   }

@@ -1,5 +1,5 @@
-import type { OrderItemType, WholesaleBuyer, WholesaleCountry } from './enums';
-import { WHOLESALE_BUYER_LABELS, WHOLESALE_COUNTRY_LABELS } from './labels';
+import type { OrderItemType, ProgramVariant, WholesaleBuyer, WholesaleCountry } from './enums';
+import { PROGRAM_VARIANT_LABELS, WHOLESALE_BUYER_LABELS, WHOLESALE_COUNTRY_LABELS } from './labels';
 import { formatKgs } from './money';
 import { quizAnswerLabel, type QuizAnswers } from './quiz';
 
@@ -16,13 +16,24 @@ export function waLink(phone: string, text?: string): string {
   return `https://wa.me/${digits}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
 }
 
-export function orderItemLabel(item: { type: OrderItemType; title: string }): string {
-  return item.type === 'program' ? `Программа «${item.title}»` : item.title;
+/**
+ * «Программа «Акне и постакне»», with the variant after it when the program offers several (design: progItem):
+ * «Программа «Акне и постакне» · Мини».
+ */
+export function orderItemLabel(item: {
+  type: OrderItemType;
+  title: string;
+  variant?: ProgramVariant | null;
+}): string {
+  if (item.type !== 'program') return item.title;
+  return `Программа «${item.title}»${item.variant ? ` · ${PROGRAM_VARIANT_LABELS[item.variant]}` : ''}`;
 }
 
 export interface OrderMessageLine {
   type: OrderItemType;
   title: string;
+  /** Set for a program with several variants. */
+  variant?: ProgramVariant | null;
   qty: number;
   /** Line total formatted in the visitor's currency. */
   total: string;
@@ -121,7 +132,13 @@ export function upgradeWhatsappTemplates(
 }
 
 export interface OrderItemsInput {
-  lines: { type: OrderItemType; title: string; qty: number; totalKgs: number }[];
+  lines: {
+    type: OrderItemType;
+    title: string;
+    variant?: ProgramVariant | null;
+    qty: number;
+    totalKgs: number;
+  }[];
   adjustmentKgs?: number;
   adjustmentNote?: string | null;
 }
@@ -130,6 +147,7 @@ export interface OrderItemsInput {
 export function orderLineText(line: {
   type: OrderItemType;
   title: string;
+  variant?: ProgramVariant | null;
   qty: number;
   totalKgs: number;
 }): string {
@@ -207,18 +225,23 @@ export function buildWholesaleMessage(choice: {
   return lines.join('\n');
 }
 
-/** Quiz hand-off from "Спросить Нурайым в WhatsApp" under the result list (README §2). */
+/**
+ * Quiz hand-off from "Спросить Нурайым в WhatsApp" under the result list (README §2). An offer of a program with
+ * several variants names the suggested one: «Акне и постакне» — мини, 3 900 сом (design: quizWa).
+ */
 export function buildQuizMessage(
   answers: Partial<QuizAnswers>,
-  offers: { title: string; price: string }[],
+  offers: { title: string; price: string; variant?: ProgramVariant | null }[],
 ): string {
+  const offer = (o: (typeof offers)[number]) =>
+    `«${o.title}»${o.variant ? ` — ${PROGRAM_VARIANT_LABELS[o.variant].toLowerCase()}` : ''}, ${o.price}`;
   return [
     'Здравствуйте, Нурайым! Прошла тест «Подобрать программу ухода за 1 минуту» на сайте.',
     `— Задача: ${quizAnswerLabel('goal', answers.goal)}`,
     `— Кожа через 2–3 часа после умывания: ${quizAnswerLabel('skin', answers.skin)}`,
     `— Активная косметика: ${quizAnswerLabel('exp', answers.exp)}`,
     `— Возраст: ${quizAnswerLabel('age', answers.age)}`,
-    `Сайт предложил: ${offers.map((offer) => `«${offer.title}», ${offer.price}`).join('; ')}. Помогите выбрать, пожалуйста.`,
+    `Сайт предложил: ${offers.map(offer).join('; ')}. Помогите выбрать, пожалуйста.`,
   ].join('\n');
 }
 

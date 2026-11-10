@@ -1,5 +1,5 @@
 import { z } from '../zod';
-import { QUIZ_GOALS, SKIN_TYPES, USER_ROLES } from '../enums';
+import { PROGRAM_VARIANTS, QUIZ_GOALS, SKIN_TYPES, USER_ROLES } from '../enums';
 import { BADGES } from '../labels';
 import { PRODUCT_IMAGES_MAX } from '../limits';
 import { fileRefSchema, imageRefSchema, slugSchema } from './common';
@@ -199,6 +199,20 @@ const stepInput = z.object({
   text: z.string().trim().min(1, 'program.step.text.required').max(200, 'text.too_long'),
 });
 
+const PROGRAM_ITEMS_MAX = 12;
+
+/** «Мини» or «Максимум»: its own products (at least one) and price; null when the program does not offer it. */
+const variantInput = z
+  .object({
+    itemIds: z
+      .array(z.uuid())
+      .min(1, 'program.variant.items.required')
+      .max(PROGRAM_ITEMS_MAX, 'program.items.max'),
+    priceKgs: price,
+  })
+  .nullable()
+  .default(null);
+
 export const programInputSchema = z.object({
   title: z.string().trim().min(2, 'program.title.required').max(80, 'text.too_long'),
   slug: z.union([slugSchema, z.literal('')]).default(''),
@@ -215,7 +229,9 @@ export const programInputSchema = z.object({
   published: z.boolean(),
   inStock: z.boolean(),
   /** Ordered product ids; steps may only use these products. */
-  itemIds: z.array(z.uuid()).max(12, 'program.items.max'),
+  itemIds: z.array(z.uuid()).max(PROGRAM_ITEMS_MAX, 'program.items.max'),
+  /** Optional variants beside «Стандарт» (the products and price above). */
+  variants: z.object({ mini: variantInput, max: variantInput }).default({ mini: null, max: null }),
   steps: z.object({ am: z.array(stepInput).max(10), pm: z.array(stepInput).max(10) }),
   videoId: z.uuid().nullable(),
   protocolMediaId: z.uuid().nullable(),
@@ -244,6 +260,8 @@ export const adminProgramRowSchema = z.object({
   videoStatus: adminVideoSchema.shape.status.nullable(),
   protocolStatus: adminMediaSchema.shape.status.nullable(),
   thumbs: z.array(imageRefSchema.nullable()),
+  /** Variants on offer, in page order; just «Стандарт» for a program without a choice. */
+  variants: z.array(z.enum(PROGRAM_VARIANTS)),
 });
 export type AdminProgramRow = z.infer<typeof adminProgramRowSchema>;
 
@@ -257,6 +275,10 @@ export const adminProgramItemSchema = z.object({
   image: imageRefSchema.nullable(),
 });
 export type AdminProgramItem = z.infer<typeof adminProgramItemSchema>;
+
+const adminProgramVariantSchema = z
+  .object({ items: z.array(adminProgramItemSchema), priceKgs: z.number().int() })
+  .nullable();
 
 export const adminProgramSchema = z.object({
   id: z.uuid(),
@@ -274,6 +296,8 @@ export const adminProgramSchema = z.object({
   published: z.boolean(),
   inStock: z.boolean(),
   items: z.array(adminProgramItemSchema),
+  /** «Мини» and «Максимум»; null when not offered. */
+  variants: z.object({ mini: adminProgramVariantSchema, max: adminProgramVariantSchema }),
   steps: z.object({
     am: z.array(z.object({ productId: z.uuid(), text: z.string() })),
     pm: z.array(z.object({ productId: z.uuid(), text: z.string() })),

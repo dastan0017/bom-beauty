@@ -1,7 +1,17 @@
 'use client';
 
-import type { ProgramCard, QuizAnswers, QuizKey } from '@bom/shared';
-import { buildQuizMessage, QUIZ_QUESTIONS, rankPrograms, waLink } from '@bom/shared/web';
+import type { ProgramCard, ProgramVariant, ProgramVariantCard, QuizAnswers, QuizKey } from '@bom/shared';
+import {
+  buildQuizMessage,
+  namedVariant,
+  pickVariant,
+  PROGRAM_VARIANT_LABELS,
+  programCardVariants,
+  QUIZ_QUESTIONS,
+  rankPrograms,
+  recommendVariant,
+  waLink,
+} from '@bom/shared/web';
 import { useRef, type ReactNode } from 'react';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
@@ -53,13 +63,24 @@ export function QuizDialog({
     programs.map((program) => ({ ...program, quizGoal: program.quiz.goal, quizSkins: program.quiz.skins })),
     state.answers,
   );
+  // Results stay programs; one with variants shows the variant the answers suggest (design: quizOffers).
+  const suggested = recommendVariant(state.answers);
+  const offers = ranked.map((program) => {
+    const variants = programCardVariants(program);
+    const variant = pickVariant(variants, suggested);
+    return { program, variant, named: namedVariant(variants, variant.variant) };
+  });
 
   // "Спросить Нурайым в WhatsApp": the answers and the suggested programs go to her, and the lead is recorded.
   const handOff = () => {
     const answers = state.answers as QuizAnswers;
     const message = buildQuizMessage(
       answers,
-      ranked.map((program) => ({ title: program.title, price: format(program.priceKgs) })),
+      offers.map(({ program, variant, named }) => ({
+        title: program.title,
+        price: format(variant.priceKgs),
+        variant: named,
+      })),
     );
     openExternal(waLink(whatsapp, message));
     submit('/leads/quiz', { ...submissionMeta(message), answers, choose: true });
@@ -175,14 +196,20 @@ export function QuizDialog({
                 </p>
               </div>
               <div className="mt-6 flex flex-col gap-2.5">
-                {ranked.map((program, index) => (
+                {offers.map(({ program, variant, named }, index) => (
                   <div key={program.slug} className="contents">
                     {index === 1 && (
                       <span className="mt-3.5 block text-[15px] font-semibold text-muted">
                         {copy.quiz.alternatives}
                       </span>
                     )}
-                    <ResultCard program={program} primary={index === 0} onPick={() => onPick(program.slug)} />
+                    <ResultCard
+                      program={program}
+                      variant={variant}
+                      named={named}
+                      primary={index === 0}
+                      onPick={() => onPick(program.slug)}
+                    />
                   </div>
                 ))}
               </div>
@@ -200,13 +227,20 @@ export function QuizDialog({
   );
 }
 
-/** A suggested program: title, symptom and price, then the product thumbs and «Подробнее» (README §2). */
+/**
+ * A suggested program: title, symptom and price, then the product thumbs and «Подробнее» (README §2). Price, thumbs
+ * and count are the suggested variant's; a program with a choice names it before the symptom.
+ */
 function ResultCard({
   program,
+  variant,
+  named,
   primary,
   onPick,
 }: {
   program: ProgramCard;
+  variant: ProgramVariantCard;
+  named: ProgramVariant | null;
   primary: boolean;
   onPick: () => void;
 }) {
@@ -230,16 +264,22 @@ function ResultCard({
       <span className="flex items-start justify-between gap-3">
         <span className="flex min-w-0 flex-col gap-[3px]">
           <span className="text-lg leading-[1.25] font-semibold">{program.title}</span>
-          <span className="text-sm leading-[1.4] text-pretty text-muted">{program.symptom}</span>
+          <span className="text-sm leading-[1.4] text-pretty text-muted">
+            {named
+              ? [copy.program.variantName(PROGRAM_VARIANT_LABELS[named]), program.symptom]
+                  .filter(Boolean)
+                  .join(' · ')
+              : program.symptom}
+          </span>
         </span>
         <span className="flex-none text-lg leading-[1.25] font-semibold tracking-[-0.01em] whitespace-nowrap">
-          <Price kgs={program.priceKgs} />
+          <Price kgs={variant.priceKgs} />
         </span>
       </span>
       <span className="flex items-center justify-between gap-2.5 border-t border-line-2 pt-3">
         <span className="flex min-w-0 items-center gap-2">
           <span className="flex pl-[7px]">
-            {program.thumbs.slice(0, 5).map((thumb) => (
+            {variant.thumbs.slice(0, 5).map((thumb) => (
               <span
                 key={thumb.slug}
                 className="relative -ml-[7px] size-[26px] flex-none overflow-hidden rounded-lg bg-surface-2 shadow-[0_0_0_2px_var(--sf)]"
@@ -248,7 +288,7 @@ function ResultCard({
               </span>
             ))}
           </span>
-          <span className="text-sm whitespace-nowrap text-muted">{productsCount(program.itemCount)}</span>
+          <span className="text-sm whitespace-nowrap text-muted">{productsCount(variant.itemCount)}</span>
         </span>
         <span className="flex flex-none items-center gap-0.5 text-sm font-semibold text-accent-ink">
           {copy.quiz.details}

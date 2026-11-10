@@ -3,6 +3,7 @@ import type { Route } from 'next';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BbImage } from '@/components/bb-image';
+import { programProductSlugs, programSummary } from '@/lib/program-summary';
 import {
   CatalogBar,
   CatalogFiltersProvider,
@@ -73,7 +74,8 @@ export default async function CatalogPage({ searchParams }: Props) {
   const problem = programs.find((program) => program.slug === single(params.problem));
   const brand = brands.find((b) => b.slug === single(params.brand));
   // A problem shows only the products of its program (README §5).
-  const inProblem = problem ? new Set(problem.thumbs.map((thumb) => thumb.slug)) : null;
+  const inProblem = problem ? programProductSlugs(problem) : null;
+  const problemSummary = problem ? programSummary(problem) : null;
   const shown = products.filter(
     (product) =>
       (!inProblem || inProblem.has(product.slug)) &&
@@ -225,7 +227,8 @@ export default async function CatalogPage({ searchParams }: Props) {
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
               <span className="text-[15px] leading-[1.3] font-semibold">{copy.catalog.bannerTitle}</span>
               <span className="text-sm leading-[1.4] text-muted">
-                «{problem.title}» · <Price kgs={problem.priceKgs} />
+                «{problem.title}» · {problemSummary?.from && copy.program.priceFrom}
+                <Price kgs={problemSummary?.priceKgs ?? problem.priceKgs} />
               </span>
             </span>
             <span className="flex size-9 flex-none items-center justify-center rounded-full bg-surface">

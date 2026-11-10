@@ -1,5 +1,11 @@
 import { HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { normalizePhone, orderLinesOf, type CreateOrder, type CreateOrderResponse } from '@bom/shared';
+import {
+  normalizePhone,
+  orderLinesOf,
+  type CreateOrder,
+  type CreateOrderResponse,
+  type ProgramVariant,
+} from '@bom/shared';
 import type { Env } from '../config/env';
 import { ENV } from '../config/env.module';
 import { hashIp } from '../common/client-ip';
@@ -10,6 +16,7 @@ import { PaymentsService } from '../payments/payments.service';
 import { TurnstileService } from '../common/turnstile.service';
 import type { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { offeredVariants } from '../catalog/program-variants';
 
 interface RequestMeta {
   ip: string;
@@ -69,16 +76,37 @@ export class OrdersService {
       }),
       this.prisma.program.findMany({
         where: { slug: { in: slugsOf('program') }, published: true },
-        select: { id: true, slug: true, title: true, priceKgs: true },
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          priceKgs: true,
+          miniPriceKgs: true,
+          maxPriceKgs: true,
+          items: { select: { variant: true } },
+        },
       }),
     ]);
+    // A program line costs what its variant costs; a variant the program no longer offers is gone like a deleted item.
+    const programLine = (program: (typeof programs)[number], wanted: ProgramVariant = 'standard') => {
+      const offered = offeredVariants(program, program.items);
+      const chosen = offered.find((v) => v.variant === wanted);
+      if (!chosen) return null;
+      return {
+        programId: program.id,
+        title: program.title,
+        // Only a program with a choice names the variant (labels, messages, admin).
+        variant: offered.length > 1 ? chosen.variant : null,
+        priceKgs: chosen.priceKgs,
+      };
+    };
     const lines = requested.map((line, position) => {
       const product = line.type === 'product' ? products.find((p) => p.slug === line.slug) : undefined;
       const program = line.type === 'program' ? programs.find((p) => p.slug === line.slug) : undefined;
       const found = product
         ? { productId: product.id, title: product.name, priceKgs: product.priceKgs }
         : program
-          ? { programId: program.id, title: program.title, priceKgs: program.priceKgs }
+          ? programLine(program, line.variant)
           : null;
       if (!found) throw new ApiException('not_found', HttpStatus.NOT_FOUND, NOT_AVAILABLE);
       const { priceKgs, ...ref } = found;

@@ -22,6 +22,7 @@ import {
   COMPOSITION,
   DELIVERY_CONTENT,
   DEMO_ORDERS,
+  DEMO_PROGRAM_VARIANTS,
   HOME_CONTENT,
   HOME_RAILS,
   OFFER_CONTENT,
@@ -116,6 +117,38 @@ export async function seed(
         },
       },
     });
+  }
+
+  if (options.demo) {
+    // Only onto a program without variants, so whatever the owner (or a developer) set stays.
+    for (const [slug, variants] of Object.entries(DEMO_PROGRAM_VARIANTS)) {
+      const program = await prisma.program.findUnique({
+        where: { slug },
+        select: {
+          id: true,
+          miniPriceKgs: true,
+          maxPriceKgs: true,
+          _count: { select: { items: { where: { variant: { not: 'standard' } } } } },
+        },
+      });
+      if (!program || program.miniPriceKgs || program.maxPriceKgs || program._count.items) continue;
+      await prisma.program.update({
+        where: { id: program.id },
+        data: {
+          miniPriceKgs: variants.mini?.priceKgs ?? null,
+          maxPriceKgs: variants.max?.priceKgs ?? null,
+          items: {
+            create: (['mini', 'max'] as const).flatMap((variant) =>
+              (variants[variant]?.items ?? []).map((key, order) => ({
+                variant,
+                order,
+                productId: lookup(productIds, key),
+              })),
+            ),
+          },
+        },
+      });
+    }
   }
 
   for (const key of SETTING_KEYS) {

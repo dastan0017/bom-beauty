@@ -38,7 +38,7 @@ const paymentDiffSchema = z.object({
 export const orderLinesInclude = {
   lines: {
     orderBy: { position: 'asc' },
-    select: { type: true, title: true, unitPriceKgs: true, qty: true, totalKgs: true },
+    select: { type: true, title: true, variant: true, unitPriceKgs: true, qty: true, totalKgs: true },
   },
 } satisfies Prisma.OrderInclude;
 type OrderWithLines = Prisma.OrderGetPayload<{ include: typeof orderLinesInclude }>;

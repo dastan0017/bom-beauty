@@ -2,7 +2,7 @@ import type { ProgramCard as ProgramCardData } from '@bom/shared';
 import Link from 'next/link';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
-import { productsCount } from '@/lib/words';
+import { programSummary } from '@/lib/program-summary';
 import { BbImage } from '../bb-image';
 import { Price } from '../currency';
 import { ChevronRightIcon, PlayTriangleIcon, SparkleIcon } from '../icons';
@@ -11,6 +11,7 @@ import { VideoThumb } from '../video-thumb';
 
 /** Program card from the programs list (design: isPrograms → programs). */
 export function ProgramCard({ program }: { program: ProgramCardData }) {
+  const summary = programSummary(program);
   return (
     <Link
       href={`/programs/${program.slug}`}
@@ -43,9 +44,7 @@ export function ProgramCard({ program }: { program: ProgramCardData }) {
             <BbImage image={thumb.image} sizes="32px" width={64} alt="" />
           </span>
         ))}
-        <span className="ml-1.5 text-sm whitespace-nowrap text-muted">
-          {productsCount(program.itemCount)}
-        </span>
+        <span className="ml-1.5 text-sm whitespace-nowrap text-muted">{summary.count}</span>
       </span>
       <span className="flex items-center justify-between gap-3 border-t border-line-2 pt-3">
         {program.video ? (
@@ -60,7 +59,8 @@ export function ProgramCard({ program }: { program: ProgramCardData }) {
           </span>
         )}
         <span className="flex items-center gap-1.5 text-[17px] font-semibold whitespace-nowrap">
-          <Price kgs={program.priceKgs} />
+          {summary.from && copy.program.priceFrom}
+          <Price kgs={summary.priceKgs} />
           <ChevronRightIcon size={16} className="text-muted" />
         </span>
       </span>

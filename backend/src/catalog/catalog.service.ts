@@ -6,6 +6,7 @@ import type {
   ProductDetail,
   ProgramCard,
   ProgramDetail,
+  ProgramVariant,
   RoutineStep,
   Sitemap,
 } from '@bom/shared';
@@ -22,6 +23,7 @@ import {
 } from '../common/media-refs';
 import { PrismaService } from '../prisma/prisma.service';
 import { productCardSelect, productOrder, toProductCard, type ProductCardRow } from './catalog.selects';
+import { offeredVariants, type VariantPrices } from './program-variants';
 
 const RELATED_MAX = 6;
 
@@ -35,14 +37,18 @@ const programCardSelect = {
   symptom: true,
   badge: true,
   priceKgs: true,
+  miniPriceKgs: true,
+  maxPriceKgs: true,
   inStock: true,
   quizGoal: true,
   quizSkins: true,
   video: { select: videoSelect },
   cover: { select: imageMediaSelect },
+  // Every variant's items; toProgramCard splits them.
   items: {
     orderBy: { order: 'asc' },
     select: {
+      variant: true,
       product: {
         select: {
           slug: true,
@@ -130,7 +136,12 @@ export class CatalogService {
       howToUse: row.howToUse,
       inci: row.inci,
       images,
-      programs: row.programItems.map(({ program }) => ({ slug: program.slug, title: program.title })),
+      // A product in several variants of one program lists that program once.
+      programs: [
+        ...new Map(
+          row.programItems.map(({ program }) => [program.slug, { slug: program.slug, title: program.title }]),
+        ).values(),
+      ],
       related,
       seo: { title: row.seoTitle, description: row.seoDescription },
       updatedAt: row.updatedAt.toISOString(),
@@ -182,7 +193,10 @@ export class CatalogService {
         seoDescription: true,
         updatedAt: true,
         protocol: { select: fileMediaSelect },
-        items: { orderBy: { order: 'asc' }, select: { product: { select: productCardSelect } } },
+        items: {
+          orderBy: { order: 'asc' },
+          select: { variant: true, product: { select: productCardSelect } },
+        },
         steps: {
           orderBy: { order: 'asc' },
           select: {
@@ -195,14 +209,25 @@ export class CatalogService {
     });
     if (!row) throw notFound();
 
-    const items = row.items.map((item) => toProductCard(item.product));
+    const card = this.toProgramCard(row);
+    const variants = offeredVariants(row, row.items).map(({ variant, priceKgs, items: rows }) => {
+      const items = rows.map((item) => toProductCard(item.product));
+      return {
+        variant,
+        priceKgs,
+        itemCount: items.length,
+        thumbs: items.map((item) => ({ slug: item.slug, image: item.image })),
+        items,
+        sumKgs: items.reduce((sum, item) => sum + item.priceKgs, 0),
+      };
+    });
+    const standard = variants.find((v) => v.variant === 'standard');
+    const items = standard?.items ?? [];
     const step = (s: (typeof row.steps)[number]): RoutineStep => ({
       productSlug: s.product.slug,
       title: s.product.shortName ?? s.product.name,
       text: s.text,
     });
-    const card = this.toProgramCard(row);
-
     return {
       ...card,
       headline: row.headline,
@@ -210,7 +235,8 @@ export class CatalogService {
       fit: row.fit,
       description: row.description,
       items,
-      sumKgs: items.reduce((sum, item) => sum + item.priceKgs, 0),
+      sumKgs: standard?.sumKgs ?? 0,
+      variants,
       steps: {
         am: row.steps.filter((s) => s.period === 'am').map(step),
         pm: row.steps.filter((s) => s.period === 'pm').map(step),
@@ -240,27 +266,39 @@ export class CatalogService {
     return { programs: iso(programs), products: iso(products) };
   }
 
-  private toProgramCard(row: {
-    id: string;
-    slug: string;
-    title: string;
-    symptom: string;
-    badge: string | null;
-    priceKgs: number;
-    inStock: boolean;
-    quizGoal: ProgramCard['quiz']['goal'];
-    quizSkins: ProgramCard['quiz']['skins'];
-    video: Parameters<typeof toVideoRef>[0];
-    cover: Parameters<typeof toImageRef>[0];
-    items: {
-      product: {
-        slug: string;
-        name: string;
-        images: { alt: string; media: Parameters<typeof toImageRef>[0] }[];
-      };
-    }[];
-  }): ProgramCard {
+  private toProgramCard(
+    row: VariantPrices & {
+      id: string;
+      slug: string;
+      title: string;
+      symptom: string;
+      badge: string | null;
+      inStock: boolean;
+      quizGoal: ProgramCard['quiz']['goal'];
+      quizSkins: ProgramCard['quiz']['skins'];
+      video: Parameters<typeof toVideoRef>[0];
+      cover: Parameters<typeof toImageRef>[0];
+      items: {
+        variant: ProgramVariant;
+        product: {
+          slug: string;
+          name: string;
+          images: { alt: string; media: Parameters<typeof toImageRef>[0] }[];
+        };
+      }[];
+    },
+  ): ProgramCard {
     const video = toVideoRef(row.video);
+    const variants = offeredVariants(row, row.items).map(({ variant, priceKgs, items }) => ({
+      variant,
+      priceKgs,
+      itemCount: items.length,
+      thumbs: items.map(({ product }) => ({
+        slug: product.slug,
+        image: toImageRef(product.images[0]?.media, product.images[0]?.alt || product.name),
+      })),
+    }));
+    const standard = variants.find((v) => v.variant === 'standard');
     return {
       id: row.id,
       slug: row.slug,
@@ -269,11 +307,9 @@ export class CatalogService {
       badge: row.badge,
       priceKgs: row.priceKgs,
       inStock: row.inStock,
-      itemCount: row.items.length,
-      thumbs: row.items.map(({ product }) => ({
-        slug: product.slug,
-        image: toImageRef(product.images[0]?.media, product.images[0]?.alt || product.name),
-      })),
+      itemCount: standard?.itemCount ?? 0,
+      thumbs: standard?.thumbs ?? [],
+      variants,
       cover: toImageRef(row.cover, row.title),
       video: video ? { durationSec: video.durationSec, poster: video.poster } : null,
       quiz: { goal: row.quizGoal, skins: row.quizSkins },

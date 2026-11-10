@@ -180,6 +180,54 @@ test('catalog: a category is renamed and deleted from its «⋯» settings; dupl
   await expect(page.getByRole('button', { name: `Настроить «${renamed}»` })).toHaveCount(0);
 });
 
+test('programs: the picker finds a product by name; «Мини» is saved for the site and removed', async ({
+  request,
+}) => {
+  await page.getByRole('link', { name: 'Программы' }).first().click();
+  await page.getByRole('link', { name: 'Пигментация', exact: true }).click();
+  await expect(page).toHaveURL(/\/programs\/[0-9a-f-]{36}$/);
+
+  // «Мини» starts from «Стандарт»'s products, drops two and gets the oil through the search.
+  await page.getByRole('switch', { name: 'Добавить «Мини»' }).click();
+  const mini = page.locator('[data-variant="mini"]');
+  await mini.getByRole('button', { name: 'Взять средства «Стандарт»' }).click();
+  await expect(mini.getByText('Средства «Мини» · 5')).toBeVisible();
+  await mini.getByRole('button', { name: 'Убрать из варианта «Мини»' }).first().click();
+  await mini.getByRole('button', { name: 'Убрать из варианта «Мини»' }).first().click();
+  await mini.getByRole('button', { name: 'Добавить средство' }).click();
+  const search = mini.getByRole('searchbox', { name: 'Найти по названию или бренду' });
+  await expect(search).toBeFocused();
+  await search.fill('масло');
+  const add = mini.getByRole('button', { name: 'Добавить', exact: true });
+  await expect(add).toHaveCount(1);
+  await add.click();
+  await expect(search).toBeFocused();
+  await search.fill('несуществующее средство');
+  await expect(mini.getByText('Ничего не нашлось. Проверьте название')).toBeVisible();
+  await mini.getByRole('button', { name: 'Закрыть' }).click();
+  await expect(mini.getByText('Средства «Мини» · 4')).toBeVisible();
+  await mini.getByLabel('Цена «Мини»').fill('4500');
+  await page.getByRole('button', { name: 'Сохранить' }).click();
+  await expect(page.getByText('Изменения сохранены')).toBeVisible();
+
+  const variantsOnSite = async () => {
+    const response = await request.get(`${API}/catalog/programs/pigmentation`);
+    const body = (await response.json()) as {
+      variants: { variant: string; priceKgs: number; itemCount: number }[];
+    };
+    return body.variants.map((v) => [v.variant, v.priceKgs, v.itemCount]);
+  };
+  expect(await variantsOnSite()).toEqual([
+    ['mini', 4500, 4],
+    ['standard', 6900, 5],
+  ]);
+
+  // Switched off and saved, the program is as before.
+  await page.getByRole('switch', { name: 'Добавить «Мини»' }).click();
+  await page.getByRole('button', { name: 'Сохранить' }).click();
+  await expect.poll(variantsOnSite).toEqual([['standard', 6900, 5]]);
+});
+
 test('payments: the link to send, a WhatsApp order marked paid, the «Оплата» settings', async ({
   request,
 }) => {

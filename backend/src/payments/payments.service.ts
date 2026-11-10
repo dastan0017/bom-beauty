@@ -8,6 +8,7 @@ import {
   renderWhatsappTemplate,
   type FinikStatus,
   type OrderItemType,
+  type ProgramVariant,
   type OrderPayment,
   type OrderPaymentStart,
   type PaymentAttempt,
@@ -177,7 +178,7 @@ export class PaymentsService {
         adjustmentNote: true,
         lines: {
           orderBy: { position: 'asc' },
-          select: { type: true, title: true, qty: true, totalKgs: true },
+          select: { type: true, title: true, variant: true, qty: true, totalKgs: true },
         },
       },
     });
@@ -569,7 +570,13 @@ export class PaymentsService {
     totalKgs: number;
     adjustmentKgs: number;
     adjustmentNote: string | null;
-    lines: { type: OrderItemType; title: string; qty: number; totalKgs: number }[];
+    lines: {
+      type: OrderItemType;
+      title: string;
+      variant: ProgramVariant | null;
+      qty: number;
+      totalKgs: number;
+    }[];
   }): Promise<OrderPayment> {
     const [attempts, on, payments] = await Promise.all([
       this.prisma.payment.findMany({

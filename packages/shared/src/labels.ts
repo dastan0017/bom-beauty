@@ -7,6 +7,7 @@ import type {
   PaymentChannel,
   PaymentMethod,
   PaymentStatus,
+  ProgramVariant,
   QuizGoal,
   RoutinePeriod,
   SkinType,
@@ -55,13 +56,38 @@ export const PAYMENT_CHANNEL_LABELS: Record<PaymentChannel, string> = {
   visa: 'Visa',
 };
 
-/** "Cica-сыворотка × 2" for one order line. */
-export function orderLineLabel(line: { title: string; qty: number }): string {
-  return line.qty > 1 ? `${line.title} × ${line.qty}` : line.title;
+/** Variant names and notes, verbatim from the design (TIER_META). */
+export const PROGRAM_VARIANT_LABELS: Record<ProgramVariant, string> = {
+  mini: 'Мини',
+  standard: 'Стандарт',
+  max: 'Максимум',
+};
+
+export const PROGRAM_VARIANT_NOTES: Record<ProgramVariant, string> = {
+  mini: 'Самое необходимое, чтобы начать',
+  standard: 'Полная программа на весь курс',
+  max: 'Полная программа и усилители для быстрого результата',
+};
+
+/** "Акне и постакне · Мини": the title with the variant an order line or a lead chose; just the title without one. */
+export function withVariant(title: string, variant?: ProgramVariant | null): string {
+  return variant ? `${title} · ${PROGRAM_VARIANT_LABELS[variant]}` : title;
+}
+
+/** "Cica-сыворотка × 2" for one order line; a program line adds its variant ("Акне и постакне · Мини"). */
+export function orderLineLabel(line: {
+  title: string;
+  qty: number;
+  variant?: ProgramVariant | null;
+}): string {
+  const title = withVariant(line.title, line.variant);
+  return line.qty > 1 ? `${title} × ${line.qty}` : title;
 }
 
 /** Order column in the admin: the first line, plus "и ещё N" for a cart with more lines. */
-export function orderSummary(lines: readonly { title: string; qty: number }[]): string {
+export function orderSummary(
+  lines: readonly { title: string; qty: number; variant?: ProgramVariant | null }[],
+): string {
   const [first] = lines;
   if (!first) return '—';
   return lines.length > 1 ? `${orderLineLabel(first)} и ещё ${lines.length - 1}` : orderLineLabel(first);

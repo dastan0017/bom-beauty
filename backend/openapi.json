@@ -4618,6 +4618,109 @@
               "additionalProperties": false
             }
           },
+          "variants": {
+            "type": "array",
+            "default": [],
+            "items": {
+              "type": "object",
+              "properties": {
+                "variant": {
+                  "type": "string",
+                  "enum": [
+                    "mini",
+                    "standard",
+                    "max"
+                  ]
+                },
+                "priceKgs": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "itemCount": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "thumbs": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "slug": {
+                        "type": "string"
+                      },
+                      "image": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "width": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "height": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "alt": {
+                                "type": "string"
+                              },
+                              "blurDataUrl": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "widths": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                }
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "width",
+                              "height",
+                              "alt",
+                              "blurDataUrl",
+                              "widths"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "slug",
+                      "image"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "variant",
+                "priceKgs",
+                "itemCount",
+                "thumbs"
+              ],
+              "additionalProperties": false
+            }
+          },
           "cover": {
             "anyOf": [
               {
@@ -4757,6 +4860,7 @@
           "inStock",
           "itemCount",
           "thumbs",
+          "variants",
           "cover",
           "video",
           "quiz"
@@ -4868,6 +4972,340 @@
               "required": [
                 "slug",
                 "image"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "variants": {
+            "type": "array",
+            "default": [],
+            "items": {
+              "type": "object",
+              "properties": {
+                "variant": {
+                  "type": "string",
+                  "enum": [
+                    "mini",
+                    "standard",
+                    "max"
+                  ]
+                },
+                "priceKgs": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "itemCount": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "thumbs": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "slug": {
+                        "type": "string"
+                      },
+                      "image": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "width": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "height": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "alt": {
+                                "type": "string"
+                              },
+                              "blurDataUrl": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "widths": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                }
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "width",
+                              "height",
+                              "alt",
+                              "blurDataUrl",
+                              "widths"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "slug",
+                      "image"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                      },
+                      "slug": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "shortName": {
+                        "type": "string"
+                      },
+                      "brand": {
+                        "type": "string"
+                      },
+                      "category": {
+                        "type": "object",
+                        "properties": {
+                          "slug": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "slug",
+                          "name"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "volume": {
+                        "type": "string"
+                      },
+                      "purpose": {
+                        "type": "string"
+                      },
+                      "priceKgs": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "badge": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "inStock": {
+                        "type": "boolean"
+                      },
+                      "bestseller": {
+                        "type": "boolean"
+                      },
+                      "seoulChoice": {
+                        "type": "boolean"
+                      },
+                      "isNew": {
+                        "type": "boolean"
+                      },
+                      "image": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "width": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "height": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              "alt": {
+                                "type": "string"
+                              },
+                              "blurDataUrl": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "widths": {
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                }
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "width",
+                              "height",
+                              "alt",
+                              "blurDataUrl",
+                              "widths"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "video": {
+                        "default": null,
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                              },
+                              "durationSec": {
+                                "anyOf": [
+                                  {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "width": {
+                                "anyOf": [
+                                  {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "height": {
+                                "anyOf": [
+                                  {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "poster": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "hls": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "mp4": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "durationSec",
+                              "width",
+                              "height",
+                              "poster",
+                              "hls",
+                              "mp4"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "slug",
+                      "name",
+                      "shortName",
+                      "brand",
+                      "category",
+                      "volume",
+                      "purpose",
+                      "priceKgs",
+                      "badge",
+                      "inStock",
+                      "bestseller",
+                      "seoulChoice",
+                      "isNew",
+                      "image",
+                      "video"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "sumKgs": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "variant",
+                "priceKgs",
+                "itemCount",
+                "thumbs",
+                "items",
+                "sumKgs"
               ],
               "additionalProperties": false
             }
@@ -5427,6 +5865,7 @@
           "inStock",
           "itemCount",
           "thumbs",
+          "variants",
           "cover",
           "video",
           "quiz",
@@ -6121,6 +6560,14 @@
                   "type": "integer",
                   "minimum": 1,
                   "maximum": 20
+                },
+                "variant": {
+                  "type": "string",
+                  "enum": [
+                    "mini",
+                    "standard",
+                    "max"
+                  ]
                 }
               },
               "required": [
@@ -6308,6 +6755,22 @@
                 "title": {
                   "type": "string"
                 },
+                "variant": {
+                  "default": null,
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "mini",
+                        "standard",
+                        "max"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
                 "qty": {
                   "type": "integer",
                   "minimum": -9007199254740991,
@@ -6322,6 +6785,7 @@
               "required": [
                 "type",
                 "title",
+                "variant",
                 "qty",
                 "totalKgs"
               ],
@@ -6769,6 +7233,22 @@
                       "title": {
                         "type": "string"
                       },
+                      "variant": {
+                        "default": null,
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "mini",
+                              "standard",
+                              "max"
+                            ]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
                       "unitPriceKgs": {
                         "type": "integer",
                         "minimum": -9007199254740991,
@@ -6788,6 +7268,7 @@
                     "required": [
                       "type",
                       "title",
+                      "variant",
                       "unitPriceKgs",
                       "qty",
                       "totalKgs"
@@ -6939,6 +7420,22 @@
                 "title": {
                   "type": "string"
                 },
+                "variant": {
+                  "default": null,
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "mini",
+                        "standard",
+                        "max"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
                 "unitPriceKgs": {
                   "type": "integer",
                   "minimum": -9007199254740991,
@@ -6958,6 +7455,7 @@
               "required": [
                 "type",
                 "title",
+                "variant",
                 "unitPriceKgs",
                 "qty",
                 "totalKgs"
@@ -7756,6 +8254,22 @@
                       "title": {
                         "type": "string"
                       },
+                      "variant": {
+                        "default": null,
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "mini",
+                              "standard",
+                              "max"
+                            ]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
                       "unitPriceKgs": {
                         "type": "integer",
                         "minimum": -9007199254740991,
@@ -7775,6 +8289,7 @@
                     "required": [
                       "type",
                       "title",
+                      "variant",
                       "unitPriceKgs",
                       "qty",
                       "totalKgs"
@@ -8821,6 +9336,17 @@
                 }
               ]
             }
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "mini",
+                "standard",
+                "max"
+              ]
+            }
           }
         },
         "required": [
@@ -8836,7 +9362,8 @@
           "quizGoal",
           "videoStatus",
           "protocolStatus",
-          "thumbs"
+          "thumbs",
+          "variants"
         ],
         "additionalProperties": false
       },
@@ -8959,6 +9486,79 @@
               "type": "string",
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          "variants": {
+            "default": {
+              "mini": null,
+              "max": null
+            },
+            "type": "object",
+            "properties": {
+              "mini": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "itemIds": {
+                        "minItems": 1,
+                        "maxItems": 12,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "priceKgs": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10000000
+                      }
+                    },
+                    "required": [
+                      "itemIds",
+                      "priceKgs"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "max": {
+                "default": null,
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "itemIds": {
+                        "minItems": 1,
+                        "maxItems": 12,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        }
+                      },
+                      "priceKgs": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 10000000
+                      }
+                    },
+                    "required": [
+                      "itemIds",
+                      "priceKgs"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
             }
           },
           "steps": {
@@ -9286,6 +9886,246 @@
               ],
               "additionalProperties": false
             }
+          },
+          "variants": {
+            "type": "object",
+            "properties": {
+              "mini": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "shortName": {
+                              "type": "string"
+                            },
+                            "brand": {
+                              "type": "string"
+                            },
+                            "volume": {
+                              "type": "string"
+                            },
+                            "priceKgs": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "image": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                    },
+                                    "width": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "height": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "alt": {
+                                      "type": "string"
+                                    },
+                                    "blurDataUrl": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    },
+                                    "widths": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      }
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "width",
+                                    "height",
+                                    "alt",
+                                    "blurDataUrl",
+                                    "widths"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "shortName",
+                            "brand",
+                            "volume",
+                            "priceKgs",
+                            "image"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "priceKgs": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "items",
+                      "priceKgs"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "max": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "shortName": {
+                              "type": "string"
+                            },
+                            "brand": {
+                              "type": "string"
+                            },
+                            "volume": {
+                              "type": "string"
+                            },
+                            "priceKgs": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "image": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                    },
+                                    "width": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "height": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "alt": {
+                                      "type": "string"
+                                    },
+                                    "blurDataUrl": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    },
+                                    "widths": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "integer",
+                                        "minimum": -9007199254740991,
+                                        "maximum": 9007199254740991
+                                      }
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "width",
+                                    "height",
+                                    "alt",
+                                    "blurDataUrl",
+                                    "widths"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "shortName",
+                            "brand",
+                            "volume",
+                            "priceKgs",
+                            "image"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "priceKgs": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "items",
+                      "priceKgs"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "mini",
+              "max"
+            ],
+            "additionalProperties": false
           },
           "steps": {
             "type": "object",
@@ -9719,6 +10559,7 @@
           "published",
           "inStock",
           "items",
+          "variants",
           "steps",
           "sumKgs",
           "video",

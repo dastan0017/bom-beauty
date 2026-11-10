@@ -6,6 +6,7 @@ import {
   PAYMENT_METHODS,
   PAYMENT_PURPOSES,
   PAYMENT_STATUSES,
+  PROGRAM_VARIANTS,
 } from '../enums';
 
 // Online payment through Finik (docs/finik/SPEC.md). Public shapes carry no personal data.
@@ -23,6 +24,7 @@ export const payPageSchema = z.object({
     z.object({
       type: z.enum(ORDER_ITEM_TYPES),
       title: z.string(),
+      variant: z.enum(PROGRAM_VARIANTS).nullable().default(null),
       qty: z.number().int(),
       totalKgs: z.number().int(),
     }),

@@ -1,4 +1,4 @@
-import type { QuizAge, QuizExperience, QuizGoal, SkinType } from './enums';
+import type { ProgramVariant, QuizAge, QuizExperience, QuizGoal, SkinType } from './enums';
 
 // Port of QUIZ, quizScore and quizRank in design/Bom Beauty Prototype.dc.html (design/updates-2026-10/README.md §2).
 
@@ -119,6 +119,20 @@ export function rankPrograms<T extends QuizRankable>(
     .slice(0, 3)
     .map((entry) => entry.program);
   return ranked.length ? ranked : programs.slice(0, 3);
+}
+
+/**
+ * Variant the quiz suggests for programs that have several (design: recTier): «Мини» for a beginner, «Максимум»
+ * for a regular user of actives or anyone from 35, but never «Максимум» for sensitive skin; «Стандарт» otherwise.
+ */
+export function recommendVariant(answers: Partial<QuizAnswers>): ProgramVariant {
+  const level: ProgramVariant =
+    answers.exp === 'new'
+      ? 'mini'
+      : answers.exp === 'pro' || answers.age === '35' || answers.age === '45'
+        ? 'max'
+        : 'standard';
+  return level === 'max' && answers.skin === 'sens' ? 'standard' : level;
 }
 
 /** Answer labels of the quiz before October 2026 (skin, goal, experience, format), for leads saved back then. */

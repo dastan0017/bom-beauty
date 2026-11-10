@@ -1,25 +1,28 @@
 import type { Route } from 'next';
 import type { ProgramDetail } from '@bom/shared';
+import { programDetailVariants } from '@bom/shared/web';
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound, permanentRedirect, redirect } from 'next/navigation';
-import { BbImage, PhotoPlaceholder } from '@/components/bb-image';
-import { Price } from '@/components/currency';
 import { CheckIcon } from '@/components/icons';
 import { JsonLd } from '@/components/json-ld';
 import {
   OrderProgramButton,
   ProgramBackLink,
+  ProgramContentsLead,
+  ProgramItems,
   ProgramOrderBar,
+  ProgramPriceSummary,
+  ProgramReadyOf,
+  ProgramVariantProvider,
   ProgramVideo,
   SchemeCard,
+  VariantSwitch,
 } from '@/components/program/program-client';
 import { AccentTitle, card, SectionTitle, StockBadge } from '@/components/ui';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
 import { getContent, getProgram, resolveRedirect } from '@/lib/data';
 import { BASE_OPEN_GRAPH, breadcrumbsLd, excerpt, imageUrl, productLd } from '@/lib/seo';
-import { productsCount, productsGenitive } from '@/lib/words';
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -51,14 +54,19 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 export default async function ProgramPage({ params }: Params) {
   const { slug } = await params;
   const [program, delivery] = await Promise.all([loadProgram(slug), getContent('delivery')]);
-  const count = program.items.length;
-  const saving = program.sumKgs - program.priceKgs;
-  // Order lines show the program's cover (README §11).
-  const forOrder = { ...program, image: program.cover };
+  // Order lines show the program's cover (README §11). Only what ordering needs goes to the browser.
+  const forOrder = {
+    slug: program.slug,
+    title: program.title,
+    headline: program.headline,
+    course: program.course,
+    image: program.cover,
+  };
   const facts = delivery?.data.programFacts ?? [];
 
   return (
-    <>
+    // Everything derived from the products follows the chosen variant (key: a new program starts on its default).
+    <ProgramVariantProvider key={program.slug} slug={program.slug} variants={programDetailVariants(program)}>
       <JsonLd
         data={[
           breadcrumbsLd([
@@ -92,7 +100,7 @@ export default async function ProgramPage({ params }: Params) {
                 )}
               </h1>
               <p className="mt-3.5 self-stretch text-[17px] leading-[1.4] font-semibold">
-                {copy.program.readyOf(productsGenitive(count))}
+                <ProgramReadyOf />
               </p>
               {program.course && (
                 <p className="mt-1 self-stretch text-base leading-normal text-muted">{program.course}</p>
@@ -123,60 +131,15 @@ export default async function ProgramPage({ params }: Params) {
             </section>
 
             <section className="flex flex-col gap-[18px] px-4 pt-14 lg:px-0">
-              <SectionTitle
-                title={copy.program.contentsTitle}
-                lead={copy.program.contentsLead(productsCount(count))}
-              />
-              <ul className={cn(card, 'flex flex-col')}>
-                {program.items.map((item, index) => (
-                  <li key={item.slug} className={cn(index > 0 && 'border-t border-line-2')}>
-                    <Link href={`/catalog/${item.slug}`} className="flex items-center gap-3.5 px-4 py-3.5">
-                      <span className="relative flex size-[60px] flex-none items-center justify-center overflow-hidden rounded-xl bg-surface-2">
-                        <BbImage
-                          image={item.image}
-                          sizes="60px"
-                          width={120}
-                          alt={item.name}
-                          placeholder={<PhotoPlaceholder label={copy.common.photo} className="text-[10px]" />}
-                        />
-                      </span>
-                      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                        <span className="text-base leading-[1.3] font-semibold">{item.name}</span>
-                        <span className="text-[15px] leading-[1.4] text-muted">{item.purpose}</span>
-                      </span>
-                      <span className="flex-none text-[15px] whitespace-nowrap text-muted">
-                        <Price kgs={item.priceKgs} />
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              <SectionTitle title={copy.program.contentsTitle} lead={<ProgramContentsLead />} />
+              <VariantSwitch />
+              <ProgramItems />
             </section>
           </div>
 
           <aside className="flex flex-col gap-4 px-4 pt-10 lg:sticky lg:top-[92px] lg:self-start lg:px-0 lg:pt-[60px]">
             <div className={cn(card, 'flex flex-col px-5 py-[22px]')}>
-              <div className="flex items-end justify-between gap-3">
-                <div className="flex flex-col gap-1">
-                  <span className="text-[15px] text-muted">{copy.program.priceTitle}</span>
-                  <span className="text-4xl leading-none font-semibold tracking-[-0.035em] whitespace-nowrap">
-                    <Price kgs={program.priceKgs} />
-                  </span>
-                </div>
-                {saving > 0 && (
-                  <span className="mb-1 flex-none rounded-full bg-accent-soft px-3 py-1.5 text-sm font-semibold whitespace-nowrap text-accent-ink">
-                    −<Price kgs={saving} />
-                  </span>
-                )}
-              </div>
-              {saving > 0 && (
-                <p className="mt-3 text-[15px] text-muted">
-                  {copy.program.separately}
-                  <s>
-                    <Price kgs={program.sumKgs} />
-                  </s>
-                </p>
-              )}
+              <ProgramPriceSummary />
               {facts.length > 0 && (
                 <dl className="mt-5 flex flex-col gap-3 border-t border-line-2 pt-[18px] text-[15px]">
                   {facts.map((fact) => (
@@ -197,6 +160,6 @@ export default async function ProgramPage({ params }: Params) {
       </div>
 
       <ProgramOrderBar program={forOrder} />
-    </>
+    </ProgramVariantProvider>
   );
 }

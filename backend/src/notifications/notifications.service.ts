@@ -35,7 +35,10 @@ import {
 const orderSelect = {
   id: true,
   number: true,
-  lines: { orderBy: { position: 'asc' }, select: { type: true, title: true, qty: true, totalKgs: true } },
+  lines: {
+    orderBy: { position: 'asc' },
+    select: { type: true, title: true, variant: true, qty: true, totalKgs: true },
+  },
   totalKgs: true,
   adjustmentKgs: true,
   adjustmentNote: true,

@@ -1,5 +1,5 @@
 import { z } from '../zod';
-import { QUIZ_GOALS, SKIN_TYPES } from '../enums';
+import { PROGRAM_VARIANTS, QUIZ_GOALS, SKIN_TYPES } from '../enums';
 import { fileRefSchema, imageRefSchema, videoRefSchema } from './common';
 
 // Public catalog responses (docs/API.md §4).
@@ -48,6 +48,17 @@ export const productDetailSchema = productCardSchema.extend({
 });
 export type ProductDetail = z.infer<typeof productDetailSchema>;
 
+const programThumbSchema = z.object({ slug: z.string(), image: imageRefSchema.nullable() });
+
+/** One variant of a program as the cards and the quiz show it: its price and products. */
+export const programVariantCardSchema = z.object({
+  variant: z.enum(PROGRAM_VARIANTS),
+  priceKgs: z.number().int(),
+  itemCount: z.number().int(),
+  thumbs: z.array(programThumbSchema),
+});
+export type ProgramVariantCard = z.infer<typeof programVariantCardSchema>;
+
 export const programCardSchema = z.object({
   id: z.uuid(),
   slug: z.string(),
@@ -57,8 +68,14 @@ export const programCardSchema = z.object({
   priceKgs: z.number().int(),
   inStock: z.boolean(),
   itemCount: z.number().int(),
-  /** Every item of the program, in order (the catalog's problem filter uses the slugs). */
-  thumbs: z.array(z.object({ slug: z.string(), image: imageRefSchema.nullable() })),
+  /** Every item of «Стандарт», in order. */
+  thumbs: z.array(programThumbSchema),
+  /**
+   * The variants on offer in page order (Мини, Стандарт, Максимум), «Стандарт» always among them; one entry means
+   * the program has no choice. Price, count and thumbs above are «Стандарт». The catalog's problem filter uses the
+   * slugs of every variant. Empty only in data cached before variants existed.
+   */
+  variants: z.array(programVariantCardSchema).default([]),
   /** 5:4 photo for the home grid, the catalog banner and order lines. */
   cover: imageRefSchema.nullable(),
   video: videoRefSchema.pick({ durationSec: true, poster: true }).nullable(),
@@ -70,14 +87,23 @@ export type ProgramCard = z.infer<typeof programCardSchema>;
 export const routineStepSchema = z.object({ productSlug: z.string(), title: z.string(), text: z.string() });
 export type RoutineStep = z.infer<typeof routineStepSchema>;
 
+/** A variant on the program page: the products it lists and what they cost one by one. */
+export const programVariantDetailSchema = programVariantCardSchema.extend({
+  items: z.array(productCardSchema),
+  sumKgs: z.number().int(),
+});
+export type ProgramVariantDetail = z.infer<typeof programVariantDetailSchema>;
+
 export const programDetailSchema = programCardSchema.extend({
   headline: z.string().nullable(),
   course: z.string(),
   fit: z.array(z.string()),
   description: z.string(),
+  /** «Стандарт»'s products. */
   items: z.array(productCardSchema),
   /** Sum of item prices, for "По отдельности". */
   sumKgs: z.number().int(),
+  variants: z.array(programVariantDetailSchema).default([]),
   steps: z.object({ am: z.array(routineStepSchema), pm: z.array(routineStepSchema) }),
   video: videoRefSchema.nullable(),
   protocol: fileRefSchema.nullable(),

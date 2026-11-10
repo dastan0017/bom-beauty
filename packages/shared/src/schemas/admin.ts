@@ -5,6 +5,7 @@ import {
   ORDER_PAYMENT_STATUSES,
   ORDER_STATUSES,
   PAYMENT_METHODS,
+  PROGRAM_VARIANTS,
 } from '../enums';
 import { utmSchema } from './common';
 import { orderPaymentSchema } from './payments';
@@ -23,6 +24,8 @@ export const orderLineSchema = z.object({
   type: z.enum(ORDER_ITEM_TYPES),
   /** Snapshot of the product name or program title at the time of the order. */
   title: z.string(),
+  /** The chosen variant of a program that offered several; null otherwise. */
+  variant: z.enum(PROGRAM_VARIANTS).nullable().default(null),
   unitPriceKgs: z.number().int(),
   qty: z.number().int(),
   totalKgs: z.number().int(),

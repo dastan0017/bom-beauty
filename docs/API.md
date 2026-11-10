@@ -148,8 +148,15 @@ type ProgramCard = {
   badge: string | null;
   priceKgs: number;
   inStock: boolean;
-  itemCount: number;
-  thumbs: ImageRef[];
+  itemCount: number; // «Стандарт»
+  thumbs: ImageRef[]; // «Стандарт»
+  // D45: variants on offer in page order, «Стандарт» always among them; one entry = no choice
+  variants: {
+    variant: 'mini' | 'standard' | 'max';
+    priceKgs: number;
+    itemCount: number;
+    thumbs: { slug; image }[];
+  }[];
   cover: ImageRef | null; // 5:4 home card photo (M8)
   video: Pick<VideoRef, 'durationSec' | 'poster'> | null;
   quiz: { goal: QuizGoal | null; skins: SkinType[] }; // the site ranks quiz results locally
@@ -159,8 +166,9 @@ type ProgramDetail = ProgramCard & {
   course: string;
   fit: string[];
   description: string;
-  items: (ProductCard & { order: number })[];
+  items: (ProductCard & { order: number })[]; // «Стандарт»
   sumKgs: number; // sum of item prices, for "По отдельности"
+  variants: (ProgramCard['variants'][number] & { items: ProductCard[]; sumKgs: number })[];
   steps: { am: RoutineStep[]; pm: RoutineStep[] }; // RoutineStep = { productSlug, title, text }; feeds the scheme PDF
   video: VideoRef | null;
   protocol: FileRef | null; // uploaded «Схема ухода»; null → the site generates /programs/{slug}/scheme
@@ -194,7 +202,13 @@ type PublicSettings = {
 // GET /pay/:token (packages/shared/src/schemas/payments.ts): no personal data
 type PayPage = {
   number: number;
-  lines: { type: 'product' | 'program'; title: string; qty: number; totalKgs: number }[];
+  lines: {
+    type: 'product' | 'program';
+    title: string;
+    variant: ProgramVariant | null;
+    qty: number;
+    totalKgs: number;
+  }[];
   totalKgs: number;
   adjustmentKgs: number; // the owner's signed correction, shown as its own line
   adjustmentNote: string | null;
@@ -210,7 +224,7 @@ type PayPage = {
 ```ts
 {
   clientRef: uuid,
-  items: { type: 'product' | 'program', slug, qty: 1..20 }[],   // 1..30 lines; a cart sends products, a direct order one program
+  items: { type: 'product' | 'program', slug, qty: 1..20, variant?: 'mini' | 'standard' | 'max' }[],   // 1..30 lines; a cart sends products, a direct order one program (variant: none = «Стандарт»)
   // deprecated (pre-M8 clients and retry outboxes): item: { type, slug }, qty: 1..9. One of items/item is required.
   name: string (2..80), phone: string, address: string (4..300), comment?: string (..500),
   displayCurrency: CurrencyCode, displayRate?: number,
@@ -225,8 +239,9 @@ type PayPage = {
 { id, number, payment: { url: string | null /* Finik's page; null when Finik refused */, page: string /* /pay/<token> */ } | null }
 ```
 
-Server: repeated lines merge (qty capped at 20); every line must be published, else `404` for the whole order; unit
-prices and totals from the DB, stored as `OrderLine`s with title and price snapshots; phone normalised to E.164 (KG
+Server: repeated lines merge (qty capped at 20; a program's variants stay separate lines); every line must be published,
+and a program's variant offered, else `404` for the whole order; unit prices (the variant's price) and totals from the
+DB, the line's `variant` stored only when the program offers a choice, stored as `OrderLine`s with title and price snapshots; phone normalised to E.164 (KG
 default, international accepted); a repeated `clientRef` returns the original `201` body (for an online order with the
 live link, never a new one). `paymentMethod: 'finik'` answers `409 payment_unavailable` before anything is stored
 while online payment is off; otherwise the order is stored with `payment_status = pending`, a `payments` row is
@@ -278,7 +293,7 @@ Server recomputes `recommended` for quiz leads with `rankPrograms` over publishe
 
 | Method & path                      | Role | Notes                                                                                                                                                                                                                                                                                    |
 | ---------------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /admin/orders`                | M    | `status?`, `q?` (name, phone, item, number), `from?`, `to?`, cursor → rows `{ id, number, name, phone, lines: { type, title, unitPriceKgs, qty, totalKgs }[], address, city, totalKgs, status, paymentMethod, paymentStatus, createdAt }`                                                |
+| `GET /admin/orders`                | M    | `status?`, `q?` (name, phone, item, number), `from?`, `to?`, cursor → rows `{ id, number, name, phone, lines: { type, title, variant, unitPriceKgs, qty, totalKgs }[], address, city, totalKgs, status, paymentMethod, paymentStatus, createdAt }`                                       |
 | `GET /admin/orders/counters`       | M    | `{ all, new, sent, cancelled }` (polled every 15 s)                                                                                                                                                                                                                                      |
 | `GET /admin/orders/:id`            | M    | all fields incl. lines, message, comment, UTM, note, status and payment history from AuditLog, `payment: { method, status, paidAt, adjustmentKgs, adjustmentNote, amountKgs, payUrl, linkMessage, attempts[] }`                                                                          |
 | `PATCH /admin/orders/:id`          | M    | `{ status?, note?, paymentStatus?: unpaid\|paid\|refunded, adjustmentKgs?, adjustmentNote? }`; the adjustment only while unpaid (409 once paid, 400 `order.adjustment.amount` when the amount due would be < 1); row-locked against a landing webhook; AuditLog `payment` / `adjustment` |
@@ -294,13 +309,13 @@ Server recomputes `recommended` for quiz leads with `rankPrograms` over publishe
 
 ### Catalog
 
-| Resource   | Endpoints                                                                                                                                          | Notes                                                                                                                                                                                                                                            |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Categories | `GET`, `POST`, `PUT /:id`, `DELETE /:id` (409 unless empty), `POST /:id/merge` (`{ intoId }`)                                                      |                                                                                                                                                                                                                                                  |
-| Brands     | `GET ?q=` (with `count`), `PUT /:id`, `DELETE /:id` (409 unless empty), `POST /:id/merge` (`{ intoId }`)                                           | autocomplete with each brand's «О бренде» (`description`); created implicitly by product saves                                                                                                                                                   |
-| Products   | `GET ?category=&q=`, `POST`, `GET /:id`, `PUT /:id`, `PATCH /:id` (`{ inStock?, published? }`), `POST /bulk` (`{ ids[] ≤ 500, action: delete       | show                                                                                                                                                                                                                                             | hide | inStock | outOfStock | category, categoryId? }`→`{ count }`; delete as `DELETE /:id`, unknown ids skipped), `DELETE /:id` (also leaves its programs, steps included, and the wholesale featured list) | `PUT` takes the full object incl. `brandName`, `brandDescription` (the brand's «О бренде»; null keeps it), `imageIds[]` (≤ 10, ordered), `videoId` (null removes it), `inci`, `bestseller` / `seoulChoice` / `isNew`; empty `slug` = generated; a slug change adds a 308 redirect |
-| Programs   | `GET`, `POST`, `GET /:id`, `PUT /:id`, `PATCH /:id` (`{ published?, inStock? }`), `DELETE /:id`                                                    | `PUT` takes `itemIds[]` ordered, `steps: { am: [{ productId, text }], pm: [...] }` (products from `itemIds` only), `videoId?`, `protocolMediaId?`, `coverMediaId?` (ready image); response includes `sumKgs`; delete leaves a 302 to `/programs` |
-| Reviews    | `GET`, `POST` (`{ mediaIds[] }`), `PATCH /:id` (`{ isHidden }`), `PUT /admin/reviews/order` (`{ ids }`), `DELETE /:id`; each returns the full list | `POST` takes ready review images, puts them first in upload order and hides the demo examples                                                                                                                                                    |
+| Resource   | Endpoints                                                                                                                                          | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Categories | `GET`, `POST`, `PUT /:id`, `DELETE /:id` (409 unless empty), `POST /:id/merge` (`{ intoId }`)                                                      |                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Brands     | `GET ?q=` (with `count`), `PUT /:id`, `DELETE /:id` (409 unless empty), `POST /:id/merge` (`{ intoId }`)                                           | autocomplete with each brand's «О бренде» (`description`); created implicitly by product saves                                                                                                                                                                                                                                                                                                                                                               |
+| Products   | `GET ?category=&q=`, `POST`, `GET /:id`, `PUT /:id`, `PATCH /:id` (`{ inStock?, published? }`), `POST /bulk` (`{ ids[] ≤ 500, action: delete       | show                                                                                                                                                                                                                                                                                                                                                                                                                                                         | hide | inStock | outOfStock | category, categoryId? }`→`{ count }`; delete as `DELETE /:id`, unknown ids skipped), `DELETE /:id` (also leaves its programs, steps included, and the wholesale featured list) | `PUT` takes the full object incl. `brandName`, `brandDescription` (the brand's «О бренде»; null keeps it), `imageIds[]` (≤ 10, ordered), `videoId` (null removes it), `inci`, `bestseller` / `seoulChoice` / `isNew`; empty `slug` = generated; a slug change adds a 308 redirect |
+| Programs   | `GET`, `POST`, `GET /:id`, `PUT /:id`, `PATCH /:id` (`{ published?, inStock? }`), `DELETE /:id`                                                    | `PUT` takes `itemIds[]` ordered, `variants: { mini, max }` (each null or `{ itemIds[] 1..12, priceKgs > 0 }`; errors at `variants.mini.itemIds` etc.; D45), `steps: { am: [{ productId, text }], pm: [...] }` (products from `itemIds` only), `videoId?`, `protocolMediaId?`, `coverMediaId?` (ready image); response includes `sumKgs` and `variants` (`{ items, priceKgs } \| null`), the list row `variants` on offer; delete leaves a 302 to `/programs` |
+| Reviews    | `GET`, `POST` (`{ mediaIds[] }`), `PATCH /:id` (`{ isHidden }`), `PUT /admin/reviews/order` (`{ ids }`), `DELETE /:id`; each returns the full list | `POST` takes ready review images, puts them first in upload order and hides the demo examples                                                                                                                                                                                                                                                                                                                                                                |
 
 Names of categories and brands are unique up to case, spaces and punctuation (`nameKey`: «Dr. SGN» = «Dr.SGN»): a
 create or rename that collides answers 409 `category.name.taken` / `brand.name.taken`, and a product save with such a
@@ -330,12 +345,12 @@ program create, update, publish toggle and delete also enqueue `indexnow.submit`
 
 ## 7. Web (Next.js) endpoints
 
-| Method & path                 | Auth                  | Purpose                                                                                                                                                                            |
-| ----------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST /api/revalidate`        | `X-Revalidate-Secret` | `{ tags: string[] }` → `revalidateTag`; called by the worker                                                                                                                       |
-| `GET /indexnow-key.txt`       | none                  | IndexNow key file (`INDEXNOW_KEY`); 404 when unset                                                                                                                                 |
-| `GET /programs/{slug}/scheme` | none                  | Care scheme PDF (A4, pdf-lib) for a published program; `attachment` with a UTF-8 file name «Схема ухода — <title>.pdf», `no-cache`, `X-Robots-Tag: noindex`; 404 for unknown slugs |
-| `GET /health`                 | none                  | liveness                                                                                                                                                                           |
+| Method & path                 | Auth                  | Purpose                                                                                                                                                                                                                                                                                                             |
+| ----------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /api/revalidate`        | `X-Revalidate-Secret` | `{ tags: string[] }` → `revalidateTag`; called by the worker                                                                                                                                                                                                                                                        |
+| `GET /indexnow-key.txt`       | none                  | IndexNow key file (`INDEXNOW_KEY`); 404 when unset                                                                                                                                                                                                                                                                  |
+| `GET /programs/{slug}/scheme` | none                  | Care scheme PDF (A4, pdf-lib) for a published program; `?variant=mini\|standard\|max` builds that variant's scheme (unknown = «Стандарт»); `attachment` with a UTF-8 file name «Схема ухода — <title>.pdf» («… (Мини).pdf» for a program with a choice), `no-cache`, `X-Robots-Tag: noindex`; 404 for unknown slugs |
+| `GET /health`                 | none                  | liveness                                                                                                                                                                                                                                                                                                            |
 
 ## 8. Background jobs (BullMQ)
 
