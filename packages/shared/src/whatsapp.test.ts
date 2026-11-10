@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { formatKgs } from './money';
+import { DEFAULT_QUIZ } from './quiz';
 import {
   buildOrderItemsText,
   buildOrderMessage,
@@ -84,10 +85,14 @@ describe('WhatsApp messages', () => {
   });
 
   it('quiz message lists the four answers and the suggested programs', () => {
-    const text = buildQuizMessage({ goal: 'acne', skin: 'combo', exp: 'some', age: '25' }, [
-      { title: 'Акне и постакне', price: formatKgs(5900) },
-      { title: 'Чёрные точки и поры', price: formatKgs(5400) },
-    ]);
+    const text = buildQuizMessage(
+      { goal: 'acne', skin: 'combo', exp: 'some', age: '25' },
+      [
+        { title: 'Акне и постакне', price: formatKgs(5900) },
+        { title: 'Чёрные точки и поры', price: formatKgs(5400) },
+      ],
+      DEFAULT_QUIZ,
+    );
     expect(text).toBe(
       [
         'Здравствуйте, Нурайым! Прошла тест «Подобрать программу ухода за 1 минуту» на сайте.',
@@ -101,10 +106,14 @@ describe('WhatsApp messages', () => {
   });
 
   it('quiz message names the suggested variant of a program with a choice (design: quizWa)', () => {
-    const text = buildQuizMessage({ goal: 'acne', skin: 'combo', exp: 'new', age: '25' }, [
-      { title: 'Акне и постакне', price: formatKgs(3900), variant: 'mini' },
-      { title: 'Пигментация', price: formatKgs(6400), variant: null },
-    ]);
+    const text = buildQuizMessage(
+      { goal: 'acne', skin: 'combo', exp: 'new', age: '25' },
+      [
+        { title: 'Акне и постакне', price: formatKgs(3900), variant: 'mini' },
+        { title: 'Пигментация', price: formatKgs(6400), variant: null },
+      ],
+      DEFAULT_QUIZ,
+    );
     expect(text.split('\n').at(-1)).toBe(
       'Сайт предложил: «Акне и постакне» — мини, 3\u00a0900\u00a0сом; «Пигментация», 6\u00a0400\u00a0сом. Помогите выбрать, пожалуйста.',
     );

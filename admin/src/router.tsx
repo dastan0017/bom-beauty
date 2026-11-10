@@ -60,6 +60,12 @@ export const router = createBrowserRouter([
             }),
           },
           {
+            path: 'programs/quiz',
+            lazy: async () => ({
+              Component: (await import('@/features/programs/quiz-page')).QuizListsPage,
+            }),
+          },
+          {
             path: 'programs/:id',
             lazy: async () => ({
               Component: (await import('@/features/programs/program-editor')).ProgramEditorPage,

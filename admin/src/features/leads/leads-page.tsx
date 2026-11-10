@@ -1,4 +1,5 @@
 import {
+  DEFAULT_QUIZ,
   LEAD_KIND_LABELS,
   quizLeadAnswers,
   relativeDateTime,
@@ -6,11 +7,13 @@ import {
   WHOLESALE_COUNTRY_LABELS,
   type LeadKind,
   type LeadRow,
+  type QuizConfig,
   type WholesaleBuyer,
   type WholesaleCountry,
 } from '@bom/shared';
 import { useState, type CSSProperties } from 'react';
 import { toast } from 'sonner';
+import { useQuizLists } from '@/api/catalog';
 import { useDeleteLead, useLeads } from '@/api/leads';
 import {
   Button,
@@ -31,8 +34,8 @@ import { cn } from '@/lib/utils';
 type Tab = 'all' | LeadKind;
 const TABS: Tab[] = ['all', 'quiz', 'wholesale'];
 const COLUMNS = '150px 90px 2.2fr 1.6fr 1fr 44px';
-function answersText(lead: LeadRow): string[] {
-  if (lead.kind === 'quiz') return quizLeadAnswers(lead.answers);
+function answersText(lead: LeadRow, quiz: QuizConfig): string[] {
+  if (lead.kind === 'quiz') return quizLeadAnswers(lead.answers, quiz);
   const buyer = lead.answers.buyer as WholesaleBuyer | undefined;
   const country = lead.answers.country as WholesaleCountry | undefined;
   return [
@@ -45,6 +48,8 @@ function answersText(lead: LeadRow): string[] {
 export function LeadsPage() {
   const [tab, setTab] = useState<Tab>('all');
   const leads = useLeads(tab);
+  // The owner's goal and skin answers (D47); the design's until her lists have loaded.
+  const quiz = useQuizLists().data ?? DEFAULT_QUIZ;
   const remove = useDeleteLead();
   const owner = useUser().role === 'owner';
   const rows = leads.data?.pages.flatMap((page) => page.items) ?? [];
@@ -94,7 +99,7 @@ export function LeadsPage() {
                 </span>
               </span>
               <span className="flex flex-col gap-0.5 text-sm">
-                {answersText(lead).map((line) => (
+                {answersText(lead, quiz).map((line) => (
                   <span key={line}>{line}</span>
                 ))}
               </span>

@@ -4,19 +4,22 @@ import {
   PROGRAM_VARIANT_LABELS,
   PROGRAM_VARIANT_NOTES,
   programsWord,
-  QUIZ_GOAL_LABELS,
-  QUIZ_GOALS,
-  SKIN_TYPE_LABELS,
-  SKIN_TYPES,
   type AdminProgram,
   type AdminProgramItem,
   type ExtraProgramVariant,
   type ProgramInput,
 } from '@bom/shared';
 import { useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router';
+import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
-import { useDeleteProgram, useProducts, useProgram, usePrograms, useSaveProgram } from '@/api/catalog';
+import {
+  useDeleteProgram,
+  useProducts,
+  useProgram,
+  usePrograms,
+  useQuizLists,
+  useSaveProgram,
+} from '@/api/catalog';
 import { CloseIcon, inputClass, Spinner } from '@/components/ui';
 import {
   EditorHeader,
@@ -113,6 +116,7 @@ function ProgramForm({ program }: { program: AdminProgram | null }) {
   const navigate = useNavigate();
   const products = useProducts({});
   const programs = usePrograms();
+  const quiz = useQuizLists();
   const save = useSaveProgram(program?.id ?? null);
   const remove = useDeleteProgram();
   const initial = program ? toInput(program) : EMPTY;
@@ -510,14 +514,15 @@ function ProgramForm({ program }: { program: AdminProgram | null }) {
             <label className="flex flex-col gap-1.5">
               <span className="text-[15px]">{copy.program.goal}</span>
               <select
+                aria-invalid={Boolean(errors.quizGoal)}
                 value={form.quizGoal ?? ''}
-                onChange={(e) => set('quizGoal', (e.target.value || null) as ProgramInput['quizGoal'])}
+                onChange={(e) => set('quizGoal', e.target.value || null)}
                 className={selectClass}
               >
                 <option value="">{copy.program.noGoal}</option>
-                {QUIZ_GOALS.map((goal) => (
-                  <option key={goal} value={goal}>
-                    {QUIZ_GOAL_LABELS[goal]}
+                {quiz.data?.goals.map((goal) => (
+                  <option key={goal.key} value={goal.key}>
+                    {goal.name}
                   </option>
                 ))}
               </select>
@@ -526,21 +531,22 @@ function ProgramForm({ program }: { program: AdminProgram | null }) {
                   ? copy.program.goalHint(sameGoal, programsWord(sameGoal))
                   : copy.program.goalHintNone}
               </span>
+              <FieldError error={errors.quizGoal} />
             </label>
             <div className="flex flex-col gap-2">
               <span className="text-[15px]">{copy.program.skins}</span>
               <div className="flex flex-wrap gap-2">
-                {SKIN_TYPES.map((skin) => {
-                  const on = form.quizSkins.includes(skin);
+                {quiz.data?.skins.map(({ key, name }) => {
+                  const on = form.quizSkins.includes(key);
                   return (
                     <button
-                      key={skin}
+                      key={key}
                       type="button"
                       aria-pressed={on}
                       onClick={() =>
                         set(
                           'quizSkins',
-                          on ? form.quizSkins.filter((s) => s !== skin) : [...form.quizSkins, skin],
+                          on ? form.quizSkins.filter((s) => s !== key) : [...form.quizSkins, key],
                         )
                       }
                       className={cn(
@@ -548,13 +554,20 @@ function ProgramForm({ program }: { program: AdminProgram | null }) {
                         on ? 'border-ink bg-ink text-white' : 'border-input bg-surface text-ink',
                       )}
                     >
-                      {SKIN_TYPE_LABELS[skin]}
+                      {name}
                     </button>
                   );
                 })}
               </div>
               <span className="text-[13px] leading-normal text-muted">{copy.program.skinsHint}</span>
+              <FieldError error={errors.quizSkins} />
             </div>
+            <Link
+              to="/programs/quiz"
+              className="inline-flex min-h-9 items-center gap-1.5 self-start text-[15px] font-semibold text-blue hover:underline"
+            >
+              {copy.quizLists.open}
+            </Link>
           </Panel>
           <Panel title={copy.program.publication}>
             <div className="flex items-center justify-between gap-3">

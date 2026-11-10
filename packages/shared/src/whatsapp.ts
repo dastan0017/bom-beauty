@@ -2,6 +2,7 @@ import type { OrderItemType, ProgramVariant, WholesaleBuyer, WholesaleCountry } 
 import { PROGRAM_VARIANT_LABELS, WHOLESALE_BUYER_LABELS, WHOLESALE_COUNTRY_LABELS } from './labels';
 import { formatKgs } from './money';
 import { quizAnswerLabel, type QuizAnswers } from './quiz';
+import type { QuizConfig } from './schemas/quiz';
 
 // WhatsApp message texts, verbatim from design/Bom Beauty Prototype.dc.html.
 
@@ -232,15 +233,16 @@ export function buildWholesaleMessage(choice: {
 export function buildQuizMessage(
   answers: Partial<QuizAnswers>,
   offers: { title: string; price: string; variant?: ProgramVariant | null }[],
+  config: QuizConfig,
 ): string {
   const offer = (o: (typeof offers)[number]) =>
     `«${o.title}»${o.variant ? ` — ${PROGRAM_VARIANT_LABELS[o.variant].toLowerCase()}` : ''}, ${o.price}`;
   return [
     'Здравствуйте, Нурайым! Прошла тест «Подобрать программу ухода за 1 минуту» на сайте.',
-    `— Задача: ${quizAnswerLabel('goal', answers.goal)}`,
-    `— Кожа через 2–3 часа после умывания: ${quizAnswerLabel('skin', answers.skin)}`,
-    `— Активная косметика: ${quizAnswerLabel('exp', answers.exp)}`,
-    `— Возраст: ${quizAnswerLabel('age', answers.age)}`,
+    `— Задача: ${quizAnswerLabel('goal', answers.goal, config)}`,
+    `— Кожа через 2–3 часа после умывания: ${quizAnswerLabel('skin', answers.skin, config)}`,
+    `— Активная косметика: ${quizAnswerLabel('exp', answers.exp, config)}`,
+    `— Возраст: ${quizAnswerLabel('age', answers.age, config)}`,
     `Сайт предложил: ${offers.map(offer).join('; ')}. Помогите выбрать, пожалуйста.`,
   ].join('\n');
 }

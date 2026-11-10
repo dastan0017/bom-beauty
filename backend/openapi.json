@@ -238,6 +238,27 @@
         ]
       }
     },
+    "/v1/catalog/quiz": {
+      "get": {
+        "operationId": "CatalogController_quiz",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuizConfigDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "public"
+        ]
+      }
+    },
     "/v1/catalog/brands": {
       "get": {
         "operationId": "CatalogController_brands",
@@ -2241,6 +2262,86 @@
         "responses": {
           "204": {
             "description": ""
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/quiz": {
+      "get": {
+        "operationId": "AdminCatalogController_quizLists",
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "description": "Required on mutations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminQuizDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ]
+      },
+      "put": {
+        "operationId": "AdminCatalogController_saveQuiz",
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "description": "Required on mutations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuizInputDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminQuizDto_Output"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4813,33 +4914,15 @@
             "type": "object",
             "properties": {
               "goal": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "enum": [
-                      "acne",
-                      "pigment",
-                      "age",
-                      "calm",
-                      "glow"
-                    ]
-                  },
-                  {
-                    "type": "null"
-                  }
+                "type": [
+                  "string",
+                  "null"
                 ]
               },
               "skins": {
                 "type": "array",
                 "items": {
-                  "type": "string",
-                  "enum": [
-                    "oily",
-                    "combo",
-                    "dry",
-                    "sens",
-                    "normal"
-                  ]
+                  "type": "string"
                 }
               }
             },
@@ -5448,33 +5531,15 @@
             "type": "object",
             "properties": {
               "goal": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "enum": [
-                      "acne",
-                      "pigment",
-                      "age",
-                      "calm",
-                      "glow"
-                    ]
-                  },
-                  {
-                    "type": "null"
-                  }
+                "type": [
+                  "string",
+                  "null"
                 ]
               },
               "skins": {
                 "type": "array",
                 "items": {
-                  "type": "string",
-                  "enum": [
-                    "oily",
-                    "combo",
-                    "dry",
-                    "sens",
-                    "normal"
-                  ]
+                  "type": "string"
                 }
               }
             },
@@ -5879,6 +5944,89 @@
           "protocol",
           "seo",
           "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "QuizConfigDto_Output": {
+        "type": "object",
+        "properties": {
+          "goals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "answer": {
+                  "type": "string"
+                },
+                "related": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "bonusSkins": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "key",
+                "name",
+                "answer",
+                "related",
+                "bonusSkins"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "skins": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "answer": {
+                  "type": "string"
+                },
+                "alsoMatches": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "avoidMax": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "key",
+                "name",
+                "answer",
+                "alsoMatches",
+                "avoidMax"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "goals",
+          "skins"
         ],
         "additionalProperties": false
       },
@@ -7039,23 +7187,11 @@
             "properties": {
               "goal": {
                 "type": "string",
-                "enum": [
-                  "acne",
-                  "pigment",
-                  "age",
-                  "calm",
-                  "glow"
-                ]
+                "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
               },
               "skin": {
                 "type": "string",
-                "enum": [
-                  "oily",
-                  "combo",
-                  "dry",
-                  "sens",
-                  "normal"
-                ]
+                "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
               },
               "exp": {
                 "type": "string",
@@ -9234,14 +9370,7 @@
           "quizGoal": {
             "anyOf": [
               {
-                "type": "string",
-                "enum": [
-                  "acne",
-                  "pigment",
-                  "age",
-                  "calm",
-                  "glow"
-                ]
+                "type": "string"
               },
               {
                 "type": "null"
@@ -9447,13 +9576,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "enum": [
-                  "acne",
-                  "pigment",
-                  "age",
-                  "calm",
-                  "glow"
-                ]
+                "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
               },
               {
                 "type": "null"
@@ -9464,13 +9587,7 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": [
-                "oily",
-                "combo",
-                "dry",
-                "sens",
-                "normal"
-              ]
+              "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
             }
           },
           "published": {
@@ -9761,14 +9878,7 @@
           "quizGoal": {
             "anyOf": [
               {
-                "type": "string",
-                "enum": [
-                  "acne",
-                  "pigment",
-                  "age",
-                  "calm",
-                  "glow"
-                ]
+                "type": "string"
               },
               {
                 "type": "null"
@@ -9778,14 +9888,7 @@
           "quizSkins": {
             "type": "array",
             "items": {
-              "type": "string",
-              "enum": [
-                "oily",
-                "combo",
-                "dry",
-                "sens",
-                "normal"
-              ]
+              "type": "string"
             }
           },
           "published": {
@@ -10581,6 +10684,199 @@
             "type": "boolean"
           }
         }
+      },
+      "AdminQuizDto_Output": {
+        "type": "object",
+        "properties": {
+          "goals": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "answer": {
+                  "type": "string"
+                },
+                "related": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "bonusSkins": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "programCount": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "key",
+                "name",
+                "answer",
+                "related",
+                "bonusSkins",
+                "programCount"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "skins": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "answer": {
+                  "type": "string"
+                },
+                "alsoMatches": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "avoidMax": {
+                  "type": "boolean"
+                },
+                "programCount": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "key",
+                "name",
+                "answer",
+                "alsoMatches",
+                "avoidMax",
+                "programCount"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "goals",
+          "skins"
+        ],
+        "additionalProperties": false
+      },
+      "QuizInputDto": {
+        "type": "object",
+        "properties": {
+          "goals": {
+            "minItems": 1,
+            "maxItems": 12,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 60
+                },
+                "answer": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 160
+                },
+                "related": {
+                  "maxItems": 12,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
+                  }
+                },
+                "bonusSkins": {
+                  "maxItems": 12,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
+                  }
+                }
+              },
+              "required": [
+                "key",
+                "name",
+                "answer",
+                "related",
+                "bonusSkins"
+              ]
+            }
+          },
+          "skins": {
+            "minItems": 1,
+            "maxItems": 12,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 60
+                },
+                "answer": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 160
+                },
+                "alsoMatches": {
+                  "maxItems": 12,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9-]{0,39}$"
+                  }
+                },
+                "avoidMax": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "key",
+                "name",
+                "answer",
+                "alsoMatches",
+                "avoidMax"
+              ]
+            }
+          }
+        },
+        "required": [
+          "goals",
+          "skins"
+        ]
       },
       "ReviewDto_Output": {
         "type": "object",

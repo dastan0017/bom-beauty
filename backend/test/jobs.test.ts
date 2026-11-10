@@ -6,7 +6,7 @@ import type {
   ErrorResponse,
   NotificationTestResult,
 } from '@bom/shared';
-import { formatKgs } from '@bom/shared';
+import { DEFAULT_QUIZ, formatKgs } from '@bom/shared';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { MaintenanceService } from '../src/jobs/maintenance.service';
 import { leadMessage, orderMessage } from '../src/notifications/messages';
@@ -89,6 +89,7 @@ describe('notification texts', () => {
         answers: { goal: 'acne', skin: 'combo', exp: 'some', age: '25' },
         recommendedTitles: ['Акне'],
         choose: true,
+        quiz: DEFAULT_QUIZ,
       },
       'https://admin',
     );
@@ -102,6 +103,7 @@ describe('notification texts', () => {
         answers: { skin: 'oily', goal: 'barrier', fmt: 'wa' },
         recommendedTitles: [],
         choose: false,
+        quiz: DEFAULT_QUIZ,
       },
       'https://admin',
     );
@@ -109,7 +111,13 @@ describe('notification texts', () => {
     expect(old.text).not.toContain('—');
     expect(quiz.text).toContain('Просит помочь выбрать');
     const wholesale = leadMessage(
-      { kind: 'wholesale', answers: { buyer: 'salon', country: 'kz' }, recommendedTitles: [], choose: false },
+      {
+        kind: 'wholesale',
+        answers: { buyer: 'salon', country: 'kz' },
+        recommendedTitles: [],
+        choose: false,
+        quiz: DEFAULT_QUIZ,
+      },
       'https://admin',
     );
     expect(wholesale.text).toContain('Салон\nКазахстан');

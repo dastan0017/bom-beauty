@@ -1,6 +1,6 @@
 'use client';
 
-import type { ProgramCard, ProgramVariant, PublicSettings, QuizKey } from '@bom/shared';
+import type { ProgramCard, ProgramVariant, PublicSettings, QuizConfig, QuizKey } from '@bom/shared';
 import { recommendVariant } from '@bom/shared/web';
 import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
@@ -65,6 +65,7 @@ export function SiteOverlays({
   whatsapp,
   currencies,
   programs,
+  quiz: quizConfig,
   products,
   turnstileSiteKey,
   payments,
@@ -73,6 +74,8 @@ export function SiteOverlays({
   whatsapp: string;
   currencies: CurrencyOption[];
   programs: ProgramCard[];
+  /** The owner's goals and skin types (D47). */
+  quiz: QuizConfig;
   products: CartProduct[];
   turnstileSiteKey: string | null;
   payments: PublicSettings['payments'];
@@ -95,7 +98,7 @@ export function SiteOverlays({
   if (paths.current !== pathname) setPaths({ current: pathname, previous: paths.current });
 
   const quizDone = QUIZ_TOTAL === Object.keys(quiz.answers).length;
-  const quizVariant = quizDone ? recommendVariant(quiz.answers) : null;
+  const quizVariant = quizDone ? recommendVariant(quiz.answers, quizConfig) : null;
 
   useEffect(() => {
     captureAttribution();
@@ -256,6 +259,7 @@ export function SiteOverlays({
           <QuizDialog
             state={quiz}
             programs={programs}
+            config={quizConfig}
             whatsapp={whatsapp}
             onAnswer={(key: QuizKey, answer) => {
               window.clearTimeout(advance.current);

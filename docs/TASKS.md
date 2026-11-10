@@ -226,3 +226,22 @@ Design update (`design_handoff_bom_beauty_updates/PROMPT_variants.md` in the Cla
       e2e (switch with keyboard, no switch without variants, variant scheme PDF, quiz pre-selection, admin picker and
       variants)
 - [x] Gate + `feat: program variants (Мини, Стандарт, Максимум) and search in the program product picker`
+
+## M12 Quiz goals and skin types as the owner's lists (2026-11-10)
+
+Owner request: add, edit and delete the «Задача» and «Тип кожи» options of «Подбор в тесте»; the full version was chosen
+with the design's rules as settings (D47).
+
+- [x] Data: `quiz_goals` and `skin_types` tables filled with the design's lists and rules by the migration; the
+      `QuizGoal` / `SkinType` enums dropped, programs keep their keys (goal: FK, set null on delete)
+- [x] Shared: `QuizConfig` schemas, `DEFAULT_QUIZ`, `quizQuestions(config)`; ranking, `recommendVariant`, lead labels
+      and the quiz WhatsApp text take the config; parity with the prototype kept with the defaults
+- [x] API: `GET /catalog/quiz`; `GET`/`PUT /admin/quiz` (whole lists by key, rules checked, programs cleaned on
+      delete, audit, revalidation); program saves check keys; leads rank with the lists; Telegram lead labels
+- [x] Admin: «Программы → Подбор в тесте» (name, answer, order, delete with a warning when programs use it, related
+      goals, skin bonus, «Также подходят программы для», «Не предлагать «Максимум»»); the program editor's select and
+      chips come from the lists and link there; leads label answers with them
+- [x] Site: quiz questions and ranking from the lists (design lists if the API is down)
+- [x] Tests: shared (defaults parity, edited lists, input rules), backend (admin edit, cleanup, validation, leads),
+      e2e (admin adds and deletes a skin type)
+- [x] Gate + `feat: quiz goals and skin types editable in the admin`

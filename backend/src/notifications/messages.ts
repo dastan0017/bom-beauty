@@ -3,12 +3,12 @@ import {
   formatPhoneDisplay,
   LEAD_KIND_LABELS,
   orderLineText,
-  QUIZ_QUESTIONS,
+  QUIZ_KEYS,
   quizAnswerLabel,
   WHOLESALE_BUYER_LABELS,
   WHOLESALE_COUNTRY_LABELS,
   type ProgramVariant,
-  type QuizKey,
+  type QuizConfig,
   type WholesaleBuyer,
   type WholesaleCountry,
   waLink,
@@ -69,6 +69,8 @@ export interface LeadForMessage {
   answers: Record<string, unknown>;
   recommendedTitles: string[];
   choose: boolean;
+  /** The owner's quiz lists, for the goal and skin answers (D47). */
+  quiz: QuizConfig;
 }
 
 export function leadMessage(
@@ -79,9 +81,10 @@ export function leadMessage(
   const lines: string[] = [];
   if (lead.kind === 'quiz') {
     // Leads from before October 2026 hold other answer values; those are skipped instead of printed as "—".
-    for (const key of QUIZ_QUESTIONS.map((question) => question.key) as QuizKey[]) {
+    // A goal or skin type deleted since is skipped the same way.
+    for (const key of QUIZ_KEYS) {
       const value = lead.answers[key];
-      const label = typeof value === 'string' ? quizAnswerLabel(key, value as never) : '—';
+      const label = typeof value === 'string' ? quizAnswerLabel(key, value as never, lead.quiz) : '—';
       if (label !== '—') lines.push(label);
     }
     if (lead.recommendedTitles.length)

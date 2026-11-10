@@ -7,6 +7,7 @@ import type {
   ProgramCard,
   ProgramDetail,
   ProgramVariant,
+  QuizConfig,
   RoutineStep,
   Sitemap,
 } from '@bom/shared';
@@ -24,6 +25,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { productCardSelect, productOrder, toProductCard, type ProductCardRow } from './catalog.selects';
 import { offeredVariants, type VariantPrices } from './program-variants';
+import { loadQuizConfig } from './quiz-config';
 
 const RELATED_MAX = 6;
 
@@ -246,6 +248,10 @@ export class CatalogService {
       seo: { title: row.seoTitle, description: row.seoDescription },
       updatedAt: row.updatedAt.toISOString(),
     };
+  }
+
+  quiz(): Promise<QuizConfig> {
+    return loadQuizConfig(this.prisma);
   }
 
   async brands(): Promise<Brand[]> {

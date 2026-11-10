@@ -27,6 +27,7 @@ export const keys = {
     list: ['programs', 'list'] as const,
     detail: (id: string) => ['programs', 'detail', id] as const,
   },
+  quiz: ['quiz'] as const,
   reviews: ['reviews'] as const,
   media: (id: string) => ['media', id] as const,
   video: (id: string) => ['video', id] as const,

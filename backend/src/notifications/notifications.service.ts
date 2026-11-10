@@ -15,6 +15,7 @@ import { JobsService } from '../jobs/jobs.service';
 import type { NotifyTarget } from '../jobs/queues';
 import { FINIK_CONFIG, isFinikConfigured, type FinikConfig } from '../payments/finik/finik.config';
 import { payPageUrl } from '../payments/pay-url';
+import { loadQuizConfig } from '../catalog/quiz-config';
 import { PrismaService } from '../prisma/prisma.service';
 import { SettingsService } from '../settings/settings.service';
 import {
@@ -272,6 +273,7 @@ export class NotificationsService {
           (slug) => programs.find((p) => p.slug === slug)?.title ?? slug,
         ),
         choose: lead.choose,
+        quiz: await loadQuizConfig(this.prisma),
       },
       this.env.ADMIN_ORIGIN,
     );

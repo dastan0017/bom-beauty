@@ -148,6 +148,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/catalog/quiz": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["CatalogController_quiz"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/catalog/brands": {
         parameters: {
             query?: never;
@@ -658,6 +674,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["AdminCatalogController_patchProgram"];
+        trace?: never;
+    };
+    "/v1/admin/quiz": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["AdminCatalogController_quizLists"];
+        put: operations["AdminCatalogController_saveQuiz"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/v1/admin/reviews": {
@@ -1225,8 +1257,8 @@ export interface components {
                 poster: string | null;
             } | null;
             quiz: {
-                goal: ("acne" | "pigment" | "age" | "calm" | "glow") | null;
-                skins: ("oily" | "combo" | "dry" | "sens" | "normal")[];
+                goal: string | null;
+                skins: string[];
             };
         };
         ProgramDetailDto_Output: {
@@ -1331,8 +1363,8 @@ export interface components {
                 mp4: string | null;
             } | null;
             quiz: {
-                goal: ("acne" | "pigment" | "age" | "calm" | "glow") | null;
-                skins: ("oily" | "combo" | "dry" | "sens" | "normal")[];
+                goal: string | null;
+                skins: string[];
             };
             headline: string | null;
             course: string;
@@ -1402,6 +1434,22 @@ export interface components {
             };
             /** Format: date-time */
             updatedAt: string;
+        };
+        QuizConfigDto_Output: {
+            goals: {
+                key: string;
+                name: string;
+                answer: string;
+                related: string[];
+                bonusSkins: string[];
+            }[];
+            skins: {
+                key: string;
+                name: string;
+                answer: string;
+                alsoMatches: string[];
+                avoidMax: boolean;
+            }[];
         };
         BrandDto_Output: {
             /** Format: uuid */
@@ -1638,10 +1686,8 @@ export interface components {
             website?: string;
             turnstileToken?: string;
             answers: {
-                /** @enum {string} */
-                goal: "acne" | "pigment" | "age" | "calm" | "glow";
-                /** @enum {string} */
-                skin: "oily" | "combo" | "dry" | "sens" | "normal";
+                goal: string;
+                skin: string;
                 /** @enum {string} */
                 exp: "pro" | "some" | "new";
                 /** @enum {string} */
@@ -2062,7 +2108,7 @@ export interface components {
             itemCount: number;
             published: boolean;
             inStock: boolean;
-            quizGoal: ("acne" | "pigment" | "age" | "calm" | "glow") | null;
+            quizGoal: string | null;
             videoStatus: ("created" | "uploading" | "processing" | "ready" | "failed") | null;
             protocolStatus: ("pending" | "processing" | "ready" | "failed") | null;
             thumbs: ({
@@ -2087,8 +2133,8 @@ export interface components {
             fit: string[];
             priceKgs: number;
             badge: ("Выбор Нурайым" | "Хит продаж" | "Хит эксперта" | "Новинка" | "Для зрелой кожи") | null;
-            quizGoal: ("acne" | "pigment" | "age" | "calm" | "glow") | null;
-            quizSkins: ("oily" | "combo" | "dry" | "sens" | "normal")[];
+            quizGoal: string | null;
+            quizSkins: string[];
             published: boolean;
             inStock: boolean;
             itemIds: string[];
@@ -2141,8 +2187,8 @@ export interface components {
             fit: string[];
             priceKgs: number;
             badge: ("Выбор Нурайым" | "Хит продаж" | "Хит эксперта" | "Новинка" | "Для зрелой кожи") | null;
-            quizGoal: ("acne" | "pigment" | "age" | "calm" | "glow") | null;
-            quizSkins: ("oily" | "combo" | "dry" | "sens" | "normal")[];
+            quizGoal: string | null;
+            quizSkins: string[];
             published: boolean;
             inStock: boolean;
             items: {
@@ -2282,6 +2328,40 @@ export interface components {
         ProgramPatchDto: {
             published?: boolean;
             inStock?: boolean;
+        };
+        AdminQuizDto_Output: {
+            goals: {
+                key: string;
+                name: string;
+                answer: string;
+                related: string[];
+                bonusSkins: string[];
+                programCount: number;
+            }[];
+            skins: {
+                key: string;
+                name: string;
+                answer: string;
+                alsoMatches: string[];
+                avoidMax: boolean;
+                programCount: number;
+            }[];
+        };
+        QuizInputDto: {
+            goals: {
+                key: string;
+                name: string;
+                answer: string;
+                related: string[];
+                bonusSkins: string[];
+            }[];
+            skins: {
+                key: string;
+                name: string;
+                answer: string;
+                alsoMatches: string[];
+                avoidMax: boolean;
+            }[];
         };
         ReviewDto_Output: {
             /** Format: uuid */
@@ -2709,6 +2789,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProgramDetailDto_Output"];
+                };
+            };
+        };
+    };
+    CatalogController_quiz: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuizConfigDto_Output"];
                 };
             };
         };
@@ -3807,6 +3906,54 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProgramDto_Output"];
+                };
+            };
+        };
+    };
+    AdminCatalogController_quizLists: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminQuizDto_Output"];
+                };
+            };
+        };
+    };
+    AdminCatalogController_saveQuiz: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuizInputDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminQuizDto_Output"];
                 };
             };
         };

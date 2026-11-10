@@ -6,8 +6,10 @@ import {
   orderSummary,
   withVariant,
 } from './labels';
-import { QUIZ_AGES, QUIZ_EXPERIENCES, SKIN_TYPES, type ProgramVariant } from './enums';
-import { recommendVariant } from './quiz';
+import { QUIZ_AGES, QUIZ_EXPERIENCES, type ProgramVariant } from './enums';
+import { DEFAULT_QUIZ, recommendVariant } from './quiz';
+
+const SKIN_TYPES = DEFAULT_QUIZ.skins.map((skin) => skin.key);
 import { namedVariant, pickVariant, programCardVariants, programDetailVariants } from './variants';
 import { createOrderSchema, orderLinesOf } from './schemas/orders';
 import { programInputSchema } from './schemas/admin-catalog';
@@ -25,13 +27,14 @@ describe('recommendVariant', () => {
     for (const skin of SKIN_TYPES)
       for (const exp of QUIZ_EXPERIENCES)
         for (const age of QUIZ_AGES)
-          expect(recommendVariant({ goal: 'acne', skin, exp, age }), `${skin} ${exp} ${age}`).toBe(
-            TIER_OF[designTier({ skin, exp, age })],
-          );
+          expect(
+            recommendVariant({ goal: 'acne', skin, exp, age }, DEFAULT_QUIZ),
+            `${skin} ${exp} ${age}`,
+          ).toBe(TIER_OF[designTier({ skin, exp, age })]);
   });
 
   it('suggests «Стандарт» before the answers are in', () => {
-    expect(recommendVariant({})).toBe('standard');
+    expect(recommendVariant({}, DEFAULT_QUIZ)).toBe('standard');
   });
 });
 

@@ -32,11 +32,11 @@ export type LeadKind = (typeof LEAD_KINDS)[number];
 export const USER_ROLES = ['owner', 'manager'] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
-export const QUIZ_GOALS = ['acne', 'pigment', 'age', 'calm', 'glow'] as const;
-export type QuizGoal = (typeof QUIZ_GOALS)[number];
+/** Key of a quiz goal; the goals are the owner's list (`quiz_goals`, D47), the design's five come first. */
+export type QuizGoal = string;
 
-export const SKIN_TYPES = ['oily', 'combo', 'dry', 'sens', 'normal'] as const;
-export type SkinType = (typeof SKIN_TYPES)[number];
+/** Key of a skin type; the owner's list as well (`skin_types`, D47). */
+export type SkinType = string;
 
 export const QUIZ_EXPERIENCES = ['pro', 'some', 'new'] as const;
 export type QuizExperience = (typeof QUIZ_EXPERIENCES)[number];

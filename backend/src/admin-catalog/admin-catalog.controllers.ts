@@ -7,6 +7,7 @@ import {
   adminProductSchema,
   adminProgramRowSchema,
   adminProgramSchema,
+  adminQuizSchema,
   adminReviewSchema,
   brandInputSchema,
   brandOptionSchema,
@@ -20,6 +21,7 @@ import {
   productPatchSchema,
   programInputSchema,
   programPatchSchema,
+  quizInputSchema,
   reviewOrderSchema,
   reviewPatchSchema,
 } from '@bom/shared';
@@ -31,6 +33,7 @@ import type { ActiveSession } from '../auth/session.service';
 import { clientIp } from '../common/client-ip';
 import { AdminProductsService, type Actor } from './admin-products.service';
 import { AdminProgramsService } from './admin-programs.service';
+import { AdminQuizService } from './admin-quiz.service';
 import { AdminReviewsService } from './admin-reviews.service';
 
 class IdParamsDto extends createZodDto(z.object({ id: z.uuid() })) {}
@@ -51,6 +54,8 @@ class ProgramRowDto extends createZodDto(adminProgramRowSchema) {}
 class ProgramDto extends createZodDto(adminProgramSchema) {}
 class ProgramInputDto extends createZodDto(programInputSchema) {}
 class ProgramPatchDto extends createZodDto(programPatchSchema) {}
+class AdminQuizDto extends createZodDto(adminQuizSchema) {}
+class QuizInputDto extends createZodDto(quizInputSchema) {}
 class ReviewDto extends createZodDto(adminReviewSchema) {}
 class CreateReviewsDto extends createZodDto(createReviewsSchema) {}
 class ReviewPatchDto extends createZodDto(reviewPatchSchema) {}
@@ -68,6 +73,7 @@ export class AdminCatalogController {
   constructor(
     private readonly products: AdminProductsService,
     private readonly programs: AdminProgramsService,
+    private readonly quiz: AdminQuizService,
     private readonly reviews: AdminReviewsService,
   ) {}
 
@@ -244,6 +250,18 @@ export class AdminCatalogController {
   @HttpCode(204)
   async deleteProgram(@Param() params: IdParamsDto, @CurrentSession() s: ActiveSession, @Req() r: Request) {
     await this.programs.remove(params.id, actor(s, r));
+  }
+
+  @Get('quiz')
+  @ZodResponse({ type: AdminQuizDto })
+  quizLists() {
+    return this.quiz.get();
+  }
+
+  @Put('quiz')
+  @ZodResponse({ type: AdminQuizDto })
+  saveQuiz(@Body() body: QuizInputDto, @CurrentSession() s: ActiveSession, @Req() r: Request) {
+    return this.quiz.save(body, actor(s, r));
   }
 
   @Get('reviews')

@@ -8,6 +8,7 @@ import {
   programCardSchema,
   programDetailSchema,
   publicSettingsSchema,
+  quizConfigSchema,
   redirectSchema,
   reviewCardSchema,
   SETTING_DEFAULTS,
@@ -20,8 +21,9 @@ import type {
   ProductCard,
   ProgramCard,
   PublicSettings,
+  QuizConfig,
 } from '@bom/shared';
-import { FOREIGN_CURRENCY_CODES } from '@bom/shared/web';
+import { DEFAULT_QUIZ, FOREIGN_CURRENCY_CODES } from '@bom/shared/web';
 import { cache } from 'react';
 import { z } from 'zod';
 import { apiGet, apiGetOrNull, TAGS } from './api';
@@ -59,6 +61,18 @@ export const getProgramsSafe = cache(async (): Promise<ProgramCard[]> => {
     return await getPrograms();
   } catch {
     return [];
+  }
+});
+
+/**
+ * The quiz's goals and skin types, edited by the owner (D47); saving them revalidates the programs tag. Without the API
+ * the design's lists keep the quiz working.
+ */
+export const getQuiz = cache(async (): Promise<QuizConfig> => {
+  try {
+    return await apiGet('/catalog/quiz', quizConfigSchema, [TAGS.programs]);
+  } catch {
+    return DEFAULT_QUIZ;
   }
 });
 

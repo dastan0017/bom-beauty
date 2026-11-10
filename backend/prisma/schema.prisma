@@ -93,22 +93,6 @@ enum ProgramVariant {
   max
 }
 
-enum QuizGoal {
-  acne
-  pigment
-  age
-  calm
-  glow
-}
-
-enum SkinType {
-  oily
-  combo
-  dry
-  sens
-  normal
-}
-
 // ───────────── Users and auth ─────────────
 
 model User {
@@ -232,8 +216,10 @@ model Program {
   miniPriceKgs    Int?          @map("mini_price_kgs")
   maxPriceKgs     Int?          @map("max_price_kgs")
   badge           String?
-  quizGoal        QuizGoal?     @map("quiz_goal")
-  quizSkins       SkinType[]    @map("quiz_skins")
+  // Keys from «Подбор в тесте» (D47): the goal is a foreign key; the skin list is cleaned when a skin type is deleted.
+  quizGoal        String?       @map("quiz_goal")
+  goal            QuizGoal?     @relation(fields: [quizGoal], references: [key], onDelete: SetNull, onUpdate: Cascade)
+  quizSkins       String[]      @map("quiz_skins")
   published       Boolean       @default(false)
   inStock         Boolean       @default(true) @map("in_stock")
   videoId         String?       @map("video_id") @db.Uuid
@@ -254,6 +240,38 @@ model Program {
 
   @@index([published, order])
   @@map("programs")
+}
+
+// The quiz's answers to «Какую главную задачу…» and «Как ведёт себя ваша кожа…», edited by the owner (D47). The design's
+// rules are settings: related goals rank lower, a goal can favour skin types, a skin type can also match others and can
+// keep «Максимум» away. Rules name other items by key.
+model QuizGoal {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  key        String    @unique
+  name       String
+  answer     String
+  order      Int       @default(0)
+  related    String[]
+  bonusSkins String[]  @map("bonus_skins")
+  programs   Program[]
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("quiz_goals")
+}
+
+model SkinType {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  key         String   @unique
+  name        String
+  answer      String
+  order       Int      @default(0)
+  alsoMatches String[] @map("also_matches")
+  avoidMax    Boolean  @default(false) @map("avoid_max")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("skin_types")
 }
 
 model ProgramItem {

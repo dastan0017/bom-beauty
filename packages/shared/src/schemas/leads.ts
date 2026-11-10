@@ -1,17 +1,12 @@
 import { z } from '../zod';
-import {
-  QUIZ_AGES,
-  QUIZ_EXPERIENCES,
-  QUIZ_GOALS,
-  SKIN_TYPES,
-  WHOLESALE_BUYERS,
-  WHOLESALE_COUNTRIES,
-} from '../enums';
+import { QUIZ_AGES, QUIZ_EXPERIENCES, WHOLESALE_BUYERS, WHOLESALE_COUNTRIES } from '../enums';
 import { submissionMetaShape } from './common';
+import { quizKeySchema } from './quiz';
 
+/** Goal and skin are keys of the owner's lists (D47); a key deleted meanwhile is still stored with the lead. */
 export const quizAnswersSchema = z.object({
-  goal: z.enum(QUIZ_GOALS),
-  skin: z.enum(SKIN_TYPES),
+  goal: quizKeySchema,
+  skin: quizKeySchema,
   exp: z.enum(QUIZ_EXPERIENCES),
   age: z.enum(QUIZ_AGES),
 });

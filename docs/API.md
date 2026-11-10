@@ -64,26 +64,27 @@ of login and `/auth/me`; there is no CSRF cookie.
 
 ## 4. Public endpoints
 
-| Method & path                       | Query                                               | Response                                                                |
-| ----------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------- |
-| `GET /catalog/categories`           |                                                     | `{ slug, name, count }[]` (published products only)                     |
-| `GET /catalog/products`             | `category?`                                         | `ProductCard[]` ordered by category order, product order                |
-| `GET /catalog/products/:slug`       |                                                     | `ProductDetail` (gallery, programs it belongs to, related products)     |
-| `GET /catalog/programs`             |                                                     | `ProgramCard[]` (published, by order)                                   |
-| `GET /catalog/programs/:slug`       |                                                     | `ProgramDetail`                                                         |
-| `GET /catalog/brands`               |                                                     | `{ slug, name }[]` with at least one published product                  |
-| `GET /catalog/sitemap`              |                                                     | `{ programs, products: { slug, updatedAt }[] }`                         |
-| `GET /content/:key`                 | `home \| wholesale \| delivery \| privacy \| offer` | `{ key, data, updatedAt }` with media and video refs resolved           |
-| `GET /reviews`                      |                                                     | `ReviewCard[]` (visible; demo ones only when no real review is visible) |
-| `GET /settings/public`              |                                                     | `PublicSettings`                                                        |
-| `GET /redirects/resolve`            | `path`                                              | `{ toPath, statusCode }` or 404                                         |
-| `POST /orders`                      |                                                     | `201 { id, number, payment }` (`payment` null for WhatsApp orders)      |
-| `GET /pay/:token`                   |                                                     | `PayPage`, `Cache-Control: no-store`; 400 malformed token, 404 unknown  |
-| `POST /pay/:token`                  |                                                     | `200 { url }` Finik's page; 409 paid/cancelled/off, 502 Finik failed    |
-| `POST /leads/*`                     |                                                     | `201 { id }`                                                            |
-| `POST /webhooks/bunny`              |                                                     | `204`                                                                   |
-| `POST /webhooks/finik`              |                                                     | `200 {}`; 400 not JSON, 401 bad or stale signature, 503 not configured  |
-| `GET /health` · `GET /health/ready` |                                                     | liveness · db + redis                                                   |
+| Method & path                       | Query                                               | Response                                                                                                                                            |
+| ----------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /catalog/categories`           |                                                     | `{ slug, name, count }[]` (published products only)                                                                                                 |
+| `GET /catalog/products`             | `category?`                                         | `ProductCard[]` ordered by category order, product order                                                                                            |
+| `GET /catalog/products/:slug`       |                                                     | `ProductDetail` (gallery, programs it belongs to, related products)                                                                                 |
+| `GET /catalog/programs`             |                                                     | `ProgramCard[]` (published, by order)                                                                                                               |
+| `GET /catalog/programs/:slug`       |                                                     | `ProgramDetail`                                                                                                                                     |
+| `GET /catalog/brands`               |                                                     | `{ slug, name }[]` with at least one published product                                                                                              |
+| `GET /catalog/quiz`                 |                                                     | `QuizConfig`: goals `{ key, name, answer, related[], bonusSkins[] }` and skin types `{ key, name, answer, alsoMatches[], avoidMax }` in order (D47) |
+| `GET /catalog/sitemap`              |                                                     | `{ programs, products: { slug, updatedAt }[] }`                                                                                                     |
+| `GET /content/:key`                 | `home \| wholesale \| delivery \| privacy \| offer` | `{ key, data, updatedAt }` with media and video refs resolved                                                                                       |
+| `GET /reviews`                      |                                                     | `ReviewCard[]` (visible; demo ones only when no real review is visible)                                                                             |
+| `GET /settings/public`              |                                                     | `PublicSettings`                                                                                                                                    |
+| `GET /redirects/resolve`            | `path`                                              | `{ toPath, statusCode }` or 404                                                                                                                     |
+| `POST /orders`                      |                                                     | `201 { id, number, payment }` (`payment` null for WhatsApp orders)                                                                                  |
+| `GET /pay/:token`                   |                                                     | `PayPage`, `Cache-Control: no-store`; 400 malformed token, 404 unknown                                                                              |
+| `POST /pay/:token`                  |                                                     | `200 { url }` Finik's page; 409 paid/cancelled/off, 502 Finik failed                                                                                |
+| `POST /leads/*`                     |                                                     | `201 { id }`                                                                                                                                        |
+| `POST /webhooks/bunny`              |                                                     | `204`                                                                                                                                               |
+| `POST /webhooks/finik`              |                                                     | `200 {}`; 400 not JSON, 401 bad or stale signature, 503 not configured                                                                              |
+| `GET /health` · `GET /health/ready` |                                                     | liveness · db + redis                                                                                                                               |
 
 Public GETs send `Cache-Control: public, max-age=60, stale-while-revalidate=300` for browser use; Next.js relies on its
 own tagged cache instead.
@@ -159,7 +160,7 @@ type ProgramCard = {
   }[];
   cover: ImageRef | null; // 5:4 home card photo (M8)
   video: Pick<VideoRef, 'durationSec' | 'poster'> | null;
-  quiz: { goal: QuizGoal | null; skins: SkinType[] }; // the site ranks quiz results locally
+  quiz: { goal: string | null; skins: string[] }; // keys from GET /catalog/quiz; the site ranks quiz results locally
 };
 type ProgramDetail = ProgramCard & {
   headline: string | null;
@@ -275,7 +276,9 @@ created and Finik is asked for a link for the server total. Online orders send n
 { clientRef, answers: { buyer?, country? }, message, pageUrl, referrer?, utm?, website, turnstileToken? }
 ```
 
-Server recomputes `recommended` for quiz leads with `rankPrograms` over published programs.
+Server recomputes `recommended` for quiz leads with `rankPrograms` over published programs and the owner's quiz lists.
+`goal` and `skin` are keys (`^[a-z0-9][a-z0-9-]{0,39}$`); a key deleted since the page loaded is still accepted, so a
+cached page never loses the customer (D47).
 
 ## 5. Auth endpoints
 
@@ -315,6 +318,7 @@ Server recomputes `recommended` for quiz leads with `rankPrograms` over publishe
 | Brands     | `GET ?q=` (with `count`), `PUT /:id`, `DELETE /:id` (409 unless empty), `POST /:id/merge` (`{ intoId }`)                                           | autocomplete with each brand's «О бренде» (`description`); created implicitly by product saves                                                                                                                                                                                                                                                                                                                                                               |
 | Products   | `GET ?category=&q=`, `POST`, `GET /:id`, `PUT /:id`, `PATCH /:id` (`{ inStock?, published? }`), `POST /bulk` (`{ ids[] ≤ 500, action: delete       | show                                                                                                                                                                                                                                                                                                                                                                                                                                                         | hide | inStock | outOfStock | category, categoryId? }`→`{ count }`; delete as `DELETE /:id`, unknown ids skipped), `DELETE /:id` (also leaves its programs, steps included, and the wholesale featured list) | `PUT` takes the full object incl. `brandName`, `brandDescription` (the brand's «О бренде»; null keeps it), `imageIds[]` (≤ 10, ordered), `videoId` (null removes it), `inci`, `bestseller` / `seoulChoice` / `isNew`; empty `slug` = generated; a slug change adds a 308 redirect |
 | Programs   | `GET`, `POST`, `GET /:id`, `PUT /:id`, `PATCH /:id` (`{ published?, inStock? }`), `DELETE /:id`                                                    | `PUT` takes `itemIds[]` ordered, `variants: { mini, max }` (each null or `{ itemIds[] 1..12, priceKgs > 0 }`; errors at `variants.mini.itemIds` etc.; D45), `steps: { am: [{ productId, text }], pm: [...] }` (products from `itemIds` only), `videoId?`, `protocolMediaId?`, `coverMediaId?` (ready image); response includes `sumKgs` and `variants` (`{ items, priceKgs } \| null`), the list row `variants` on offer; delete leaves a 302 to `/programs` |
+| Quiz lists | `GET /admin/quiz` (each item with `programCount`), `PUT /admin/quiz` (`{ goals[], skins[] }`, whole lists in order)                                | items match by `key` (new key = new item, missing = deleted; programs lose a deleted goal or skin type); 1..12 per list; rules may only name items of the same save (`quiz.rule.unknown`); revalidates `programs` (D47); program saves check `quizGoal` / `quizSkins` exist (`quiz.goal.not_found`, `quiz.skin.not_found`)                                                                                                                                   |
 | Reviews    | `GET`, `POST` (`{ mediaIds[] }`), `PATCH /:id` (`{ isHidden }`), `PUT /admin/reviews/order` (`{ ids }`), `DELETE /:id`; each returns the full list | `POST` takes ready review images, puts them first in upload order and hides the demo examples                                                                                                                                                                                                                                                                                                                                                                |
 
 Names of categories and brands are unique up to case, spaces and punctuation (`nameKey`: «Dr. SGN» = «Dr.SGN»): a

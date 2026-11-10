@@ -27,32 +27,32 @@ enum MediaStatus   { pending processing ready failed }
 enum VideoStatus   { created uploading processing ready failed }
 enum RoutinePeriod { am pm }
 enum ProgramVariant { mini standard max }
-enum QuizGoal      { acne pigment age calm glow }
-enum SkinType      { oily combo dry sens normal }
 enum PaymentMethod      { whatsapp finik }
 enum OrderPaymentStatus { unpaid pending paid refunded }
 enum PaymentStatus      { created pending succeeded failed expired }
 enum PaymentPurpose     { order check }
 ```
 
-| Value set             | Labels (in `packages/shared/src/labels.ts`)                                                                                                                                                                                                                                    |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| OrderStatus           | new: Новый · sent: Отправлен · cancelled: Отменён                                                                                                                                                                                                                              |
-| OrderItemType         | product: Товар · program: Программа                                                                                                                                                                                                                                            |
-| QuizGoal              | acne: Высыпания, чёрные точки, комедоны · pigment: Пигментация, постакне, неровный тон · age: Упругость, морщины, овал лица · calm: Краснота, шелушения, чувствительность · glow: Тусклая кожа: сияние и увлажнение (admin labels; the quiz shows the design's longer answers) |
-| SkinType              | oily: Жирная · combo: Комбинированная · dry: Сухая · sens: Чувствительная · normal: Нормальная                                                                                                                                                                                 |
-| Badges (string list)  | Выбор Нурайым · Хит продаж · Хит эксперта · Новинка · Для зрелой кожи                                                                                                                                                                                                          |
-| Wholesale buyer kinds | cosmo: Косметолог · clinic: Клиника · salon: Салон · shop: Магазин косметики                                                                                                                                                                                                   |
-| Wholesale countries   | kg: Кыргызстан · kz: Казахстан · uz: Узбекистан · ru: Россия                                                                                                                                                                                                                   |
-| Quiz experience       | pro · some · new (labels in `quiz.ts`, verbatim from the design)                                                                                                                                                                                                               |
-| Quiz age              | u25: До 25 лет · 25: 25–35 лет · 35: 35–45 лет · 45: 45+ лет                                                                                                                                                                                                                   |
-| ProgramVariant        | mini: Мини · standard: Стандарт · max: Максимум; notes «Самое необходимое, чтобы начать» · «Полная программа на весь курс» · «Полная программа и усилители для быстрого результата» (design: TIER_META)                                                                        |
-| PaymentMethod         | whatsapp: WhatsApp · finik: Онлайн (Finik)                                                                                                                                                                                                                                     |
-| OrderPaymentStatus    | unpaid: Не оплачен · pending: Ждёт оплаты · paid: Оплачен · refunded: Возврат                                                                                                                                                                                                  |
-| PaymentStatus         | created: Создаётся · pending: Ссылка выдана · succeeded: Оплачен · failed: Ошибка · expired: Истекла                                                                                                                                                                           |
-| Payment channel       | qr: QR-код · visa: Visa (a string column, from the webhook's `service.id`)                                                                                                                                                                                                     |
+| Value set             | Labels (in `packages/shared/src/labels.ts`)                                                                                                                                                             |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OrderStatus           | new: Новый · sent: Отправлен · cancelled: Отменён                                                                                                                                                       |
+| OrderItemType         | product: Товар · program: Программа                                                                                                                                                                     |
+| Quiz goals            | rows of `quiz_goals` (D47): admin `name` and quiz `answer`, seeded from `DEFAULT_QUIZ` (acne, pigment, age, calm, glow)                                                                                 |
+| Skin types            | rows of `skin_types` (D47), seeded from `DEFAULT_QUIZ` (oily, combo, dry, sens, normal)                                                                                                                 |
+| Badges (string list)  | Выбор Нурайым · Хит продаж · Хит эксперта · Новинка · Для зрелой кожи                                                                                                                                   |
+| Wholesale buyer kinds | cosmo: Косметолог · clinic: Клиника · salon: Салон · shop: Магазин косметики                                                                                                                            |
+| Wholesale countries   | kg: Кыргызстан · kz: Казахстан · uz: Узбекистан · ru: Россия                                                                                                                                            |
+| Quiz experience       | pro · some · new (labels in `quiz.ts`, verbatim from the design)                                                                                                                                        |
+| Quiz age              | u25: До 25 лет · 25: 25–35 лет · 35: 35–45 лет · 45: 45+ лет                                                                                                                                            |
+| ProgramVariant        | mini: Мини · standard: Стандарт · max: Максимум; notes «Самое необходимое, чтобы начать» · «Полная программа на весь курс» · «Полная программа и усилители для быстрого результата» (design: TIER_META) |
+| PaymentMethod         | whatsapp: WhatsApp · finik: Онлайн (Finik)                                                                                                                                                              |
+| OrderPaymentStatus    | unpaid: Не оплачен · pending: Ждёт оплаты · paid: Оплачен · refunded: Возврат                                                                                                                           |
+| PaymentStatus         | created: Создаётся · pending: Ссылка выдана · succeeded: Оплачен · failed: Ошибка · expired: Истекла                                                                                                    |
+| Payment channel       | qr: QR-код · visa: Visa (a string column, from the webhook's `service.id`)                                                                                                                              |
 
-M8 migration: `barrier` goals became `calm` when the program targets sensitive skin, otherwise `glow`. Leads saved before
+M8 migration: `barrier` goals became `calm` when the program targets sensitive skin, otherwise `glow`. The
+`quiz_lists` migration (D47) replaced the `QuizGoal` and `SkinType` enums with the `quiz_goals` and `skin_types` tables,
+filled with the design's lists and rules; programs kept their values as text keys. Leads saved before
 M8 keep their old answers (`skin, goal, exp, fmt`); `quizLeadAnswers` labels both versions.
 
 ## 2. Schema
@@ -178,8 +178,9 @@ model Program {
   miniPriceKgs    Int?                             // «Мини»; offered while set and the variant has items (D45)
   maxPriceKgs     Int?                             // «Максимум», same rule
   badge           String?
-  quizGoal        QuizGoal?                        // null = not in quiz results
-  quizSkins       SkinType[]                       // empty = any skin
+  quizGoal        String?                          // quiz_goals.key (FK, SET NULL on delete); null = not in quiz results
+  goal            QuizGoal?     @relation(fields: [quizGoal], references: [key], onDelete: SetNull, onUpdate: Cascade)
+  quizSkins       String[]                         // skin_types keys; empty = any skin; cleaned when a skin type is deleted
   published       Boolean       @default(false)
   inStock         Boolean       @default(true)     // false = "Под заказ из Кореи"
   videoId         String?       @db.Uuid
@@ -198,6 +199,34 @@ model Program {
   updatedAt       DateTime      @updatedAt
 
   @@index([published, order])
+}
+
+// The quiz's answers, edited by the owner (D47). Rules name other items by key; a save replaces both lists.
+model QuizGoal {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  key        String    @unique                       // never changes; "acne" for the design's, random for new ones
+  name       String                                  // admin: "Высыпания, чёрные точки, комедоны"
+  answer     String                                  // quiz: "Избавиться от высыпаний, чёрных точек и закрытых комедонов"
+  order      Int       @default(0)
+  related    String[]                                // goals whose programs also fit, lower (design: Q_REL)
+  bonusSkins String[]                                // skin types that raise this goal's programs (sens → calm)
+  programs   Program[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  @@map("quiz_goals")
+}
+
+model SkinType {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  key         String   @unique
+  name        String                                 // admin chip: "Комбинированная"
+  answer      String                                 // quiz answer text
+  order       Int      @default(0)
+  alsoMatches String[]                               // programs tagged for these also fit (combo → oily)
+  avoidMax    Boolean  @default(false)               // the quiz never suggests «Максимум» (sens)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@map("skin_types")
 }
 
 model ProgramItem {
@@ -545,6 +574,7 @@ unpaid ──► pending ──► paid ──► refunded        pending: a Fin
   продаж" (cica) and "Выбор Нурайым" (pdrn); Состав texts and the home rail flags from the October 2026 README (§1.5).
 - No media: photos, videos, care scheme PDFs, program covers and review screenshots are uploaded by the owner through
   the admin after deploy; the site shows placeholders until then.
+- Quiz goals and skin types from `DEFAULT_QUIZ` (create only, so the owner's edits stay).
 - Settings: shop (WhatsApp `+996706304803`), appearance defaults, currencies with the design's rates, notifications off.
 - Content: home, wholesale (`WS0`), delivery, placeholder privacy and offer texts marked `[...]`.
 - Dev only: the prototype's sample variants (`TIERS`): «Акне и постакне» Мини 3 900 сом (foam, cica, gel) and

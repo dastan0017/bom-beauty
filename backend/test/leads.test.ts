@@ -52,10 +52,18 @@ describe('POST /v1/leads/*', () => {
   });
 
   it('validates answers', async () => {
-    const res = await request(ctx.url('/v1/leads/quiz'), {
+    for (const answers of [
+      { goal: 'Не ключ', skin: 'oily', exp: 'pro', age: '25' },
+      { goal: 'acne', skin: 'oily', exp: 'always', age: '25' },
+    ]) {
+      const res = await request(ctx.url('/v1/leads/quiz'), { method: 'POST', json: { ...meta(), answers } });
+      expect(res.status).toBe(400);
+    }
+    // A goal the owner deleted after the page was cached still reaches her (D47): the lead is kept.
+    const stale = await request(ctx.url('/v1/leads/quiz'), {
       method: 'POST',
       json: { ...meta(), answers: { goal: 'barrier', skin: 'oily', exp: 'pro', age: '25' } },
     });
-    expect(res.status).toBe(400);
+    expect(stale.status).toBe(201);
   });
 });

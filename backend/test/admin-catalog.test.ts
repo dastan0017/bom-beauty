@@ -9,6 +9,7 @@ import type {
   AdminProductRow,
   AdminProgram,
   AdminProgramRow,
+  AdminQuiz,
   AdminReview,
   AdminUser,
   ErrorResponse,
@@ -17,8 +18,11 @@ import type {
   ProductInput,
   ProgramDetail,
   ProgramInput,
+  QuizConfig,
+  QuizInput,
   RedirectTarget,
 } from '@bom/shared';
+import { DEFAULT_QUIZ } from '@bom/shared';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   createManager,
@@ -708,6 +712,121 @@ describe('admin: catalog, content, settings, users', () => {
     expect(line).toMatchObject({ variant: null, unitPriceKgs: 5000 });
 
     await request(api(`/programs/${id}`), { method: 'DELETE', headers: manager.write });
+  });
+
+  it('edits the quiz lists: add, rename, reorder, delete; programs and the site follow (D47)', async () => {
+    const site = await request<QuizConfig>(ctx.url('/v1/catalog/quiz'));
+    expect(site.body.goals.map((goal) => goal.key)).toEqual(['acne', 'pigment', 'age', 'calm', 'glow']);
+    expect(site.body.skins.find((skin) => skin.key === 'combo')?.alsoMatches).toEqual(['oily']);
+
+    const before = await request<AdminQuiz>(api('/quiz'), { headers: manager.read });
+    expect(before.body.goals.find((goal) => goal.key === 'glow')?.programCount).toBe(2);
+    expect(before.body.skins.find((skin) => skin.key === 'sens')?.programCount).toBe(2);
+
+    const input: QuizInput = {
+      // «Сияние» deleted, a new goal first, «Акне» related to it.
+      goals: [
+        { key: 'pores-new', name: 'Поры', answer: 'Сузить поры', related: ['acne'], bonusSkins: ['oily'] },
+        ...DEFAULT_QUIZ.goals
+          .filter((goal) => goal.key !== 'glow')
+          .map((goal) => ({
+            ...goal,
+            related:
+              goal.key === 'acne' ? ['pigment', 'pores-new'] : goal.related.filter((k) => k !== 'glow'),
+          })),
+      ],
+      // «Нормальная» deleted, «Сухая» renamed.
+      skins: DEFAULT_QUIZ.skins
+        .filter((skin) => skin.key !== 'normal')
+        .map((skin) => (skin.key === 'dry' ? { ...skin, name: 'Сухая кожа', answer: 'Стягивает' } : skin)),
+    };
+    const broken = await request<ErrorResponse>(api('/quiz'), {
+      method: 'PUT',
+      headers: manager.write,
+      json: { ...input, goals: [{ ...input.goals[0], related: ['glow'] }, ...input.goals.slice(1)] },
+    });
+    expect(broken.status).toBe(400);
+    expect(broken.body.error.fields).toEqual({ 'goals.0.related': 'quiz.rule.unknown' });
+
+    const saved = await request<AdminQuiz>(api('/quiz'), {
+      method: 'PUT',
+      headers: manager.write,
+      json: input,
+    });
+    expect(saved.status).toBe(200);
+    expect(saved.body.goals.map((goal) => goal.key)).toEqual(['pores-new', 'acne', 'pigment', 'age', 'calm']);
+    expect(saved.body.skins.find((skin) => skin.key === 'dry')).toMatchObject({
+      name: 'Сухая кожа',
+      answer: 'Стягивает',
+    });
+
+    // Programs lose the deleted goal and skin type; the rest stays.
+    const glow = await ctx.prisma.program.findUniqueOrThrow({ where: { slug: 'glow' } });
+    expect(glow.quizGoal).toBeNull();
+    expect(glow.quizSkins).toEqual(['oily', 'combo']);
+    const acne = await ctx.prisma.program.findUniqueOrThrow({ where: { slug: 'acne' } });
+    expect(acne).toMatchObject({ quizGoal: 'acne', quizSkins: ['combo', 'dry'] });
+
+    // A program takes the new goal; unknown keys are refused.
+    const program = await request<AdminProgram>(api(`/programs/${glow.id}`), { headers: manager.read });
+    const programInput = (patch: Partial<ProgramInput>): ProgramInput => ({
+      title: program.body.title,
+      slug: program.body.slug,
+      headline: program.body.headline,
+      symptom: program.body.symptom,
+      description: program.body.description,
+      course: program.body.course,
+      fit: program.body.fit,
+      priceKgs: program.body.priceKgs,
+      badge: program.body.badge,
+      quizGoal: program.body.quizGoal,
+      quizSkins: program.body.quizSkins,
+      published: program.body.published,
+      inStock: program.body.inStock,
+      itemIds: program.body.items.map((item) => item.id),
+      variants: { mini: null, max: null },
+      steps: program.body.steps,
+      videoId: null,
+      protocolMediaId: null,
+      coverMediaId: null,
+      seoTitle: null,
+      seoDescription: null,
+      ...patch,
+    });
+    const unknown = await request<ErrorResponse>(api(`/programs/${glow.id}`), {
+      method: 'PUT',
+      headers: manager.write,
+      json: programInput({ quizGoal: 'glow' }),
+    });
+    expect(unknown.body.error.fields).toEqual({ quizGoal: 'quiz.goal.not_found' });
+    const badSkin = await request<ErrorResponse>(api(`/programs/${glow.id}`), {
+      method: 'PUT',
+      headers: manager.write,
+      json: programInput({ quizSkins: ['normal'] }),
+    });
+    expect(badSkin.body.error.fields).toEqual({ quizSkins: 'quiz.skin.not_found' });
+    const moved = await request<AdminProgram>(api(`/programs/${glow.id}`), {
+      method: 'PUT',
+      headers: manager.write,
+      json: programInput({ quizGoal: 'pores-new' }),
+    });
+    expect(moved.body.quizGoal).toBe('pores-new');
+
+    // The site's quiz and the lead record rank with the new lists.
+    const after = await request<QuizConfig>(ctx.url('/v1/catalog/quiz'));
+    expect(after.body.goals[0]).toMatchObject({ key: 'pores-new', answer: 'Сузить поры' });
+    const lead = await request<{ id: string }>(ctx.url('/v1/leads/quiz'), {
+      method: 'POST',
+      json: {
+        clientRef: randomUUID(),
+        answers: { goal: 'pores-new', skin: 'oily', exp: 'some', age: '25' },
+        message: 'Здравствуйте, Нурайым!',
+        pageUrl: 'http://localhost:3100/',
+      },
+    });
+    expect(lead.status).toBe(201);
+    const stored = await ctx.prisma.lead.findUniqueOrThrow({ where: { id: lead.body.id } });
+    expect(stored.recommended[0]).toBe('glow');
   });
 
   it('orders, hides and deletes reviews; real ones hide the demo examples', async () => {

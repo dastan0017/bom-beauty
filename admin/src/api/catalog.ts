@@ -5,6 +5,7 @@ import type {
   ProductBulkInput,
   ProductInput,
   ProgramInput,
+  QuizInput,
 } from '@bom/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, unwrap } from '@/lib/api';
@@ -258,4 +259,21 @@ export function useReviewActions() {
       ...settle,
     }),
   };
+}
+
+/** «Подбор в тесте»: the quiz's goals and skin types (D47). */
+export function useQuizLists() {
+  return useQuery({ queryKey: keys.quiz, queryFn: () => unwrap(api.GET('/v1/admin/quiz')) });
+}
+
+export function useSaveQuizLists() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: QuizInput) => unwrap(api.PUT('/v1/admin/quiz', { body })),
+    onSuccess: (quiz) => {
+      queryClient.setQueryData(keys.quiz, quiz);
+      // Programs may have lost a deleted goal or skin type.
+      void queryClient.invalidateQueries({ queryKey: keys.programs.all });
+    },
+  });
 }

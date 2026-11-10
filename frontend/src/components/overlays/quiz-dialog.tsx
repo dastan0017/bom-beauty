@@ -1,13 +1,20 @@
 'use client';
 
-import type { ProgramCard, ProgramVariant, ProgramVariantCard, QuizAnswers, QuizKey } from '@bom/shared';
+import type {
+  ProgramCard,
+  ProgramVariant,
+  ProgramVariantCard,
+  QuizAnswers,
+  QuizConfig,
+  QuizKey,
+} from '@bom/shared';
 import {
   buildQuizMessage,
   namedVariant,
   pickVariant,
   PROGRAM_VARIANT_LABELS,
   programCardVariants,
-  QUIZ_QUESTIONS,
+  quizQuestions,
   rankPrograms,
   recommendVariant,
   waLink,
@@ -29,12 +36,13 @@ export interface QuizState {
   answers: Partial<QuizAnswers>;
 }
 
-const TOTAL = QUIZ_QUESTIONS.length;
+const TOTAL = 4;
 
 /** «Подобрать программу ухода за 1 минуту»: full-screen dialog, four questions, then up to three programs (README §2). */
 export function QuizDialog({
   state,
   programs,
+  config,
   whatsapp,
   onAnswer,
   onBack,
@@ -44,6 +52,8 @@ export function QuizDialog({
 }: {
   state: QuizState;
   programs: ProgramCard[];
+  /** Goals and skin types for the first two questions and the ranking (D47). */
+  config: QuizConfig;
   whatsapp: string;
   onAnswer: (key: QuizKey, value: string) => void;
   onBack: () => void;
@@ -58,13 +68,15 @@ export function QuizDialog({
   if (!mounted) return null;
 
   const done = state.step >= TOTAL;
-  const question = QUIZ_QUESTIONS[Math.min(state.step, TOTAL - 1)];
+  const questions = quizQuestions(config);
+  const question = questions[Math.min(state.step, TOTAL - 1)];
   const ranked = rankPrograms(
     programs.map((program) => ({ ...program, quizGoal: program.quiz.goal, quizSkins: program.quiz.skins })),
     state.answers,
+    config,
   );
   // Results stay programs; one with variants shows the variant the answers suggest (design: quizOffers).
-  const suggested = recommendVariant(state.answers);
+  const suggested = recommendVariant(state.answers, config);
   const offers = ranked.map((program) => {
     const variants = programCardVariants(program);
     const variant = pickVariant(variants, suggested);
@@ -81,6 +93,7 @@ export function QuizDialog({
         price: format(variant.priceKgs),
         variant: named,
       })),
+      config,
     );
     openExternal(waLink(whatsapp, message));
     submit('/leads/quiz', { ...submissionMeta(message), answers, choose: true });
@@ -121,7 +134,7 @@ export function QuizDialog({
           </div>
         </div>
         <div className="mx-auto grid w-full max-w-[640px] grid-cols-4 gap-1" aria-hidden="true">
-          {QUIZ_QUESTIONS.map((q, index) => (
+          {questions.map((q, index) => (
             <span
               key={q.key}
               className={cn(

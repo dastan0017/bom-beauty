@@ -18,6 +18,7 @@ export * from './schemas/payments';
 export * from './schemas/leads';
 export * from './schemas/auth';
 export * from './schemas/catalog';
+export * from './schemas/quiz';
 export * from './schemas/settings';
 export * from './schemas/content';
 export * from './time';

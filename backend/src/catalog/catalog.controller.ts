@@ -7,6 +7,7 @@ import {
   productDetailSchema,
   programCardSchema,
   programDetailSchema,
+  quizConfigSchema,
   sitemapSchema,
   slugSchema,
 } from '@bom/shared';
@@ -22,6 +23,7 @@ class ProgramCardDto extends createZodDto(programCardSchema) {}
 class ProgramDetailDto extends createZodDto(programDetailSchema) {}
 class BrandDto extends createZodDto(brandSchema) {}
 class SitemapDto extends createZodDto(sitemapSchema) {}
+class QuizConfigDto extends createZodDto(quizConfigSchema) {}
 class SlugParamsDto extends createZodDto(z.object({ slug: slugSchema })) {}
 class ProductsQueryDto extends createZodDto(z.object({ category: slugSchema.optional() })) {}
 
@@ -63,6 +65,14 @@ export class CatalogController {
   @ZodResponse({ type: ProgramDetailDto })
   program(@Param() params: SlugParamsDto) {
     return this.catalog.program(params.slug);
+  }
+
+  /** The quiz's goals and skin types with their rules (D47); the site ranks programs with them. */
+  @Get('quiz')
+  @PublicCache()
+  @ZodResponse({ type: QuizConfigDto })
+  quiz() {
+    return this.catalog.quiz();
   }
 
   @Get('brands')

@@ -11,6 +11,7 @@ import { hashIp } from '../common/client-ip';
 import { fakeId, isBot, isDuplicateClientRef, utmJson } from '../common/submission';
 import { NotificationsService } from '../notifications/notifications.service';
 import { TurnstileService } from '../common/turnstile.service';
+import { loadQuizConfig } from '../catalog/quiz-config';
 import { PrismaService } from '../prisma/prisma.service';
 
 type LeadInput = { kind: 'quiz'; data: CreateQuizLead } | { kind: 'wholesale'; data: CreateWholesaleLead };
@@ -43,6 +44,7 @@ export class LeadsService {
               select: { slug: true, quizGoal: true, quizSkins: true },
             }),
             input.data.answers,
+            await loadQuizConfig(this.prisma),
           ).map((program) => program.slug)
         : [];
 

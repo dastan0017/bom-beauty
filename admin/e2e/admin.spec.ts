@@ -228,6 +228,41 @@ test('programs: the picker finds a product by name; «Мини» is saved for th
   await expect.poll(variantsOnSite).toEqual([['standard', 6900, 5]]);
 });
 
+test('quiz lists: a skin type is added from the program editor, reaches the site, and is deleted', async ({
+  request,
+}) => {
+  const answersOnSite = async () => {
+    const response = await request.get(`${API}/catalog/quiz`);
+    const body = (await response.json()) as { skins: { answer: string }[] };
+    return body.skins.map((skin) => skin.answer);
+  };
+  await page.getByRole('link', { name: 'Программы' }).first().click();
+  await page.getByRole('link', { name: 'Пигментация', exact: true }).click();
+  await page.getByRole('link', { name: 'Изменить задачи и типы кожи' }).click();
+  await expect(page).toHaveURL(/\/programs\/quiz$/);
+  await expect(page.getByRole('region', { name: 'Задача 1' }).getByLabel('Название в админке')).toHaveValue(
+    'Высыпания, чёрные точки, комедоны',
+  );
+
+  await page.getByRole('button', { name: 'Добавить тип кожи' }).click();
+  const added = page.getByRole('region', { name: 'Тип кожи 6' });
+  await added.getByLabel('Название в админке').fill('E2E кожа');
+  await added.getByLabel('Ответ в тесте на сайте').fill('E2E: кожа после солнца');
+  await added
+    .getByRole('group', { name: 'Также подходят программы для' })
+    .getByRole('button', { name: 'Сухая' })
+    .click();
+  await page.getByRole('button', { name: 'Сохранить' }).click();
+  await expect(page.getByText('Изменения сохранены')).toBeVisible();
+  expect(await answersOnSite()).toContain('E2E: кожа после солнца');
+
+  // Unused, so it goes without a question; the save removes it from the site.
+  await added.getByRole('button', { name: 'Удалить' }).click();
+  await expect(page.getByRole('region', { name: 'Тип кожи 6' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Сохранить' }).click();
+  await expect.poll(answersOnSite).not.toContain('E2E: кожа после солнца');
+});
+
 test('payments: the link to send, a WhatsApp order marked paid, the «Оплата» settings', async ({
   request,
 }) => {

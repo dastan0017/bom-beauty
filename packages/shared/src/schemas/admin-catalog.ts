@@ -1,8 +1,9 @@
 import { z } from '../zod';
-import { PROGRAM_VARIANTS, QUIZ_GOALS, SKIN_TYPES, USER_ROLES } from '../enums';
+import { PROGRAM_VARIANTS, USER_ROLES } from '../enums';
 import { BADGES } from '../labels';
 import { PRODUCT_IMAGES_MAX } from '../limits';
 import { fileRefSchema, imageRefSchema, slugSchema } from './common';
+import { quizKeySchema } from './quiz';
 
 // Admin catalog, content, settings and users (docs/API.md §6). Inputs use message codes; the admin maps them to text.
 
@@ -224,8 +225,9 @@ export const programInputSchema = z.object({
   fit: z.array(text(160)).max(8, 'program.fit.max'),
   priceKgs: price,
   badge: z.enum(BADGES).nullable(),
-  quizGoal: z.enum(QUIZ_GOALS).nullable(),
-  quizSkins: z.array(z.enum(SKIN_TYPES)),
+  /** Keys from «Подбор в тесте» (D47). */
+  quizGoal: quizKeySchema.nullable(),
+  quizSkins: z.array(quizKeySchema),
   published: z.boolean(),
   inStock: z.boolean(),
   /** Ordered product ids; steps may only use these products. */
@@ -256,7 +258,7 @@ export const adminProgramRowSchema = z.object({
   itemCount: z.number().int(),
   published: z.boolean(),
   inStock: z.boolean(),
-  quizGoal: z.enum(QUIZ_GOALS).nullable(),
+  quizGoal: z.string().nullable(),
   videoStatus: adminVideoSchema.shape.status.nullable(),
   protocolStatus: adminMediaSchema.shape.status.nullable(),
   thumbs: z.array(imageRefSchema.nullable()),
@@ -291,8 +293,8 @@ export const adminProgramSchema = z.object({
   fit: z.array(z.string()),
   priceKgs: z.number().int(),
   badge: z.enum(BADGES).nullable(),
-  quizGoal: z.enum(QUIZ_GOALS).nullable(),
-  quizSkins: z.array(z.enum(SKIN_TYPES)),
+  quizGoal: z.string().nullable(),
+  quizSkins: z.array(z.string()),
   published: z.boolean(),
   inStock: z.boolean(),
   items: z.array(adminProgramItemSchema),

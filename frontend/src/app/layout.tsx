@@ -8,7 +8,7 @@ import { SiteFooter } from '@/components/site-footer';
 import { SiteHeader } from '@/components/site-header';
 import { copy } from '@/content/copy';
 import { env } from '@/env';
-import { getProductsSafe, getProgramsSafe, getSettings } from '@/lib/data';
+import { getProductsSafe, getProgramsSafe, getQuiz, getSettings } from '@/lib/data';
 import { BASE_OPEN_GRAPH } from '@/lib/seo';
 import { cormorant, notoKr, onest } from './fonts';
 import './globals.css';
@@ -37,10 +37,11 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const [settings, programs, products] = await Promise.all([
+  const [settings, programs, products, quiz] = await Promise.all([
     getSettings(),
     getProgramsSafe(),
     getProductsSafe(),
+    getQuiz(),
   ]);
   // Theme from "Оформление" in the admin; changing it revalidates the "settings" tag (no rebuild).
   const themeVars = buildThemeVars(settings.appearance) as CSSProperties;
@@ -60,6 +61,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           whatsapp={settings.shop.whatsapp}
           currencies={settings.currencies}
           programs={programs}
+          quiz={quiz}
           products={products.map(cartProduct)}
           turnstileSiteKey={settings.turnstileSiteKey}
           payments={settings.payments}

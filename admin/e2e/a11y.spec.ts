@@ -47,6 +47,7 @@ const SCREENS = [
   '/products/new',
   '/programs',
   '/programs/new',
+  '/programs/quiz',
   '/wholesale',
   '/reviews',
   '/content/home',

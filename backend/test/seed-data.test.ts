@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { CONTENT_SCHEMAS, quizScore } from '@bom/shared';
+import { CONTENT_SCHEMAS, DEFAULT_QUIZ, quizScore } from '@bom/shared';
 import { describe, expect, it } from 'vitest';
 import {
   COMPOSITION,
@@ -59,8 +59,17 @@ describe('seed data', () => {
   it('every program can appear in quiz results', () => {
     for (const program of PROGRAMS) {
       expect(
-        quizScore(program, { goal: program.quizGoal, skin: program.quizSkins[0] }),
+        quizScore(program, { goal: program.quizGoal, skin: program.quizSkins[0] }, DEFAULT_QUIZ),
       ).toBeGreaterThanOrEqual(5);
+    }
+  });
+
+  it('programs use goals and skin types of the default quiz lists', () => {
+    const goals = new Set(DEFAULT_QUIZ.goals.map((goal) => goal.key));
+    const skins = new Set(DEFAULT_QUIZ.skins.map((skin) => skin.key));
+    for (const program of PROGRAMS) {
+      expect(goals.has(program.quizGoal)).toBe(true);
+      expect(program.quizSkins.every((skin) => skins.has(skin))).toBe(true);
     }
   });
 

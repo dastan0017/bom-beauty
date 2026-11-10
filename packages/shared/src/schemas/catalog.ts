@@ -1,5 +1,5 @@
 import { z } from '../zod';
-import { PROGRAM_VARIANTS, QUIZ_GOALS, SKIN_TYPES } from '../enums';
+import { PROGRAM_VARIANTS } from '../enums';
 import { fileRefSchema, imageRefSchema, videoRefSchema } from './common';
 
 // Public catalog responses (docs/API.md §4).
@@ -80,7 +80,7 @@ export const programCardSchema = z.object({
   cover: imageRefSchema.nullable(),
   video: videoRefSchema.pick({ durationSec: true, poster: true }).nullable(),
   /** The site ranks quiz results locally with `rankPrograms`. */
-  quiz: z.object({ goal: z.enum(QUIZ_GOALS).nullable(), skins: z.array(z.enum(SKIN_TYPES)) }),
+  quiz: z.object({ goal: z.string().nullable(), skins: z.array(z.string()) }),
 });
 export type ProgramCard = z.infer<typeof programCardSchema>;
 

@@ -4,6 +4,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import {
   buildOrderMessage,
   buildQuizMessage,
+  DEFAULT_QUIZ,
   buildWholesaleMessage,
   formatKgs,
   normalizePhone,
@@ -85,6 +86,14 @@ export async function seed(
       select: { id: true },
     });
     productIds.set(key, row.id);
+  }
+
+  // The quiz lists start as the design's; the owner's own edits stay (D47). Programs refer to them by key.
+  for (const [order, { key, ...goal }] of DEFAULT_QUIZ.goals.entries()) {
+    await prisma.quizGoal.upsert({ where: { key }, update: {}, create: { key, ...goal, order } });
+  }
+  for (const [order, { key, ...skin }] of DEFAULT_QUIZ.skins.entries()) {
+    await prisma.skinType.upsert({ where: { key }, update: {}, create: { key, ...skin, order } });
   }
 
   for (const [order, program] of PROGRAMS.entries()) {
@@ -273,7 +282,7 @@ async function seedDemo(prisma: PrismaClient): Promise<void> {
       select: { slug: true, title: true, priceKgs: true, quizGoal: true, quizSkins: true },
     });
     const answers = { goal: 'acne', skin: 'combo', exp: 'some', age: '25' } as const;
-    const ranked = rankPrograms(published, answers);
+    const ranked = rankPrograms(published, answers, DEFAULT_QUIZ);
     await prisma.lead.create({
       data: {
         kind: 'quiz',
@@ -283,6 +292,7 @@ async function seedDemo(prisma: PrismaClient): Promise<void> {
         message: buildQuizMessage(
           answers,
           ranked.map((p) => ({ title: p.title, price: formatKgs(p.priceKgs) })),
+          DEFAULT_QUIZ,
         ),
         pageUrl: 'http://localhost:3100/',
         clientRef: randomUUID(),

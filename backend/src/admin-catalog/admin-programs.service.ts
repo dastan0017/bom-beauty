@@ -370,6 +370,15 @@ export class AdminProgramsService {
           throw invalidField(`steps.${period}.${index}.productId`, 'program.step.product');
       });
     }
+    if (input.quizGoal) {
+      const goal = await this.prisma.quizGoal.count({ where: { key: input.quizGoal } });
+      if (!goal) throw invalidField('quizGoal', 'quiz.goal.not_found');
+    }
+    const skins = [...new Set(input.quizSkins)];
+    if (skins.length) {
+      const found = await this.prisma.skinType.count({ where: { key: { in: skins } } });
+      if (found !== skins.length) throw invalidField('quizSkins', 'quiz.skin.not_found');
+    }
     if (input.protocolMediaId) {
       const pdf = await this.prisma.media.count({ where: { id: input.protocolMediaId, kind: 'pdf' } });
       if (!pdf) throw invalidField('protocolMediaId', 'media.not_found');

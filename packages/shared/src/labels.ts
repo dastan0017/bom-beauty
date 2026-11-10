@@ -8,9 +8,7 @@ import type {
   PaymentMethod,
   PaymentStatus,
   ProgramVariant,
-  QuizGoal,
   RoutinePeriod,
-  SkinType,
   UserRole,
   WholesaleBuyer,
   WholesaleCountry,
@@ -110,24 +108,6 @@ export const LEAD_KIND_LABELS: Record<LeadKind, string> = {
 export const USER_ROLE_LABELS: Record<UserRole, string> = {
   owner: 'Владелец',
   manager: 'Менеджер',
-};
-
-/** Goal labels used in the admin's quiz matching select (design: Q_GOALS). */
-export const QUIZ_GOAL_LABELS: Record<QuizGoal, string> = {
-  acne: 'Высыпания, чёрные точки, комедоны',
-  pigment: 'Пигментация, постакне, неровный тон',
-  age: 'Упругость, морщины, овал лица',
-  calm: 'Краснота, шелушения, чувствительность',
-  glow: 'Тусклая кожа: сияние и увлажнение',
-};
-
-/** Skin type labels used in the admin's quiz matching chips (design: Q_SKINS). */
-export const SKIN_TYPE_LABELS: Record<SkinType, string> = {
-  oily: 'Жирная',
-  combo: 'Комбинированная',
-  dry: 'Сухая',
-  sens: 'Чувствительная',
-  normal: 'Нормальная',
 };
 
 export const ROUTINE_PERIOD_LABELS: Record<RoutinePeriod, string> = {
