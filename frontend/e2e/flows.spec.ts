@@ -166,6 +166,20 @@ test.describe('programs search', () => {
       await expect(programs).toHaveCount(3);
       await expect(programs.getByRole('link', { name: 'Акне и постакне' })).toBeVisible();
 
+      // The same word in Cyrillic or with a typo finds them too; no program with every word offers the closest (D53).
+      await search.fill('пдрн');
+      await search.press('Enter');
+      await expect(page.getByRole('status')).toHaveText('Нашлось 3 программы');
+      await search.fill('сывортка от пятен');
+      await search.press('Enter');
+      await expect(page.getByRole('status')).toHaveText('Нашлось 2 программы');
+      await search.fill('пенка от пятен шампунь');
+      await search.press('Enter');
+      await expect(page.getByRole('status')).toHaveText(
+        'По запросу «пенка от пятен шампунь» точных совпадений нет. Похожие программы:',
+      );
+      await expect(programs).not.toHaveCount(0);
+
       await search.fill('маникюр');
       await search.press('Enter');
       await expect(page.getByText('По запросу «маникюр» программ не нашлось')).toBeVisible();

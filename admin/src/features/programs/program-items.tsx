@@ -1,4 +1,4 @@
-import { formatKgs, matchesSearch, type AdminProductRow, type AdminProgramItem } from '@bom/shared';
+import { formatKgs, rankSearch, type AdminProductRow, type AdminProgramItem } from '@bom/shared';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Button, CloseIcon, inputClass } from '@/components/ui';
 import { FieldError } from '@/components/ui/editor';
@@ -135,7 +135,8 @@ function ProductPicker({
   // The picker opens for one thing: finding a product.
   useEffect(() => search.current?.focus(), []);
   const available = products?.filter((p) => !chosen.has(p.id)) ?? [];
-  const found = available.filter((p) => matchesSearch(query, [p.name, p.brand, p.category.name]));
+  // Best matches first; typos and the other alphabet or layout count too (D53).
+  const found = rankSearch(available, query, (p) => [p.name, p.brand, p.category.name], 0).found;
   return (
     <div className="flex flex-col rounded-xl border border-input">
       <div className="flex items-center justify-between gap-3 border-b border-line-2 px-3.5 py-3">

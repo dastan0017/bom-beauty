@@ -1,4 +1,4 @@
-import { matchesSearch, nameKey, type AdminProductRow } from '@bom/shared';
+import { filterSearch, nameKey, type AdminProductRow } from '@bom/shared';
 import { useState, type KeyboardEvent } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
@@ -79,11 +79,13 @@ export function ProductsPage() {
   const setCategory = (id?: string) => setParam('category', id);
 
   const inCategory = products.data ?? [];
-  const rows = inCategory.filter(
-    (product) =>
-      (!brand || product.brand === brand) &&
-      (show === 'all' || SHOW_FILTERS[show](product)) &&
-      matchesSearch(query, [product.name, product.brand, product.category.name]),
+  // The search also reads typos and the other alphabet or layout (D53); the table keeps its order.
+  const rows = filterSearch(
+    inCategory.filter(
+      (product) => (!brand || product.brand === brand) && (show === 'all' || SHOW_FILTERS[show](product)),
+    ),
+    query,
+    (product) => [product.name, product.brand, product.category.name],
   );
   // Every brand, also those without products (so they can be deleted); counts follow the category filter.
   const brandItems: TaxonomyItem[] =

@@ -263,3 +263,6 @@ Requests from Нурайым after adding the first variants, plus the admin che
 - [x] Tests: shared (names, offers, `?variant=`), backend (card sums, related picks, bulk orders), e2e (card rows,
       admin related products and bulk orders)
 - [x] Gate + `feat: owner feedback (variant cards, related products, bulk orders, program headings)`
+- [x] Search beyond the exact letters on the site and in the admin: typos, the other alphabet and keyboard layout,
+      everyday and ingredient words, ranked results, products found by their programs' problems, «Похожие» when a
+      longer query has no full match (D53)

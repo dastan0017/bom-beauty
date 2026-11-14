@@ -1,7 +1,7 @@
-import type { ProgramCard } from '@bom/shared';
+import type { ProductCard, ProgramCard } from '@bom/shared';
 import { describe, expect, it } from 'vitest';
 import { searchHref } from '../components/search-box';
-import { searchPrograms } from './program-search';
+import { searchProducts, searchPrograms } from './search';
 
 const program = (
   slug: string,
@@ -54,7 +54,7 @@ const products = [
   { slug: 'pdrn', name: 'PDRN Perfect Ampoule', shortName: 'PDRN-ампула', brand: 'Dr. SGN' },
   { slug: 'wserum', name: 'Осветляющая сыворотка', shortName: 'Сыворотка', brand: 'Merikit' },
 ];
-const slugs = (query: string) => searchPrograms(programs, products, query).map((p) => p.slug);
+const slugs = (query: string) => searchPrograms(programs, products, query).found.map((p) => p.slug);
 
 describe('searchPrograms (programs page search)', () => {
   it('keeps every program for an empty query', () => {
@@ -76,6 +76,72 @@ describe('searchPrograms (programs page search)', () => {
   it('needs every word of the query', () => {
     expect(slugs('акне сыворотка')).toEqual(['acne']);
     expect(slugs('акне солнца')).toEqual([]);
+  });
+
+  it('reads typos, the other alphabet and everyday words (D53)', () => {
+    expect(slugs('пинка')).toEqual(['acne']);
+    expect(slugs('пдрн')).toEqual(['acne']);
+    expect(slugs('прыщи')).toEqual(['acne']);
+    expect(slugs('мерикит')).toEqual(['pigmentation']);
+  });
+
+  it('ranks the program named by the query first', () => {
+    expect(slugs('сыворотка пятна')).toEqual(['pigmentation']);
+    expect(slugs('сыворотка')).toEqual(['acne', 'pigmentation']);
+    expect(slugs('пигментация')).toEqual(['pigmentation']);
+    expect(slugs('высыпания')).toEqual(['acne']);
+  });
+
+  it('offers the closest programs when none has every word', () => {
+    expect(searchPrograms(programs, products, 'акне маникюр педикюр').similar.map((p) => p.slug)).toEqual([]);
+    expect(searchPrograms(programs, products, 'пенка от пятен').similar.map((p) => p.slug)).toEqual([
+      'pigmentation',
+      'acne',
+    ]);
+  });
+});
+
+const card = (slug: string, name: string, brand: string, category: string): ProductCard => ({
+  id: '1f8fad5b-d9cb-469f-a165-70867728950e',
+  slug,
+  name,
+  shortName: name,
+  brand,
+  category: { slug: category, name: category },
+  volume: '150 мл',
+  purpose: '',
+  priceKgs: 1000,
+  badge: null,
+  inStock: true,
+  bestseller: false,
+  seoulChoice: false,
+  isNew: false,
+  image: null,
+  video: null,
+});
+
+describe('searchProducts (catalog search)', () => {
+  const catalog = [
+    card('foam', 'Пенка для умывания с центеллой', 'Dr. SGN', 'Очищение'),
+    card('cica', 'Успокаивающая cica-сыворотка', 'Dr. SGN', 'Сыворотки'),
+    card('pdrn', 'PDRN Perfect Ampoule', 'Dr. SGN', 'Сыворотки'),
+    card('wserum', 'Осветляющая сыворотка', 'Merikit', 'Сыворотки'),
+    card('acne-serum', 'Сыворотка от акне', 'Merikit', 'Сыворотки'),
+  ];
+  const found = (query: string) => searchProducts(catalog, programs, query).found.map((p) => p.slug);
+
+  it('finds a product by a problem its programs treat, after the products named for it', () => {
+    expect(found('акне')).toEqual(['acne-serum', 'foam', 'cica', 'pdrn']);
+    expect(found('пятна')).toEqual(['wserum']);
+  });
+
+  it('keeps the catalog order for an empty query', () => {
+    expect(found('')).toEqual(catalog.map((p) => p.slug));
+  });
+
+  it('reads typos and the other keyboard layout', () => {
+    expect(found('сывортка')).toEqual(['cica', 'wserum', 'acne-serum', 'pdrn']);
+    expect(found('gtyrf')).toEqual(['foam']);
   });
 });
 

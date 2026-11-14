@@ -84,6 +84,8 @@ export const copy = {
     searchLabel: 'Поиск по программам',
     searchPlaceholder: 'Найти программу или средство',
     searchNotFound: (query: string) => `По запросу «${query}» программ не нашлось`,
+    /** No program has every word of the query: the closest ones follow (D53). */
+    searchSimilar: (query: string) => `По запросу «${query}» точных совпадений нет. Похожие программы:`,
     showAll: 'Показать все программы',
     /** Each variant with its own price on the cards (owner request 2026-11-14, D48). */
     variantsLabel: 'Варианты программы',
@@ -150,6 +152,8 @@ export const copy = {
     clearSearch: 'Очистить поиск',
     found: (n: number, word: string) => `Нашлось ${n} ${word}`,
     notFound: (query: string) => `По запросу «${query}» ничего не нашлось`,
+    /** No product has every word of the query: the closest ones follow (D53). */
+    similar: (query: string) => `По запросу «${query}» точных совпадений нет. Похожие средства:`,
     searchEverywhere: 'Искать во всём каталоге',
     showAll: 'Показать весь каталог',
     byBrand: 'По бренду',

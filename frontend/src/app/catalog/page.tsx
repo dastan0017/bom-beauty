@@ -1,4 +1,4 @@
-import { matchesSearch, productsWord } from '@bom/shared/web';
+import { productsWord } from '@bom/shared/web';
 import type { Route } from 'next';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -22,6 +22,7 @@ import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
 import { catalogHref } from '@/lib/catalog-href';
 import { getBrands, getCategories, getProducts, getProgramsSafe, getSettings } from '@/lib/data';
+import { searchProducts } from '@/lib/search';
 import { breadcrumbsLd } from '@/lib/seo';
 
 type Param = string | string[] | undefined;
@@ -76,19 +77,13 @@ export default async function CatalogPage({ searchParams }: Props) {
   // A problem shows only the products of its program (README §5).
   const inProblem = problem ? programProductSlugs(problem) : null;
   const problemSummary = problem ? programSummary(problem) : null;
-  const shown = products.filter(
-    (product) =>
-      (!inProblem || inProblem.has(product.slug)) &&
-      (!brand || product.brand === brand.name) &&
-      matchesSearch(query, [
-        product.name,
-        product.shortName,
-        product.brand,
-        product.purpose,
-        product.category.name,
-        product.volume,
-      ]),
+  const inFilters = products.filter(
+    (product) => (!inProblem || inProblem.has(product.slug)) && (!brand || product.brand === brand.name),
   );
+  // Typos, other spellings, everyday words and the programs a product is in find it too; the closest products when
+  // none has every word (D53).
+  const { found, similar } = searchProducts(inFilters, programs, query);
+  const shown = found.length ? found : similar;
   const filters = { problem: problem?.slug, category: active?.slug, brand: brand?.slug };
   const typeChips = [{ slug: undefined, name: copy.catalog.all }, ...categories.filter((c) => c.count > 0)];
   const problemChips = [
@@ -240,7 +235,9 @@ export default async function CatalogPage({ searchParams }: Props) {
 
       {query && shown.length > 0 && (
         <p role="status" className={cn(container, 'px-5 pt-4 text-sm text-muted')}>
-          {copy.catalog.found(shown.length, productsWord(shown.length))}
+          {found.length
+            ? copy.catalog.found(found.length, productsWord(found.length))
+            : copy.catalog.similar(query)}
         </p>
       )}
 

@@ -14,7 +14,7 @@ import { AccentTitle, card, container, PageIntro, PageTitle, SectionTitle } from
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
 import { getContent, getPrograms, getProductsSafe, getSettings } from '@/lib/data';
-import { searchPrograms } from '@/lib/program-search';
+import { searchPrograms } from '@/lib/search';
 import { breadcrumbsLd } from '@/lib/seo';
 
 type Props = { searchParams: Promise<{ q?: string | string[] }> };
@@ -54,7 +54,9 @@ export default async function ProgramsPage({ searchParams }: Props) {
   ]);
   // The owner's headings (D50); the defaults if the texts cannot be read.
   const texts = home?.data.programs ?? PROGRAMS_TEXT_DEFAULTS;
-  const shown = searchPrograms(programs, products, query);
+  // Typos, other spellings and everyday words find a program too; the closest ones when none has every word (D53).
+  const { found, similar } = searchPrograms(programs, products, query);
+  const shown = found.length ? found : similar;
 
   return (
     <>
@@ -96,7 +98,9 @@ export default async function ProgramsPage({ searchParams }: Props) {
       >
         {query && shown.length > 0 && (
           <p role="status" className="px-1 text-sm text-muted lg:col-span-2">
-            {copy.catalog.found(shown.length, programsWord(shown.length))}
+            {found.length
+              ? copy.catalog.found(found.length, programsWord(found.length))
+              : copy.programs.searchSimilar(query)}
           </p>
         )}
         {/* While searching, the results come first; the quiz is offered when nothing is found. */}
@@ -121,7 +125,7 @@ export default async function ProgramsPage({ searchParams }: Props) {
             </Link>
           </div>
         )}
-        {query && shown.length === 0 && <QuizBanner className="mt-2 lg:col-span-2" />}
+        {query && found.length === 0 && <QuizBanner className="mt-2 lg:col-span-2" />}
         {programs.length === 0 && (
           <p className={cn(card, 'px-5 py-6 text-center text-base text-muted lg:col-span-2')}>
             {copy.programs.empty}
