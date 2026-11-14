@@ -115,7 +115,7 @@ describe('WhatsApp messages', () => {
       DEFAULT_QUIZ,
     );
     expect(text.split('\n').at(-1)).toBe(
-      'Сайт предложил: «Акне и постакне» — мини, 3\u00a0900\u00a0сом; «Пигментация», 6\u00a0400\u00a0сом. Помогите выбрать, пожалуйста.',
+      'Сайт предложил: «Акне и постакне» — базовый уход, 3\u00a0900\u00a0сом; «Пигментация», 6\u00a0400\u00a0сом. Помогите выбрать, пожалуйста.',
     );
   });
 
@@ -127,11 +127,11 @@ describe('WhatsApp messages', () => {
       phone: '+996 555 12 34 56',
       address: 'Бишкек',
     });
-    expect(text).toContain('• Программа «Акне и постакне» · Максимум — 10\u00a0500\u00a0сом');
+    expect(text).toContain('• Программа «Акне и постакне» · Интенсивный курс — 10\u00a0500\u00a0сом');
     expect(orderItemLabel({ type: 'program', title: 'Пигментация' })).toBe('Программа «Пигментация»');
     expect(
       orderLineText({ type: 'program', title: 'Акне и постакне', variant: 'mini', qty: 1, totalKgs: 3900 }),
-    ).toBe('Программа «Акне и постакне» · Мини × 1 · 3\u00a0900\u00a0сом');
+    ).toBe('Программа «Акне и постакне» · Базовый уход × 1 · 3\u00a0900\u00a0сом');
   });
 
   it('scheme request names the program', () => {

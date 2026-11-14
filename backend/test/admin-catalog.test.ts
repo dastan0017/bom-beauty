@@ -16,6 +16,7 @@ import type {
   ProductCard,
   ProductDetail,
   ProductInput,
+  ProgramCard,
   ProgramDetail,
   ProgramInput,
   QuizConfig,
@@ -91,6 +92,7 @@ describe('admin: catalog, content, settings, users', () => {
     seoulChoice: false,
     isNew: false,
     imageIds: [],
+    relatedIds: [],
     shortName: null,
     seoTitle: null,
     seoDescription: null,
@@ -296,6 +298,62 @@ describe('admin: catalog, content, settings, users', () => {
     expect(deleted.body).toEqual({ count: 2 });
     expect(await ctx.prisma.product.count({ where: { id: { in: ids } } })).toBe(0);
     expect(await ctx.prisma.programItem.count({ where: { productId: a.id } })).toBe(0);
+  });
+
+  it('saves «С этим средством ещё берут» picks: the site shows them in order, else its own (D49)', async () => {
+    const [first, second, hidden] = await ctx.prisma.product.findMany({
+      where: { published: true },
+      take: 3,
+      orderBy: { slug: 'asc' },
+    });
+    if (!first || !second || !hidden) throw new Error('seed products missing');
+    const fields = { name: 'Связанный тонер', slug: 'svyazannyy-toner' };
+    const created = await request<AdminProduct>(api('/products'), {
+      method: 'POST',
+      headers: manager.write,
+      json: product({ ...fields, relatedIds: [second.id, hidden.id, first.id] }),
+    });
+    expect(created.status).toBe(201);
+    expect(created.body.relatedIds).toEqual([second.id, hidden.id, first.id]);
+    // Not in any program: the site's own choice would be the rails.
+    expect(created.body.relatedAutoIds.length).toBeGreaterThan(0);
+    const { id } = created.body;
+
+    await ctx.prisma.product.update({ where: { id: hidden.id }, data: { published: false } });
+    const page = await request<ProductDetail>(ctx.url('/v1/catalog/products/svyazannyy-toner'));
+    // A hidden pick stays in the editor but not on the site.
+    expect(page.body.related.map((p) => p.id)).toEqual([second.id, first.id]);
+    await ctx.prisma.product.update({ where: { id: hidden.id }, data: { published: true } });
+
+    const save = (relatedIds: string[]) =>
+      request<AdminProduct & Partial<ErrorResponse>>(api(`/products/${id}`), {
+        method: 'PUT',
+        headers: manager.write,
+        json: product({ ...fields, relatedIds }),
+      });
+    const self = await save([first.id, id]);
+    expect(self.status).toBe(400);
+    expect(self.body.error?.fields).toEqual({ relatedIds: 'product.related.self' });
+    const tooMany = await save(Array.from({ length: 7 }, () => randomUUID()));
+    expect(tooMany.status).toBe(400);
+    expect(tooMany.body.error?.fields).toEqual({ relatedIds: 'product.related.max' });
+    const unknown = await save([randomUUID()]);
+    expect(unknown.body.error?.fields).toEqual({ relatedIds: 'product.not_found' });
+
+    // No picks: the site's choice is back, the same list the editor previews.
+    const cleared = await save([]);
+    expect(cleared.body.relatedIds).toEqual([]);
+    const again = await request<ProductDetail>(ctx.url('/v1/catalog/products/svyazannyy-toner'));
+    expect(again.body.related.map((p) => p.id)).toEqual(cleared.body.relatedAutoIds);
+
+    // A product that picked this one loses it when it is deleted.
+    await save([first.id]);
+    await ctx.prisma.productRelated.create({ data: { productId: second.id, relatedId: id, order: 0 } });
+    const removed = await request(api(`/products/${id}`), { method: 'DELETE', headers: owner.write });
+    expect(removed.status).toBe(204);
+    expect(
+      await ctx.prisma.productRelated.count({ where: { OR: [{ productId: id }, { relatedId: id }] } }),
+    ).toBe(0);
   });
 
   it('keeps brand and category names unique, and renames, merges and deletes them', async () => {
@@ -657,6 +715,14 @@ describe('admin: catalog, content, settings, users', () => {
     ]);
     expect(page.body.variants[2]?.sumKgs).toBe(a.priceKgs + b.priceKgs + c.priceKgs);
     expect(page.body).toMatchObject({ itemCount: 2, priceKgs: 5000, sumKgs: a.priceKgs + b.priceKgs });
+    // Cards carry each variant's sum too, for the saving shown on them (D48).
+    const cards = await request<ProgramCard[]>(ctx.url('/v1/catalog/programs'));
+    const card = cards.body.find((p) => p.slug === 'varianty');
+    expect(card?.variants.map((v) => [v.variant, v.priceKgs, v.sumKgs])).toEqual([
+      ['mini', 1000, a.priceKgs],
+      ['standard', 5000, a.priceKgs + b.priceKgs],
+      ['max', 9000, a.priceKgs + b.priceKgs + c.priceKgs],
+    ]);
     // A product in several variants lists the program once; one only in «Максимум» lists it too.
     for (const product of [a, c]) {
       const detail = await request<ProductDetail>(ctx.url(`/v1/catalog/products/${product.slug}`));

@@ -420,6 +420,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/orders/bulk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["AdminOrdersController_bulk"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/admin/orders/{id}": {
         parameters: {
             query?: never;
@@ -1242,6 +1258,8 @@ export interface components {
                         widths: number[];
                     } | null;
                 }[];
+                /** @default 0 */
+                sumKgs: number;
             }[];
             cover: {
                 /** Format: uuid */
@@ -1301,6 +1319,7 @@ export interface components {
                         widths: number[];
                     } | null;
                 }[];
+                sumKgs: number;
                 items: {
                     /** Format: uuid */
                     id: string;
@@ -1341,7 +1360,6 @@ export interface components {
                         mp4: string | null;
                     } | null;
                 }[];
-                sumKgs: number;
             }[];
             cover: {
                 /** Format: uuid */
@@ -1760,6 +1778,16 @@ export interface components {
             sent: number;
             cancelled: number;
         };
+        OrderBulkDto: {
+            ids: string[];
+            /** @enum {string} */
+            action: "status" | "delete";
+            /** @enum {string} */
+            status?: "new" | "sent" | "cancelled";
+        };
+        OrderBulkResultDto_Output: {
+            count: number;
+        };
         OrderDetailDto_Output: {
             /** Format: uuid */
             id: string;
@@ -2024,6 +2052,8 @@ export interface components {
             imageIds: string[];
             /** @default null */
             videoId: string | null;
+            /** @default [] */
+            relatedIds: string[];
             seoTitle: string | null;
             seoDescription: string | null;
         };
@@ -2090,6 +2120,8 @@ export interface components {
                 id: string;
                 title: string;
             }[];
+            relatedIds: string[];
+            relatedAutoIds: string[];
             /** Format: date-time */
             updatedAt: string;
         };
@@ -3180,6 +3212,32 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    AdminOrdersController_bulk: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Required on mutations */
+                "X-CSRF-Token"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrderBulkDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderBulkResultDto_Output"];
+                };
             };
         };
     };

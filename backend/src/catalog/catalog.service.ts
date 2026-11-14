@@ -23,11 +23,10 @@ import {
   videoSelect,
 } from '../common/media-refs';
 import { PrismaService } from '../prisma/prisma.service';
-import { productCardSelect, productOrder, toProductCard, type ProductCardRow } from './catalog.selects';
+import { productCardSelect, productOrder, toProductCard } from './catalog.selects';
 import { offeredVariants, type VariantPrices } from './program-variants';
 import { loadQuizConfig } from './quiz-config';
-
-const RELATED_MAX = 6;
+import { autoRelated, chosenRelatedSelect, programmedWithSelect } from './related-products';
 
 /** The product page also shows «О бренде». */
 const brandWithDescription = { select: { name: true, description: true } } as const;
@@ -55,6 +54,7 @@ const programCardSelect = {
         select: {
           slug: true,
           name: true,
+          priceKgs: true,
           images: {
             orderBy: { order: 'asc' },
             take: 1,
@@ -104,29 +104,23 @@ export class CatalogService {
         updatedAt: true,
         images: { orderBy: { order: 'asc' }, select: { alt: true, media: { select: imageMediaSelect } } },
         programItems: {
-          where: { program: { published: true } },
-          orderBy: [{ program: { order: 'asc' } }, { program: { title: 'asc' } }],
+          ...programmedWithSelect,
           select: {
-            program: {
-              select: {
-                slug: true,
-                title: true,
-                items: {
-                  where: { product: { published: true } },
-                  orderBy: { order: 'asc' },
-                  select: { product: { select: productCardSelect } },
-                },
-              },
-            },
+            program: { select: { slug: true, title: true, ...programmedWithSelect.select.program.select } },
           },
         },
+        related: chosenRelatedSelect,
       },
     });
     if (!row) throw notFound();
-    const related = await this.related(
-      row.id,
-      row.programItems.flatMap((item) => item.program.items.map(({ product }) => product)),
-    );
+    // «С этим средством ещё берут»: the owner's picks (D49), otherwise the site's.
+    const related = row.related.length
+      ? row.related.map(({ related: product }) => product)
+      : await autoRelated(
+          this.prisma,
+          row.id,
+          row.programItems.flatMap((item) => item.program.items.map(({ product }) => product)),
+        );
     const images = row.images.flatMap((image) => {
       const ref = toImageRef(image.media, image.alt || row.name);
       return ref ? [ref] : [];
@@ -144,33 +138,10 @@ export class CatalogService {
           row.programItems.map(({ program }) => [program.slug, { slug: program.slug, title: program.title }]),
         ).values(),
       ],
-      related,
+      related: related.map(toProductCard),
       seo: { title: row.seoTitle, description: row.seoDescription },
       updatedAt: row.updatedAt.toISOString(),
     };
-  }
-
-  /**
-   * «С этим средством ещё берут» (README §6.1): the other products of the programs that contain this one, in program
-   * order, then the «Бестселлеры» and «Выбор клиник Сеула» rails; up to 6, no repeats.
-   */
-  private async related(productId: string, fromPrograms: ProductCardRow[]): Promise<ProductCard[]> {
-    const picked = new Map<string, ProductCardRow>();
-    const add = (product: ProductCardRow) => {
-      if (picked.size < RELATED_MAX && product.id !== productId && !picked.has(product.id))
-        picked.set(product.id, product);
-    };
-    fromPrograms.forEach(add);
-    if (picked.size < RELATED_MAX) {
-      const rails = await this.prisma.product.findMany({
-        where: { published: true, id: { not: productId }, OR: [{ bestseller: true }, { seoulChoice: true }] },
-        orderBy: productOrder,
-        select: productCardSelect,
-      });
-      rails.filter((product) => product.bestseller).forEach(add);
-      rails.filter((product) => product.seoulChoice).forEach(add);
-    }
-    return [...picked.values()].map(toProductCard);
   }
 
   async programs(): Promise<ProgramCard[]> {
@@ -289,6 +260,7 @@ export class CatalogService {
         product: {
           slug: string;
           name: string;
+          priceKgs: number;
           images: { alt: string; media: Parameters<typeof toImageRef>[0] }[];
         };
       }[];
@@ -303,6 +275,7 @@ export class CatalogService {
         slug: product.slug,
         image: toImageRef(product.images[0]?.media, product.images[0]?.alt || product.name),
       })),
+      sumKgs: items.reduce((sum, { product }) => sum + product.priceKgs, 0),
     }));
     const standard = variants.find((v) => v.variant === 'standard');
     return {

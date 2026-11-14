@@ -1,23 +1,32 @@
 import type { ProgramCard as ProgramCardData } from '@bom/shared';
+import { PROGRAM_VARIANT_LABELS, variantOffers } from '@bom/shared/web';
 import Link from 'next/link';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
 import { programSummary } from '@/lib/program-summary';
+import { productsCount } from '@/lib/words';
 import { BbImage } from '../bb-image';
 import { Price } from '../currency';
 import { ChevronRightIcon, PlayTriangleIcon, SparkleIcon } from '../icons';
 import { card } from '../ui';
 import { VideoThumb } from '../video-thumb';
+import { programHref, SavingChip } from './variant-offers';
 
-/** Program card from the programs list (design: isPrograms → programs). */
+/**
+ * Program card from the programs list (design: isPrograms → programs). A program with variants lists each one with
+ * its own price, count and saving, «Оптимальный уход» raised as the main one; each row opens the page on that variant
+ * (owner request 2026-11-14, D48). The title is the card's link; the rows are links of their own above it.
+ */
 export function ProgramCard({ program }: { program: ProgramCardData }) {
+  const offers = variantOffers(program);
+  const choice = offers.length > 1;
+  const single = offers[0];
   const summary = programSummary(program);
   return (
-    <Link
-      href={`/programs/${program.slug}`}
+    <article
       className={cn(
         card,
-        'flex flex-col gap-3 px-4 py-3.5 transition-transform hover:border-line-hover active:scale-[.985]',
+        'relative flex flex-col gap-3 px-4 py-3.5 transition-transform hover:border-line-hover has-[.stretched-link:active]:scale-[.985]',
       )}
     >
       <span className="flex items-start gap-3.5">
@@ -29,23 +38,66 @@ export function ProgramCard({ program }: { program: ProgramCardData }) {
               {program.badge}
             </span>
           )}
-          <span className="text-[19px] leading-[1.25] font-semibold tracking-[-0.015em]">
+          <Link
+            href={programHref(program.slug)}
+            className="stretched-link text-[19px] leading-[1.25] font-semibold tracking-[-0.015em]"
+          >
             {program.title}
-          </span>
+          </Link>
           <span className="text-base leading-[1.45] text-muted">{program.symptom}</span>
         </span>
       </span>
-      <span className="flex items-center gap-[5px]">
-        {program.thumbs.map((thumb) => (
-          <span
-            key={thumb.slug}
-            className="relative size-8 flex-none overflow-hidden rounded-[9px] bg-surface-2"
-          >
-            <BbImage image={thumb.image} sizes="32px" width={64} alt="" />
-          </span>
-        ))}
-        <span className="ml-1.5 text-sm whitespace-nowrap text-muted">{summary.count}</span>
-      </span>
+
+      {choice ? (
+        <ul
+          aria-label={copy.programs.variantsLabel}
+          className="relative z-[1] flex flex-col gap-0.5 rounded-2xl bg-surface-2 p-1"
+        >
+          {offers.map((offer) => {
+            const main = offer.variant === 'standard';
+            return (
+              <li key={offer.variant}>
+                <Link
+                  href={programHref(program.slug, offer.variant)}
+                  className={cn(
+                    'flex min-h-[52px] items-center gap-2.5 rounded-xl py-2 pr-2 pl-3 transition-colors hover:bg-surface',
+                    main && 'bg-surface shadow-[0_2px_8px_rgba(20,20,43,.10)]',
+                  )}
+                >
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className={cn('text-[15px] leading-[1.25]', main ? 'font-bold' : 'font-semibold')}>
+                      {PROGRAM_VARIANT_LABELS[offer.variant]}
+                    </span>
+                    <span className="text-[13px] leading-[1.25] text-muted">
+                      {productsCount(offer.itemCount)}
+                    </span>
+                  </span>
+                  <span className="flex flex-none flex-col items-end gap-1">
+                    <span className="text-base leading-[1.2] font-semibold whitespace-nowrap">
+                      <Price kgs={offer.priceKgs} />
+                    </span>
+                    <SavingChip percent={offer.savingPercent} />
+                  </span>
+                  <ChevronRightIcon size={16} className="flex-none text-muted" />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <span className="flex items-center gap-[5px]">
+          {program.thumbs.map((thumb) => (
+            <span
+              key={thumb.slug}
+              className="relative size-8 flex-none overflow-hidden rounded-[9px] bg-surface-2"
+            >
+              <BbImage image={thumb.image} sizes="32px" width={64} alt="" />
+            </span>
+          ))}
+          <span className="ml-1.5 text-sm whitespace-nowrap text-muted">{summary.count}</span>
+        </span>
+      )}
+
       <span className="flex items-center justify-between gap-3 border-t border-line-2 pt-3">
         {program.video ? (
           <span className="flex items-center gap-1.5 text-sm text-muted">
@@ -58,12 +110,18 @@ export function ProgramCard({ program }: { program: ProgramCardData }) {
             {program.inStock ? copy.common.inStock : copy.common.preorder}
           </span>
         )}
-        <span className="flex items-center gap-1.5 text-[17px] font-semibold whitespace-nowrap">
-          {summary.from && copy.program.priceFrom}
-          <Price kgs={summary.priceKgs} />
-          <ChevronRightIcon size={16} className="text-muted" />
-        </span>
+        {!choice && single && (
+          <span className="flex items-center gap-1.5">
+            <span className="flex flex-col items-end gap-1">
+              <span className="text-[17px] leading-[1.2] font-semibold whitespace-nowrap">
+                <Price kgs={single.priceKgs} />
+              </span>
+              <SavingChip percent={single.savingPercent} />
+            </span>
+            <ChevronRightIcon size={16} className="flex-none text-muted" />
+          </span>
+        )}
       </span>
-    </Link>
+    </article>
   );
 }

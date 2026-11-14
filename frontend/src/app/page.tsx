@@ -109,7 +109,11 @@ export default async function HomePage() {
 
       {programs.length > 0 && (
         <section className="mx-auto flex max-w-[1100px] flex-col gap-4 px-4 pt-14 lg:px-6 lg:pt-20">
-          <SectionTitle center title={copy.home.programsTitle} lead={copy.home.programsLead} />
+          <SectionTitle
+            center
+            title={<AccentTitle text={data.programs.homeTitle} />}
+            lead={data.programs.homeLead || undefined}
+          />
           <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-4 lg:gap-4">
             {programs.map((program) => (
               <ProgramTile key={program.slug} program={program} />

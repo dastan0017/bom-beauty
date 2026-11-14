@@ -1,7 +1,7 @@
 import { z } from '../zod';
 import { PROGRAM_VARIANTS, USER_ROLES } from '../enums';
 import { BADGES } from '../labels';
-import { PRODUCT_IMAGES_MAX } from '../limits';
+import { PRODUCT_IMAGES_MAX, PRODUCT_RELATED_MAX } from '../limits';
 import { fileRefSchema, imageRefSchema, slugSchema } from './common';
 import { quizKeySchema } from './quiz';
 
@@ -113,6 +113,11 @@ export const productInputSchema = z.object({
   imageIds: z.array(z.uuid()).max(PRODUCT_IMAGES_MAX, 'product.images.max'),
   /** Bunny Stream video (owner request 2026-10-27); null removes it from the product. */
   videoId: z.uuid().nullable().default(null),
+  /**
+   * «С этим средством ещё берут» in this order (owner request 2026-11-14, D49). Empty: the site picks them (other
+   * products of its programs, then the bestsellers).
+   */
+  relatedIds: z.array(z.uuid()).max(PRODUCT_RELATED_MAX, 'product.related.max').default([]),
   seoTitle: optionalText(200),
   seoDescription: optionalText(300),
 });
@@ -189,6 +194,10 @@ export const adminProductSchema = z.object({
   seoTitle: z.string().nullable(),
   seoDescription: z.string().nullable(),
   programs: z.array(z.object({ id: z.uuid(), title: z.string() })),
+  /** «С этим средством ещё берут» chosen by the owner, in order. */
+  relatedIds: z.array(z.uuid()),
+  /** What the site picks by itself while relatedIds is empty, shown in the editor as a starting point. */
+  relatedAutoIds: z.array(z.uuid()),
   updatedAt: z.iso.datetime(),
 });
 export type AdminProduct = z.infer<typeof adminProductSchema>;

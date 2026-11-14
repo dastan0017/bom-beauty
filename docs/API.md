@@ -136,8 +136,8 @@ type ProductDetail = ProductCard & {
   inci: string | null; // «Состав»
   images: ImageRef[];
   programs: { slug: string; title: string }[];
-  // «С этим средством ещё берут»: up to 6, never this product; the other items of its programs (program order), then
-  // bestsellers, then Seoul choice, in catalog order
+  // «С этим средством ещё берут»: up to 6, never this product. The owner's picks on the site, in their order (D49);
+  // without picks the other items of its programs (program order), then bestsellers, then Seoul choice
   related: ProductCard[];
   seo: { title: string | null; description: string | null };
 };
@@ -149,14 +149,15 @@ type ProgramCard = {
   badge: string | null;
   priceKgs: number;
   inStock: boolean;
-  itemCount: number; // «Стандарт»
-  thumbs: ImageRef[]; // «Стандарт»
-  // D45: variants on offer in page order, «Стандарт» always among them; one entry = no choice
+  itemCount: number; // «standard» (Оптимальный уход)
+  thumbs: ImageRef[]; // «standard»
+  // D45: variants on offer in page order, «standard» always among them; one entry = no choice
   variants: {
     variant: 'mini' | 'standard' | 'max';
     priceKgs: number;
     itemCount: number;
     thumbs: { slug; image }[];
+    sumKgs: number; // its products one by one, for the «−N%» on the cards (D48); 0 in data cached before
   }[];
   cover: ImageRef | null; // 5:4 home card photo (M8)
   video: Pick<VideoRef, 'durationSec' | 'poster'> | null;
@@ -167,7 +168,7 @@ type ProgramDetail = ProgramCard & {
   course: string;
   fit: string[];
   description: string;
-  items: (ProductCard & { order: number })[]; // «Стандарт»
+  items: (ProductCard & { order: number })[]; // «standard»
   sumKgs: number; // sum of item prices, for "По отдельности"
   variants: (ProgramCard['variants'][number] & { items: ProductCard[]; sumKgs: number })[];
   steps: { am: RoutineStep[]; pm: RoutineStep[] }; // RoutineStep = { productSlug, title, text }; feeds the scheme PDF
@@ -304,6 +305,7 @@ cached page never loses the customer (D47).
 | `GET /admin/payments/finik`        | O    | `{ configured, environment: mock\|beta\|prod\|null, accountId (masked), webhookUrl }`                                                                                                                                                                                                    |
 | `POST /admin/payments/finik/check` | O    | creates a 1 сом payment without an order → `{ id, status, url, error, paidAt }`; AuditLog `payment` / `check`                                                                                                                                                                            |
 | `GET /admin/payments/:id`          | O    | the check's state (polled until `succeeded`, `failed` or `expired`); 404 for order attempts                                                                                                                                                                                              |
+| `POST /admin/orders/bulk`          | M    | `{ ids[] ≤ 500, action: status\|delete, status? }` → `{ count }` (D51): a status for every order not already in it (row-locked, AuditLog `status` per order); `delete` is the owner's (403 otherwise), AuditLog keeps the number; unknown ids skipped                                    |
 | `DELETE /admin/orders/:id`         | O    | personal-data deletion on request                                                                                                                                                                                                                                                        |
 | `GET /admin/leads`                 | M    | `kind?`, cursor → `{ items, nextCursor, counts: { all, quiz, wholesale } }`                                                                                                                                                                                                              |
 | `DELETE /admin/leads/:id`          | O    | a test or spam hand-off; 404 when gone                                                                                                                                                                                                                                                   |
@@ -316,7 +318,7 @@ cached page never loses the customer (D47).
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Categories | `GET`, `POST`, `PUT /:id`, `DELETE /:id` (409 unless empty), `POST /:id/merge` (`{ intoId }`)                                                      |                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | Brands     | `GET ?q=` (with `count`), `PUT /:id`, `DELETE /:id` (409 unless empty), `POST /:id/merge` (`{ intoId }`)                                           | autocomplete with each brand's «О бренде» (`description`); created implicitly by product saves                                                                                                                                                                                                                                                                                                                                                               |
-| Products   | `GET ?category=&q=`, `POST`, `GET /:id`, `PUT /:id`, `PATCH /:id` (`{ inStock?, published? }`), `POST /bulk` (`{ ids[] ≤ 500, action: delete       | show                                                                                                                                                                                                                                                                                                                                                                                                                                                         | hide | inStock | outOfStock | category, categoryId? }`→`{ count }`; delete as `DELETE /:id`, unknown ids skipped), `DELETE /:id` (also leaves its programs, steps included, and the wholesale featured list) | `PUT` takes the full object incl. `brandName`, `brandDescription` (the brand's «О бренде»; null keeps it), `imageIds[]` (≤ 10, ordered), `videoId` (null removes it), `inci`, `bestseller` / `seoulChoice` / `isNew`; empty `slug` = generated; a slug change adds a 308 redirect |
+| Products   | `GET ?category=&q=`, `POST`, `GET /:id`, `PUT /:id`, `PATCH /:id` (`{ inStock?, published? }`), `POST /bulk` (`{ ids[] ≤ 500, action: delete       | show                                                                                                                                                                                                                                                                                                                                                                                                                                                         | hide | inStock | outOfStock | category, categoryId? }`→`{ count }`; delete as `DELETE /:id`, unknown ids skipped), `DELETE /:id` (also leaves its programs, steps included, and the wholesale featured list) | `PUT` takes the full object incl. `brandName`, `brandDescription` (the brand's «О бренде»; null keeps it), `imageIds[]` (≤ 10, ordered), `videoId` (null removes it), `relatedIds[]` (≤ 6, ordered, not itself: «С этим средством ещё берут», D49; `GET /:id` also returns `relatedAutoIds`, the site's pick while the list is empty), `inci`, `bestseller` / `seoulChoice` / `isNew`; empty `slug` = generated; a slug change adds a 308 redirect |
 | Programs   | `GET`, `POST`, `GET /:id`, `PUT /:id`, `PATCH /:id` (`{ published?, inStock? }`), `DELETE /:id`                                                    | `PUT` takes `itemIds[]` ordered, `variants: { mini, max }` (each null or `{ itemIds[] 1..12, priceKgs > 0 }`; errors at `variants.mini.itemIds` etc.; D45), `steps: { am: [{ productId, text }], pm: [...] }` (products from `itemIds` only), `videoId?`, `protocolMediaId?`, `coverMediaId?` (ready image); response includes `sumKgs` and `variants` (`{ items, priceKgs } \| null`), the list row `variants` on offer; delete leaves a 302 to `/programs` |
 | Quiz lists | `GET /admin/quiz` (each item with `programCount`), `PUT /admin/quiz` (`{ goals[], skins[] }`, whole lists in order)                                | items match by `key` (new key = new item, missing = deleted; programs lose a deleted goal or skin type); 1..12 per list; rules may only name items of the same save (`quiz.rule.unknown`); revalidates `programs` (D47); program saves check `quizGoal` / `quizSkins` exist (`quiz.goal.not_found`, `quiz.skin.not_found`)                                                                                                                                   |
 | Reviews    | `GET`, `POST` (`{ mediaIds[] }`), `PATCH /:id` (`{ isHidden }`), `PUT /admin/reviews/order` (`{ ids }`), `DELETE /:id`; each returns the full list | `POST` takes ready review images, puts them first in upload order and hides the demo examples                                                                                                                                                                                                                                                                                                                                                                |

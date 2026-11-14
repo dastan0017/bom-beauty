@@ -5,8 +5,10 @@ import {
   Get,
   Header,
   HttpCode,
+  HttpStatus,
   Param,
   Patch,
+  Post,
   Query,
   Req,
   Res,
@@ -19,6 +21,8 @@ import {
   dashboardSchema,
   leadListQuerySchema,
   leadListSchema,
+  orderBulkResultSchema,
+  orderBulkSchema,
   orderCountersSchema,
   orderDetailSchema,
   orderListQuerySchema,
@@ -31,6 +35,7 @@ import { z } from 'zod';
 import { AdminAuth, CurrentSession, Roles } from '../auth/auth.guards';
 import type { ActiveSession } from '../auth/session.service';
 import { clientIp } from '../common/client-ip';
+import { ApiException } from '../common/errors';
 import { AdminInsightsService } from './admin-insights.service';
 import { AdminOrdersService } from './admin-orders.service';
 
@@ -40,6 +45,8 @@ class OrderListDto extends createZodDto(orderListSchema) {}
 class OrderCountersDto extends createZodDto(orderCountersSchema) {}
 class OrderDetailDto extends createZodDto(orderDetailSchema) {}
 class UpdateOrderDto extends createZodDto(updateOrderSchema) {}
+class OrderBulkDto extends createZodDto(orderBulkSchema) {}
+class OrderBulkResultDto extends createZodDto(orderBulkResultSchema) {}
 class IdParamsDto extends createZodDto(z.object({ id: z.uuid() })) {}
 class LeadListQueryDto extends createZodDto(leadListQuerySchema) {}
 class LeadListDto extends createZodDto(leadListSchema) {}
@@ -81,6 +88,17 @@ export class AdminOrdersController {
     const date = new Date().toISOString().slice(0, 10);
     response.setHeader('Content-Disposition', `attachment; filename="bom-orders-${date}.csv"`);
     return this.orders.exportCsv(query);
+  }
+
+  /** Ticked orders (D51): a status for all of them; delete is the owner's, as for one order. */
+  @Post('bulk')
+  @HttpCode(200)
+  @ZodResponse({ type: OrderBulkResultDto })
+  bulk(@Body() body: OrderBulkDto, @CurrentSession() session: ActiveSession, @Req() request: Request) {
+    if (body.action === 'delete' && session.user.role !== 'owner') {
+      throw new ApiException('forbidden', HttpStatus.FORBIDDEN, 'Нет доступа');
+    }
+    return this.orders.bulk(body, actor(session, request));
   }
 
   @Get(':id')

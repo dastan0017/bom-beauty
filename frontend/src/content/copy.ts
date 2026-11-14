@@ -41,8 +41,6 @@ export const copy = {
     },
     quizCta: 'Подобрать программу ухода',
     quizCtaSub: 'за 1 минуту',
-    programsTitle: 'Готовые программы ухода',
-    programsLead: 'Полный уход под вашу проблему кожи — в одном наборе',
     programPhoto: 'фото программы',
     catalogTitle: 'Каталог',
     catalogLead: 'Средства по отдельности — с ценой, описанием и составом',
@@ -62,8 +60,7 @@ export const copy = {
     reviewOf: (index: number, total: number) => `Отзыв ${index} из ${total}`,
   },
   programs: {
-    titleBefore: 'Готовые ',
-    titleAccent: 'программы ухода',
+    // The page title, its lead and the home section headings are the owner's texts (content block «home», D50).
     lead: 'Выберите уход для своей кожи. В каждой программе Нурайым на видео объяснит, как использовать средства.',
     quizTitle: 'Не знаете, что выбрать?',
     quizText: 'Пройдите тест — подберём программу за 1 минуту',
@@ -83,19 +80,26 @@ export const copy = {
     notFound: 'Не нашли свою проблему?',
     writeNurai: 'Написать Нурайым',
     empty: 'Программы скоро появятся. Пока можно написать Нурайым в WhatsApp.',
+    /** Each variant with its own price on the cards (owner request 2026-11-14, D48). */
+    variantsLabel: 'Варианты программы',
+    /** The «−11%» chip: what the set saves against buying its products one by one. */
+    saving: (percent: number) => `−${percent}%`,
+    savingSpoken: (percent: number) => `Выгода ${percent}%`,
   },
   program: {
     careFor: 'Уход при ',
     readyOf: (count: string) => `Готовая программа из ${count}`,
     videoCaption: 'Нурайым объясняет, как работает программа и в каком порядке наносить средства',
     fitTitle: 'Кому подходит',
+    /** The program's description from the admin (owner request 2026-11-14). */
+    about: 'О программе',
     contentsTitle: 'Что входит в программу',
     contentsLead: (count: string) => `${count} полного объёма — хватит на весь курс`,
     priceTitle: 'Цена программы',
     // Program variants (design 2026-11: «Вариант «Мини»», the radiogroup under «Что входит в программу»).
     variantName: (label: string) => `Вариант «${label}»`,
     variantsLabel: 'Вариант программы',
-    /** «от 3 900 сом» on cards of programs with a choice (design: progSum). */
+    /** «от 3 900 сом» on the catalog's program banner for programs with a choice (design: progSum). */
     priceFrom: 'от ',
     separately: 'По отдельности — ',
     schemeTitle: 'Схема ухода',

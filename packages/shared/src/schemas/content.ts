@@ -24,6 +24,18 @@ const comparisonSide = z.object({
   points: z.array(comparisonPoint).max(5),
 });
 
+/**
+ * Headings of the programs (owner request 2026-11-14, D50): the «Программы» page title and lead, the home section
+ * title and lead. The page title is the owner's wording; the rest is the design's.
+ */
+export const PROGRAMS_TEXT_DEFAULTS = {
+  pageTitle: 'Готовые *профессиональные программы ухода*',
+  pageLead:
+    'Выберите уход для своей кожи. В каждой программе Нурайым на видео объяснит, как использовать средства.',
+  homeTitle: 'Готовые программы ухода',
+  homeLead: 'Полный уход под вашу проблему кожи — в одном наборе',
+};
+
 export const homeContentSchema = z.object({
   heroTitle: text(160),
   heroSubtitle: text(200),
@@ -41,6 +53,9 @@ export const homeContentSchema = z.object({
   }),
   reviewsTitle: text(80),
   reviewsSubtitle: text(200),
+  programs: z
+    .object({ pageTitle: text(160), pageLead: text(300), homeTitle: text(120), homeLead: text(200) })
+    .default(PROGRAMS_TEXT_DEFAULTS),
 });
 
 export const wholesaleContentSchema = z.object({

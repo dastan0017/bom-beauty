@@ -10,7 +10,14 @@ import { QUIZ_AGES, QUIZ_EXPERIENCES, type ProgramVariant } from './enums';
 import { DEFAULT_QUIZ, recommendVariant } from './quiz';
 
 const SKIN_TYPES = DEFAULT_QUIZ.skins.map((skin) => skin.key);
-import { namedVariant, pickVariant, programCardVariants, programDetailVariants } from './variants';
+import {
+  namedVariant,
+  parseVariant,
+  pickVariant,
+  programCardVariants,
+  programDetailVariants,
+  variantOffers,
+} from './variants';
 import { createOrderSchema, orderLinesOf } from './schemas/orders';
 import { programInputSchema } from './schemas/admin-catalog';
 import type { ProgramCard, ProgramDetail } from './schemas/catalog';
@@ -33,25 +40,29 @@ describe('recommendVariant', () => {
           ).toBe(TIER_OF[designTier({ skin, exp, age })]);
   });
 
-  it('suggests «Стандарт» before the answers are in', () => {
+  it('suggests «standard» before the answers are in', () => {
     expect(recommendVariant({}, DEFAULT_QUIZ)).toBe('standard');
   });
 });
 
 describe('variant labels', () => {
-  it('names and notes are verbatim from the design', () => {
-    expect(PROGRAM_VARIANT_LABELS).toEqual({ mini: 'Мини', standard: 'Стандарт', max: 'Максимум' });
+  it("names are the owner's (D48), notes verbatim from the design", () => {
+    expect(PROGRAM_VARIANT_LABELS).toEqual({
+      mini: 'Базовый уход',
+      standard: 'Оптимальный уход',
+      max: 'Интенсивный курс',
+    });
     expect(PROGRAM_VARIANT_NOTES.max).toBe('Полная программа и усилители для быстрого результата');
   });
 
   it('adds the variant to order lines only when one was chosen', () => {
-    expect(withVariant('Акне и постакне', 'mini')).toBe('Акне и постакне · Мини');
+    expect(withVariant('Акне и постакне', 'mini')).toBe('Акне и постакне · Базовый уход');
     expect(withVariant('Акне и постакне', null)).toBe('Акне и постакне');
     expect(orderLineLabel({ title: 'Акне и постакне', qty: 2, variant: 'max' })).toBe(
-      'Акне и постакне · Максимум × 2',
+      'Акне и постакне · Интенсивный курс × 2',
     );
     expect(orderSummary([{ title: 'Чёрные точки и поры', qty: 1, variant: 'standard' }])).toBe(
-      'Чёрные точки и поры · Стандарт',
+      'Чёрные точки и поры · Оптимальный уход',
     );
   });
 });
@@ -59,7 +70,7 @@ describe('variant labels', () => {
 describe('pickVariant (design: tierPick)', () => {
   const variants = [{ variant: 'mini' as const }, { variant: 'standard' as const }];
 
-  it('takes the wanted variant, else «Стандарт»', () => {
+  it('takes the wanted variant, else «standard»', () => {
     expect(pickVariant(variants, 'mini').variant).toBe('mini');
     expect(pickVariant(variants, 'max').variant).toBe('standard');
     expect(pickVariant(variants, null).variant).toBe('standard');
@@ -70,10 +81,16 @@ describe('pickVariant (design: tierPick)', () => {
     expect(namedVariant([{ variant: 'standard' }], 'standard')).toBeNull();
   });
 
-  it('reads cached data without variants as «Стандарт» only', () => {
+  it('reads cached data without variants as «standard» only', () => {
     const { card, detail } = programProductsFixture();
     expect(programCardVariants({ ...card, variants: [] })).toEqual([
-      { variant: 'standard', priceKgs: card.priceKgs, itemCount: card.itemCount, thumbs: card.thumbs },
+      {
+        variant: 'standard',
+        priceKgs: card.priceKgs,
+        itemCount: card.itemCount,
+        thumbs: card.thumbs,
+        sumKgs: 0,
+      },
     ]);
     expect(programDetailVariants({ ...detail, variants: [] })[0]?.items).toEqual(detail.items);
     expect(programCardVariants(card)).toBe(card.variants);
@@ -160,7 +177,41 @@ describe('program input variants', () => {
   });
 });
 
-/** A program with «Мини» and «Стандарт» for unit tests. */
+describe('variantOffers (D48: every variant on the cards)', () => {
+  it('lists each variant with its own price, count and saving', () => {
+    const { card } = programProductsFixture();
+    const priced: ProgramCard = {
+      ...card,
+      variants: [
+        { variant: 'mini', priceKgs: 3900, itemCount: 2, thumbs: [], sumKgs: 4600 },
+        { variant: 'standard', priceKgs: 5900, itemCount: 3, thumbs: [], sumKgs: 7400 },
+        { variant: 'max', priceKgs: 9900, itemCount: 5, thumbs: [], sumKgs: 9900 },
+      ],
+    };
+    expect(variantOffers(priced)).toEqual([
+      { variant: 'mini', priceKgs: 3900, itemCount: 2, savingKgs: 700, savingPercent: 15 },
+      { variant: 'standard', priceKgs: 5900, itemCount: 3, savingKgs: 1500, savingPercent: 20 },
+      { variant: 'max', priceKgs: 9900, itemCount: 5, savingKgs: 0, savingPercent: 0 },
+    ]);
+  });
+
+  it('shows no saving when the sum is unknown (cached data) or below the price', () => {
+    const { card } = programProductsFixture();
+    expect(variantOffers({ ...card, variants: [] })).toEqual([
+      { variant: 'standard', priceKgs: 5900, itemCount: 2, savingKgs: 0, savingPercent: 0 },
+    ]);
+    expect(variantOffers(card).map((offer) => offer.savingKgs)).toEqual([0, 0]);
+  });
+
+  it('reads ?variant= from a card link', () => {
+    expect(parseVariant('mini')).toBe('mini');
+    expect(parseVariant('max')).toBe('max');
+    expect(parseVariant('Мини')).toBeNull();
+    expect(parseVariant(null)).toBeNull();
+  });
+});
+
+/** A program with «mini» and «standard» for unit tests. */
 export function programProductsFixture(): { card: ProgramCard; detail: ProgramDetail } {
   const thumb = (slug: string) => ({ slug, image: null });
   const product = (slug: string, priceKgs: number) => ({
@@ -192,8 +243,14 @@ export function programProductsFixture(): { card: ProgramCard; detail: ProgramDe
     itemCount: 2,
     thumbs: [thumb('foam'), thumb('cica')],
     variants: [
-      { variant: 'mini', priceKgs: 3900, itemCount: 1, thumbs: [thumb('foam')] },
-      { variant: 'standard', priceKgs: 5900, itemCount: 2, thumbs: [thumb('foam'), thumb('cica')] },
+      { variant: 'mini', priceKgs: 3900, itemCount: 1, thumbs: [thumb('foam')], sumKgs: 1500 },
+      {
+        variant: 'standard',
+        priceKgs: 5900,
+        itemCount: 2,
+        thumbs: [thumb('foam'), thumb('cica')],
+        sumKgs: 4000,
+      },
     ],
     cover: null,
     video: null,

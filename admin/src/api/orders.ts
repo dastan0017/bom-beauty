@@ -1,4 +1,5 @@
 import type {
+  OrderBulkInput,
   OrderDetail,
   OrderList,
   OrderPaymentStatus,
@@ -100,6 +101,33 @@ export function useUpdateOrder() {
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: orderKeys.counters });
+      void queryClient.invalidateQueries({ queryKey: keys.dashboard() });
+      void queryClient.invalidateQueries({ queryKey: keys.customers() });
+    },
+  });
+}
+
+/**
+ * Status or delete for the ticked orders (D51). A status shows at once in the lists and comes back if the request
+ * fails, like a single change.
+ */
+export function useBulkOrders() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: OrderBulkInput) => unwrap(api.POST('/v1/admin/orders/bulk', { body: input })),
+    onMutate: async (input) => {
+      const status = input.action === 'status' ? input.status : undefined;
+      if (!status) return { previous: [] };
+      await queryClient.cancelQueries({ queryKey: orderKeys.lists });
+      const previous = queryClient.getQueriesData<InfiniteData<OrderList>>({ queryKey: orderKeys.lists });
+      for (const id of input.ids) setRow(queryClient, id, { status });
+      return { previous };
+    },
+    onError: (_error, _input, context) => {
+      for (const [key, data] of context?.previous ?? []) queryClient.setQueryData(key, data);
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: orderKeys.all });
       void queryClient.invalidateQueries({ queryKey: keys.dashboard() });
       void queryClient.invalidateQueries({ queryKey: keys.customers() });
     },

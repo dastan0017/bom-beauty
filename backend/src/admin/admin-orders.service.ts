@@ -12,6 +12,8 @@ import {
   ORDER_STATUSES,
   PAYMENT_METHOD_LABELS,
   utmSchema,
+  type OrderBulkInput,
+  type OrderBulkResult,
   type OrderCounters,
   type OrderDetail,
   type OrderList,
@@ -276,6 +278,61 @@ export class AdminOrdersService {
       });
     }
     return this.detail(id);
+  }
+
+  /**
+   * Actions on the orders ticked in the list (D51). A status goes to every order not already in it, each change logged
+   * like a single one; delete removes them like `remove`. Unknown ids are skipped.
+   */
+  async bulk(input: OrderBulkInput, actor: { userId: string; ip: string | null }): Promise<OrderBulkResult> {
+    const ids = [...new Set(input.ids)];
+    if (input.action === 'delete') {
+      const rows = await this.prisma.order.findMany({
+        where: { id: { in: ids } },
+        select: { id: true, number: true },
+      });
+      if (!rows.length) return { count: 0 };
+      await this.prisma.order.deleteMany({ where: { id: { in: rows.map((row) => row.id) } } });
+      for (const row of rows) {
+        await this.audit.log({
+          userId: actor.userId,
+          entity: 'order',
+          entityId: row.id,
+          action: 'delete',
+          diff: { number: row.number, bulk: true },
+          ip: actor.ip,
+        });
+      }
+      return { count: rows.length };
+    }
+    const status = input.status;
+    if (!status) throw invalidField('status', 'order.status.required');
+    // Rows locked like a single update, so a payment landing meanwhile is not lost.
+    const changed = await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM orders WHERE id = ANY(${ids}::uuid[]) FOR UPDATE`;
+      const rows = await tx.order.findMany({
+        where: { id: { in: ids }, status: { not: status } },
+        select: { id: true, status: true },
+      });
+      if (rows.length) {
+        await tx.order.updateMany({
+          where: { id: { in: rows.map((row) => row.id) } },
+          data: { status, statusChangedAt: new Date() },
+        });
+      }
+      return rows;
+    });
+    for (const row of changed) {
+      await this.audit.log({
+        userId: actor.userId,
+        entity: 'order',
+        entityId: row.id,
+        action: 'status',
+        diff: { from: row.status, to: status },
+        ip: actor.ip,
+      });
+    }
+    return { count: changed.length };
   }
 
   /** Deletion on the customer's request: the row goes, the log keeps only the number. */

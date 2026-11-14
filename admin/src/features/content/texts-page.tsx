@@ -245,6 +245,38 @@ function HomeForm({ content }: { content: AdminContent }) {
             </div>
           </Panel>
 
+          <Panel title={copy.texts.programs} hint={copy.texts.accentHint}>
+            <Text label={copy.texts.programsPageTitle} error={errors['programs.pageTitle']}>
+              <input
+                value={form.programs.pageTitle}
+                onChange={(e) => update({ programs: { ...form.programs, pageTitle: e.target.value } })}
+                className={inputClass}
+              />
+            </Text>
+            <Text label={copy.texts.programsPageLead} error={errors['programs.pageLead']}>
+              <textarea
+                value={form.programs.pageLead}
+                onChange={(e) => update({ programs: { ...form.programs, pageLead: e.target.value } })}
+                rows={2}
+                className={textareaClass}
+              />
+            </Text>
+            <Text label={copy.texts.programsHomeTitle} error={errors['programs.homeTitle']}>
+              <input
+                value={form.programs.homeTitle}
+                onChange={(e) => update({ programs: { ...form.programs, homeTitle: e.target.value } })}
+                className={inputClass}
+              />
+            </Text>
+            <Text label={copy.texts.programsHomeLead} error={errors['programs.homeLead']}>
+              <input
+                value={form.programs.homeLead}
+                onChange={(e) => update({ programs: { ...form.programs, homeLead: e.target.value } })}
+                className={inputClass}
+              />
+            </Text>
+          </Panel>
+
           <Panel title={copy.texts.reviews}>
             <Text label={copy.texts.reviewsTitle} error={errors.reviewsTitle}>
               <input

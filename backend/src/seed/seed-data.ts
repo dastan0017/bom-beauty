@@ -1,6 +1,12 @@
 // Demo catalog and texts taken verbatim from design/Bom Beauty Prototype.dc.html (P, PROGRAMS, page copy) and
 // design/BomAdmin.dc.html (PROGRAMS0 descriptions). The owner replaces it in the admin (docs/HANDOFF.md).
-import type { ContentValue, ExtraProgramVariant, QuizGoal, SkinType } from '@bom/shared';
+import {
+  PROGRAMS_TEXT_DEFAULTS,
+  type ContentValue,
+  type ExtraProgramVariant,
+  type QuizGoal,
+  type SkinType,
+} from '@bom/shared';
 
 export const CATEGORIES = [
   { slug: 'cleansing', name: 'Очищение' },
@@ -578,6 +584,7 @@ export const HOME_CONTENT: ContentValue<'home'> = {
   },
   reviewsTitle: 'Отзывы',
   reviewsSubtitle: 'Переписки с клиентами — листайте и нажмите, чтобы открыть',
+  programs: PROGRAMS_TEXT_DEFAULTS,
 };
 
 export const WHOLESALE_FEATURED: ProductKey[] = [

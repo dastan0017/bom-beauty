@@ -46,7 +46,8 @@ export const QUIZ_AGES = ['u25', '25', '35', '45'] as const;
 export type QuizAge = (typeof QUIZ_AGES)[number];
 
 /**
- * Variants of one program, in page order: «Мини», «Стандарт», «Максимум». «Стандарт» is the program itself; the
+ * Variants of one program, in page order: mini, standard, max (named in PROGRAM_VARIANT_LABELS: Базовый уход,
+ * Оптимальный уход, Интенсивный курс since D48; the design's Мини, Стандарт, Максимум). «standard» is the program itself; the
  * other two are optional (design: TIERS, keys base / opt / max).
  */
 export const PROGRAM_VARIANTS = ['mini', 'standard', 'max'] as const;

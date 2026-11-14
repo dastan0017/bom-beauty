@@ -4,6 +4,7 @@ import type { FileRef, ProgramDetail, ProgramVariant, ProgramVariantDetail, Vide
 import {
   buildSchemeRequestMessage,
   namedVariant,
+  parseVariant,
   pickVariant,
   PROGRAM_VARIANT_LABELS,
   PROGRAM_VARIANT_NOTES,
@@ -16,6 +17,7 @@ import {
   use,
   useRef,
   useState,
+  useSyncExternalStore,
   type KeyboardEvent,
   type MouseEvent,
   type ReactNode,
@@ -54,8 +56,9 @@ function useVariant(): VariantState {
 }
 
 /**
- * The variant chosen on the program page. «Стандарт» first, or the quiz's suggestion when the visitor came from the
- * quiz results (design: recTier); the visitor's own choice wins. Kept in state only, the URL stays the same.
+ * The variant chosen on the program page. «Оптимальный уход» first, or the quiz's suggestion when the visitor came from
+ * the quiz results (design: recTier); a card's variant row (`?variant=mini`, D48) and then the visitor's own choice win.
+ * Switching keeps the state only, the URL stays the same.
  */
 export function ProgramVariantProvider({
   slug,
@@ -68,8 +71,9 @@ export function ProgramVariantProvider({
 }) {
   const { quizDone, quizPickedSlug, quizVariant } = useOverlays();
   const [picked, setPicked] = useState<ProgramVariant | null>(null);
+  const linked = useLinkedVariant();
   const fromQuiz = quizDone && quizPickedSlug === slug ? quizVariant : null;
-  const current = pickVariant(variants, picked ?? fromQuiz ?? 'standard');
+  const current = pickVariant(variants, picked ?? linked ?? fromQuiz ?? 'standard');
   const value: VariantState = {
     variants,
     current,
@@ -77,6 +81,23 @@ export function ProgramVariantProvider({
     select: setPicked,
   };
   return <VariantContext value={value}>{children}</VariantContext>;
+}
+
+const onHistory = (change: () => void) => {
+  window.addEventListener('popstate', change);
+  return () => window.removeEventListener('popstate', change);
+};
+
+/**
+ * `?variant=` of the page's address. The page is static, so it is read in the browser only: the server and the first
+ * render show the main variant (also without JS), then the linked one.
+ */
+function useLinkedVariant(): ProgramVariant | null {
+  return useSyncExternalStore(
+    onHistory,
+    () => parseVariant(new URLSearchParams(window.location.search).get('variant')),
+    () => null,
+  );
 }
 
 /** «Готовая программа из 5 средств» under the heading. */
@@ -92,8 +113,9 @@ export function ProgramContentsLead() {
 }
 
 /**
- * Мини / Стандарт / Максимум under «Что входит в программу», with the chosen variant's note below; only for programs
- * with a choice. A radio group: arrow keys move the choice, Tab leaves it.
+ * Базовый уход / Оптимальный уход / Интенсивный курс under «Что входит в программу», with the chosen variant's note
+ * below; only for programs with a choice. A radio group: arrow keys move the choice, Tab leaves it. Names wrap to two
+ * lines on phones.
  */
 export function VariantSwitch() {
   const { variants, current, select } = useVariant();
@@ -133,13 +155,13 @@ export function VariantSwitch() {
               onClick={() => select(variant.variant)}
               onKeyDown={(event) => onKeyDown(event, index)}
               className={cn(
-                'flex min-h-14 min-w-0 flex-[1_1_0] flex-col items-center gap-[3px] rounded-xl px-1 py-2 text-center transition-[background-color,box-shadow] duration-150',
+                'flex min-h-14 min-w-0 flex-[1_1_0] flex-col items-center justify-center gap-[3px] rounded-xl px-1 py-2 text-center transition-[background-color,box-shadow] duration-150',
                 on && 'bg-surface shadow-[0_2px_8px_rgba(20,20,43,.10)]',
               )}
             >
               <span
                 className={cn(
-                  'text-[15px] leading-[1.2] whitespace-nowrap',
+                  'text-[15px] leading-[1.2] text-balance',
                   on ? 'font-bold text-ink' : 'font-semibold text-muted',
                 )}
               >

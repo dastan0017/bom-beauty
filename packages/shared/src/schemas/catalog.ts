@@ -56,6 +56,8 @@ export const programVariantCardSchema = z.object({
   priceKgs: z.number().int(),
   itemCount: z.number().int(),
   thumbs: z.array(programThumbSchema),
+  /** Its products one by one, for the saving on the cards (D48); 0 in data cached before then. */
+  sumKgs: z.number().int().default(0),
 });
 export type ProgramVariantCard = z.infer<typeof programVariantCardSchema>;
 
@@ -68,11 +70,11 @@ export const programCardSchema = z.object({
   priceKgs: z.number().int(),
   inStock: z.boolean(),
   itemCount: z.number().int(),
-  /** Every item of «Стандарт», in order. */
+  /** Every item of the «standard» variant, in order. */
   thumbs: z.array(programThumbSchema),
   /**
-   * The variants on offer in page order (Мини, Стандарт, Максимум), «Стандарт» always among them; one entry means
-   * the program has no choice. Price, count and thumbs above are «Стандарт». The catalog's problem filter uses the
+   * The variants on offer in page order (mini, standard, max), «standard» always among them; one entry means
+   * the program has no choice. Price, count and thumbs above are «standard». The catalog's problem filter uses the
    * slugs of every variant. Empty only in data cached before variants existed.
    */
   variants: z.array(programVariantCardSchema).default([]),
@@ -99,7 +101,7 @@ export const programDetailSchema = programCardSchema.extend({
   course: z.string(),
   fit: z.array(z.string()),
   description: z.string(),
-  /** «Стандарт»'s products. */
+  /** The «standard» variant's products. */
   items: z.array(productCardSchema),
   /** Sum of item prices, for "По отдельности". */
   sumKgs: z.number().int(),

@@ -54,11 +54,14 @@ export const PAYMENT_CHANNEL_LABELS: Record<PaymentChannel, string> = {
   visa: 'Visa',
 };
 
-/** Variant names and notes, verbatim from the design (TIER_META). */
+/**
+ * Variant names: the owner's (2026-11-14, D48) in place of the design's Мини / Стандарт / Максимум. Notes stay
+ * verbatim from the design (TIER_META).
+ */
 export const PROGRAM_VARIANT_LABELS: Record<ProgramVariant, string> = {
-  mini: 'Мини',
-  standard: 'Стандарт',
-  max: 'Максимум',
+  mini: 'Базовый уход',
+  standard: 'Оптимальный уход',
+  max: 'Интенсивный курс',
 };
 
 export const PROGRAM_VARIANT_NOTES: Record<ProgramVariant, string> = {
@@ -67,12 +70,12 @@ export const PROGRAM_VARIANT_NOTES: Record<ProgramVariant, string> = {
   max: 'Полная программа и усилители для быстрого результата',
 };
 
-/** "Акне и постакне · Мини": the title with the variant an order line or a lead chose; just the title without one. */
+/** "Акне и постакне · Базовый уход": the title with the variant an order line or a lead chose; just the title without one. */
 export function withVariant(title: string, variant?: ProgramVariant | null): string {
   return variant ? `${title} · ${PROGRAM_VARIANT_LABELS[variant]}` : title;
 }
 
-/** "Cica-сыворотка × 2" for one order line; a program line adds its variant ("Акне и постакне · Мини"). */
+/** "Cica-сыворотка × 2" for one order line; a program line adds its variant ("Акне и постакне · Базовый уход"). */
 export function orderLineLabel(line: {
   title: string;
   qty: number;

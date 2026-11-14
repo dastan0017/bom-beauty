@@ -19,7 +19,7 @@ export function waLink(phone: string, text?: string): string {
 
 /**
  * «Программа «Акне и постакне»», with the variant after it when the program offers several (design: progItem):
- * «Программа «Акне и постакне» · Мини».
+ * «Программа «Акне и постакне» · Базовый уход».
  */
 export function orderItemLabel(item: {
   type: OrderItemType;

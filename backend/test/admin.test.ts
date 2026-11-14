@@ -229,6 +229,45 @@ describe('admin: orders, leads, customers, overview', () => {
     expect(JSON.stringify(log.diff)).not.toContain('Удалить меня');
   });
 
+  it('changes the status of ticked orders at once and deletes them, owner only (D51)', async () => {
+    const ticked = [
+      await addOrder({ name: 'Пакет 1', phone: '+996700000011', minutesAgo: 3 }),
+      await addOrder({ name: 'Пакет 2', phone: '+996700000012', minutesAgo: 2 }),
+      await addOrder({ name: 'Пакет 3', phone: '+996700000013', minutesAgo: 1, status: 'sent' }),
+    ];
+    const ids = ticked.map((order) => order.id);
+    const bulk = (headers: Record<string, string>, json: unknown) =>
+      request<{ count: number } & Partial<ErrorResponse>>(ctx.url('/v1/admin/orders/bulk'), {
+        method: 'POST',
+        headers,
+        json,
+      });
+
+    const noStatus = await bulk(manager.write, { ids, action: 'status' });
+    expect(noStatus.status).toBe(400);
+    const sent = await bulk(manager.write, { ids: [...ids, randomUUID()], action: 'status', status: 'sent' });
+    expect(sent.status).toBe(200);
+    expect(sent.body.count).toBe(2); // the third was already sent, the unknown id is skipped
+    const rows = await ctx.prisma.order.findMany({ where: { id: { in: ids } }, select: { status: true } });
+    expect(rows.map((row) => row.status)).toEqual(['sent', 'sent', 'sent']);
+    const detail = await request<OrderDetail>(ctx.url(`/v1/admin/orders/${ids[0]}`), {
+      headers: manager.read,
+    });
+    expect(detail.body.history.map((h) => [h.action, h.from, h.to, h.userName])).toEqual([
+      ['status', 'new', 'sent', MANAGER.name],
+    ]);
+
+    const asManager = await bulk(manager.write, { ids, action: 'delete' });
+    expect(asManager.status).toBe(403);
+    const asOwner = await bulk(owner.write, { ids, action: 'delete' });
+    expect(asOwner.status).toBe(200);
+    expect(asOwner.body.count).toBe(3);
+    expect(await ctx.prisma.order.count({ where: { id: { in: ids } } })).toBe(0);
+    const logs = await ctx.prisma.auditLog.findMany({ where: { entityId: { in: ids }, action: 'delete' } });
+    expect(logs).toHaveLength(3);
+    expect(JSON.stringify(logs.map((log) => log.diff))).not.toContain('Пакет');
+  });
+
   it('aggregates customers by phone without cancelled orders', async () => {
     const res = await request<Customer[]>(ctx.url('/v1/admin/customers'), { headers: manager.read });
     expect(res.status).toBe(200);

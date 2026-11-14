@@ -222,38 +222,71 @@ test('program order from the program page skips the cart', async ({ page }) => {
   await expect(sheet.getByText('Добавить ещё средства')).toHaveCount(0);
 });
 
-// Program variants: the dev seed gives «Акне и постакне» Мини / Стандарт / Максимум and «Чёрные точки и поры» Мини /
-// Стандарт (design 2026-11, TIERS); other programs have none.
+// Program variants: the dev seed gives «Акне и постакне» Базовый уход / Оптимальный уход / Интенсивный курс and
+// «Чёрные точки и поры» Базовый уход / Оптимальный уход (design 2026-11, TIERS; names D48); other programs have none.
 test('program variants: the switch changes the products, the price and the order', async ({ page }) => {
   await page.goto('/programs/acne');
   const variants = page.getByRole('radiogroup', { name: 'Вариант программы' });
   const radio = (name: string) => variants.getByRole('radio', { name: new RegExp(`^${name}`) });
   await expect(variants.getByRole('radio')).toHaveCount(3);
-  await expect(radio('Стандарт')).toHaveAttribute('aria-checked', 'true');
+  await expect(radio('Оптимальный уход')).toHaveAttribute('aria-checked', 'true');
   const contents = page
     .locator('section')
     .filter({ has: page.getByRole('heading', { name: 'Что входит в программу' }) })
     .getByRole('listitem');
   await expect(contents).toHaveCount(5);
 
-  await (await whenHydrated(radio('Мини'))).click();
-  await expect(radio('Мини')).toHaveAttribute('aria-checked', 'true');
-  await expect(page.getByText('Вариант «Мини» — Самое необходимое, чтобы начать')).toBeVisible();
+  await (await whenHydrated(radio('Базовый уход'))).click();
+  await expect(radio('Базовый уход')).toHaveAttribute('aria-checked', 'true');
+  await expect(page.getByText('Вариант «Базовый уход» — Самое необходимое, чтобы начать')).toBeVisible();
   await expect(contents).toHaveCount(3);
-  await expect(page.getByText('Цена программы · Вариант «Мини»')).toBeVisible();
+  await expect(page.getByText('Цена программы · Вариант «Базовый уход»')).toBeVisible();
   await expect(page.getByText('Готовая программа из 3 средств')).toBeVisible();
 
   // A radio group: the arrow keys move the choice.
-  await radio('Мини').press('ArrowRight');
-  await expect(radio('Стандарт')).toBeFocused();
-  await radio('Стандарт').press('ArrowRight');
-  await expect(radio('Максимум')).toHaveAttribute('aria-checked', 'true');
+  await radio('Базовый уход').press('ArrowRight');
+  await expect(radio('Оптимальный уход')).toBeFocused();
+  await radio('Оптимальный уход').press('ArrowRight');
+  await expect(radio('Интенсивный курс')).toHaveAttribute('aria-checked', 'true');
   await expect(contents).toHaveCount(7);
 
   await page.getByRole('button', { name: 'Заказать программу' }).filter({ visible: true }).first().click();
   const sheet = page.getByRole('dialog', { name: 'Оформление заказа' });
-  await expect(sheet.getByText('Программа «Акне и постакне» · Максимум')).toBeVisible();
+  await expect(sheet.getByText('Программа «Акне и постакне» · Интенсивный курс')).toBeVisible();
   await expect(sheet.getByText('7 средств · курс')).toBeVisible();
+});
+
+test('program cards list every variant with its price; a row opens the page on it (D48)', async ({
+  page,
+}) => {
+  await page.goto('/programs');
+  const acne = page.getByRole('article').filter({ has: page.getByRole('link', { name: 'Акне и постакне' }) });
+  const rows = acne.getByRole('list', { name: 'Варианты программы' }).getByRole('link');
+  await expect(rows).toHaveCount(3);
+  await expect(rows.nth(0)).toContainText('Базовый уход');
+  await expect(rows.nth(0)).toContainText('3 средства');
+  await expect(rows.nth(1)).toContainText('Оптимальный уход');
+  await expect(rows.nth(2)).toContainText('Интенсивный курс');
+  // A program without variants keeps one price.
+  const pigment = page.getByRole('article').filter({ has: page.getByRole('link', { name: 'Пигментация' }) });
+  await expect(pigment.getByRole('list', { name: 'Варианты программы' })).toHaveCount(0);
+
+  await (await whenHydrated(rows.nth(0))).click();
+  await expect(page).toHaveURL(/\/programs\/acne\?variant=mini$/);
+  const variants = page.getByRole('radiogroup', { name: 'Вариант программы' });
+  await expect(variants.getByRole('radio', { name: /^Базовый уход/ })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  await expect(page.getByText('Готовая программа из 3 средств')).toBeVisible();
+
+  // The same link opened directly (static page, read in the browser) and the description block.
+  await page.goto('/programs/acne?variant=max');
+  await expect(variants.getByRole('radio', { name: /^Интенсивный курс/ })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  await expect(page.getByRole('heading', { name: 'О программе' })).toBeVisible();
 });
 
 test('a program without variants has no switch', async ({ page }) => {
@@ -273,10 +306,10 @@ test('care scheme: the generated PDF downloads', async ({ request }) => {
   const mini = await request.get('/programs/pores/scheme?variant=mini');
   expect(mini.status()).toBe(200);
   expect(mini.headers()['content-disposition']).toContain('filename="scheme-pores-mini.pdf"');
-  expect(mini.headers()['content-disposition']).toContain(encodeURIComponent('(Мини).pdf'));
+  expect(mini.headers()['content-disposition']).toContain(encodeURIComponent('(Базовый уход).pdf'));
 });
 
-test('quiz: a beginner is offered «Мини» of a program with variants', async ({ page }) => {
+test('quiz: a beginner is offered «Базовый уход» of a program with variants', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('link', { name: 'Подобрать программу ухода за 1 минуту' }).click();
   const quiz = page.getByRole('dialog', { name: 'Подобрать программу ухода за 1 минуту' });
@@ -289,18 +322,18 @@ test('quiz: a beginner is offered «Мини» of a program with variants', asyn
     await quiz.getByRole('button', { name: answer }).click();
   }
   const recommended = quiz.getByRole('button', { name: /Рекомендуем для вас/ });
-  await expect(recommended).toContainText('Вариант «Мини» · ');
+  await expect(recommended).toContainText('Вариант «Базовый уход» · ');
   await expect(recommended).toContainText('3 средства');
   await expectWhatsApp(
     page,
     () => quiz.getByRole('button', { name: 'Спросить Нурайым в WhatsApp' }).click(),
-    '«Акне и постакне» — мини',
+    '«Акне и постакне» — базовый уход',
   );
 
   await recommended.click();
   await expect(page).toHaveURL(/\/programs\/acne$/);
   await expect(
-    page.getByRole('radiogroup', { name: 'Вариант программы' }).getByRole('radio', { name: /^Мини/ }),
+    page.getByRole('radiogroup', { name: 'Вариант программы' }).getByRole('radio', { name: /^Базовый уход/ }),
   ).toHaveAttribute('aria-checked', 'true');
 });
 

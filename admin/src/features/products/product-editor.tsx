@@ -26,6 +26,7 @@ import { copy } from '@/content/copy';
 import { env } from '@/env';
 import { errorText, fieldErrors } from '@/lib/format';
 import { ProductPhotos } from './product-photos';
+import { RelatedPanel } from './product-related';
 
 const EMPTY: ProductInput = {
   name: '',
@@ -48,6 +49,7 @@ const EMPTY: ProductInput = {
   isNew: false,
   imageIds: [],
   videoId: null,
+  relatedIds: [],
   seoTitle: null,
   seoDescription: null,
 };
@@ -75,6 +77,7 @@ function toInput(product: AdminProduct): ProductInput {
     isNew: product.isNew,
     imageIds: product.images.map((image) => image.id),
     videoId: product.video?.id ?? null,
+    relatedIds: product.relatedIds,
     seoTitle: product.seoTitle,
     seoDescription: product.seoDescription,
   };
@@ -379,6 +382,14 @@ function ProductForm({
             </Text>
           </Panel>
 
+          <RelatedPanel
+            productId={product?.id ?? null}
+            ids={form.relatedIds}
+            autoIds={product?.relatedAutoIds ?? []}
+            products={allProducts.data}
+            error={errors.relatedIds}
+            onChange={(ids) => set('relatedIds', ids)}
+          />
           <Panel title={copy.editor.seo}>
             <Text
               label={copy.editor.slug}

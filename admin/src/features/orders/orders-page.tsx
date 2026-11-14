@@ -22,12 +22,15 @@ import { useUser } from '@/features/auth/auth';
 import { download, saveBlob } from '@/lib/api';
 import { errorText, itemLabel, kindLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { Check } from '@/features/products/product-list';
 import { OrderDrawer } from './order-drawer';
+import { OrdersBulkBar } from './orders-bulk-bar';
 import { useOrderCounters, useOrders, useUpdateOrder } from '@/api/orders';
 
 type Tab = 'all' | OrderStatus;
 const TABS: Tab[] = ['all', 'new', 'sent', 'cancelled'];
-const COLUMNS = '70px 1.4fr 1.7fr 1fr .9fr 1fr 150px 44px';
+const COLUMNS = '36px 70px 1.4fr 1.7fr 1fr .9fr 1fr 150px 44px';
+const NONE: ReadonlySet<string> = new Set();
 
 function useDebounced<T>(value: T, ms: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -53,6 +56,24 @@ export function OrdersPage() {
   const [exporting, setExporting] = useState(false);
   const rows = orders.data?.pages.flatMap((page) => page.items) ?? [];
   const now = new Date();
+
+  // Ticked orders (D51) belong to the list they were ticked in: another tab or search starts with none.
+  const view = `${tab}|${q}`;
+  const [ticked, setTicked] = useState<{ view: string; ids: ReadonlySet<string> }>({ view, ids: NONE });
+  const selected = ticked.view === view ? ticked.ids : NONE;
+  const toggle = (id: string) => {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setTicked({ view, ids: next });
+  };
+  const ids = rows.map((order) => order.id);
+  const all = ids.length > 0 && ids.every((id) => selected.has(id));
+  const some = !all && ids.some((id) => selected.has(id));
+  const toggleAll = () => setTicked({ view, ids: all ? NONE : new Set(ids) });
+  // Orders deleted meanwhile drop out.
+  const chosen = ids.filter((id) => selected.has(id));
+  const clear = () => setTicked({ view, ids: NONE });
 
   // Keep the search in the URL so a reload or a shared link shows the same list.
   useEffect(() => {
@@ -136,48 +157,61 @@ export function OrdersPage() {
 
       {/* Phones: cards with the sum, status and WhatsApp in view (the table needs sideways scrolling there). */}
       <Card className="mt-4 sm:hidden">
+        {rows.length > 0 && (
+          <div className="flex items-center gap-1 border-b border-line-2 py-1.5 pr-4 pl-2 text-[13px] text-muted">
+            <Check label={copy.orders.selectAll} checked={all} indeterminate={some} onChange={toggleAll} />
+            {copy.orders.selectAll}
+          </div>
+        )}
         <ul aria-label={copy.orders.title}>
           {rows.map((order) => (
             <li
               key={order.id}
               className={cn(
-                'flex flex-col gap-2 border-b border-line-2 px-4 py-3.5 last:border-b-0',
-                openId === order.id && 'bg-table-head',
+                'flex gap-1 border-b border-line-2 py-3.5 pr-4 pl-2 last:border-b-0',
+                (openId === order.id || selected.has(order.id)) && 'bg-table-head',
               )}
             >
-              <button
-                type="button"
-                onClick={() => open(order.id)}
-                className="flex flex-col gap-1 text-left"
-                aria-label={copy.orders.openOrder(order.number, order.name)}
-              >
-                <span className="flex items-start justify-between gap-3">
-                  <span className="flex min-w-0 flex-col gap-0.5">
-                    <span className="text-[15px] font-semibold">{order.name}</span>
-                    <span className="text-[13px] text-muted">
-                      #{order.number} · {relativeDateTime(new Date(order.createdAt), now)}
+              <Check
+                label={copy.orders.select(order.number)}
+                checked={selected.has(order.id)}
+                onChange={() => toggle(order.id)}
+              />
+              <span className="flex min-w-0 flex-1 flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => open(order.id)}
+                  className="flex flex-col gap-1 text-left"
+                  aria-label={copy.orders.openOrder(order.number, order.name)}
+                >
+                  <span className="flex items-start justify-between gap-3">
+                    <span className="flex min-w-0 flex-col gap-0.5">
+                      <span className="text-[15px] font-semibold">{order.name}</span>
+                      <span className="text-[13px] text-muted">
+                        #{order.number} · {relativeDateTime(new Date(order.createdAt), now)}
+                      </span>
+                    </span>
+                    <span className="flex flex-none flex-col items-end gap-1">
+                      <span className="text-[15px] font-semibold whitespace-nowrap">
+                        {formatKgs(order.totalKgs)}
+                      </span>
+                      {(order.paymentMethod === 'finik' || order.paymentStatus !== 'unpaid') && (
+                        <PaymentChip status={order.paymentStatus} />
+                      )}
                     </span>
                   </span>
-                  <span className="flex flex-none flex-col items-end gap-1">
-                    <span className="text-[15px] font-semibold whitespace-nowrap">
-                      {formatKgs(order.totalKgs)}
-                    </span>
-                    {(order.paymentMethod === 'finik' || order.paymentStatus !== 'unpaid') && (
-                      <PaymentChip status={order.paymentStatus} />
-                    )}
+                  <span className="text-sm leading-snug">
+                    {itemLabel(order)} <span className="text-muted">· {order.city}</span>
                   </span>
+                </button>
+                <span className="flex items-center justify-between gap-3">
+                  <StatusSelect
+                    label={`${copy.table.status} #${order.number}`}
+                    status={order.status}
+                    onChange={(status) => changeStatus(order.id, status)}
+                  />
+                  <WhatsAppLink phone={order.phone} />
                 </span>
-                <span className="text-sm leading-snug">
-                  {itemLabel(order)} <span className="text-muted">· {order.city}</span>
-                </span>
-              </button>
-              <span className="flex items-center justify-between gap-3">
-                <StatusSelect
-                  label={`${copy.table.status} #${order.number}`}
-                  status={order.status}
-                  onChange={(status) => changeStatus(order.id, status)}
-                />
-                <WhatsAppLink phone={order.phone} />
               </span>
             </li>
           ))}
@@ -192,8 +226,15 @@ export function OrdersPage() {
       </Card>
 
       <Card className="mt-4 hidden overflow-x-auto sm:block">
-        <div role="table" style={{ '--table-min': '940px' } as CSSProperties}>
+        <div role="table" style={{ '--table-min': '976px' } as CSSProperties}>
           <TableHead columns={COLUMNS}>
+            <Check
+              label={copy.orders.selectAll}
+              checked={all}
+              indeterminate={some}
+              onChange={toggleAll}
+              disabled={!ids.length}
+            />
             <span>{copy.table.number}</span>
             <span>{copy.table.client}</span>
             <span>{copy.table.order}</span>
@@ -213,10 +254,15 @@ export function OrdersPage() {
               }}
               style={{ gridTemplateColumns: COLUMNS }}
               className={cn(
-                'grid min-h-16 min-w-[940px] cursor-pointer items-center gap-3 border-b border-line-2 px-[22px] last:border-b-0 hover:bg-table-head',
-                openId === order.id && 'bg-table-head',
+                'grid min-h-16 min-w-[976px] cursor-pointer items-center gap-3 border-b border-line-2 px-[22px] last:border-b-0 hover:bg-table-head',
+                (openId === order.id || selected.has(order.id)) && 'bg-table-head',
               )}
             >
+              <Check
+                label={copy.orders.select(order.number)}
+                checked={selected.has(order.id)}
+                onChange={() => toggle(order.id)}
+              />
               <span className="text-sm text-muted">#{order.number}</span>
               <span className="flex min-w-0 flex-col gap-0.5">
                 <span className="text-[15px] font-semibold">{order.name}</span>
@@ -254,6 +300,7 @@ export function OrdersPage() {
           {orders.data && rows.length === 0 && <TableMessage>{copy.nothingFound}</TableMessage>}
         </div>
       </Card>
+      {chosen.length > 0 && <OrdersBulkBar ids={chosen} canDelete={user.role === 'owner'} onClear={clear} />}
       {orders.hasNextPage && (
         <div className="mt-4 flex justify-center">
           <Button

@@ -26,6 +26,7 @@ import {
 import type { Env } from '../config/env';
 import { ENV } from '../config/env.module';
 import type { Prisma } from '../generated/prisma/client';
+import { autoRelatedOf } from '../catalog/related-products';
 import { PrismaService } from '../prisma/prisma.service';
 import { RevalidateService, SITE_TAGS } from '../revalidate/revalidate.service';
 import { redirectSlug, resolveSlug } from './slugs';
@@ -78,6 +79,7 @@ const detailSelect = {
   images: { orderBy: { order: 'asc' }, select: { media: { select: adminMediaSelect } } },
   video: { select: adminVideoSelect },
   programItems: { select: { program: { select: { id: true, title: true } } } },
+  related: { orderBy: { order: 'asc' }, select: { relatedId: true } },
 } satisfies Prisma.ProductSelect;
 
 // Product changes show on product pages, program pages (item lists) and the wholesale block.
@@ -322,6 +324,7 @@ export class AdminProductsService {
   async detail(id: string): Promise<AdminProduct> {
     const row = await this.prisma.product.findUnique({ where: { id }, select: detailSelect });
     if (!row) throw notFound('Товар не найден');
+    const auto = await autoRelatedOf(this.prisma, id);
     return {
       id: row.id,
       slug: row.slug,
@@ -347,6 +350,8 @@ export class AdminProductsService {
       seoTitle: row.seoTitle,
       seoDescription: row.seoDescription,
       programs: [...new Map(row.programItems.map(({ program }) => [program.id, program])).values()],
+      relatedIds: row.related.map((item) => item.relatedId),
+      relatedAutoIds: auto.map((product) => product.id),
       updatedAt: row.updatedAt.toISOString(),
     };
   }
@@ -355,6 +360,7 @@ export class AdminProductsService {
     const slug = await resolveSlug(input.slug, input.name, (candidate) => this.slugTaken(candidate));
     await this.checkImages(input.imageIds);
     await this.checkVideo(input.videoId);
+    await this.checkRelated(input.relatedIds);
     const brandId = await this.brandId(input.brandName);
     const brandText = await this.setBrandDescription(brandId, input.brandDescription);
     const last = await this.prisma.product.aggregate({
@@ -368,6 +374,7 @@ export class AdminProductsService {
         brandId,
         order: (last._max.order ?? -1) + 1,
         images: { create: input.imageIds.map((mediaId, order) => ({ mediaId, order })) },
+        related: { create: input.relatedIds.map((relatedId, order) => ({ relatedId, order })) },
       },
       select: { id: true },
     });
@@ -392,10 +399,12 @@ export class AdminProductsService {
         : current.slug;
     await this.checkImages(input.imageIds);
     await this.checkVideo(input.videoId);
+    await this.checkRelated(input.relatedIds, id);
     const brandId = await this.brandId(input.brandName);
     const brandText = await this.setBrandDescription(brandId, input.brandDescription);
     await this.prisma.$transaction([
       this.prisma.productImage.deleteMany({ where: { productId: id } }),
+      this.prisma.productRelated.deleteMany({ where: { productId: id } }),
       this.prisma.product.update({
         where: { id },
         data: {
@@ -403,6 +412,7 @@ export class AdminProductsService {
           slug,
           brandId,
           images: { create: input.imageIds.map((mediaId, order) => ({ mediaId, order })) },
+          related: { create: input.relatedIds.map((relatedId, order) => ({ relatedId, order })) },
         },
       }),
     ]);
@@ -625,6 +635,15 @@ export class AdminProductsService {
   private async checkVideo(id: string | null): Promise<void> {
     if (id && !(await this.prisma.video.count({ where: { id } })))
       throw invalidField('videoId', 'video.not_found');
+  }
+
+  /** «С этим средством ещё берут»: existing products, each once, never the product itself. */
+  private async checkRelated(ids: string[], selfId?: string): Promise<void> {
+    if (new Set(ids).size !== ids.length) throw invalidField('relatedIds', 'product.related.duplicate');
+    if (selfId && ids.includes(selfId)) throw invalidField('relatedIds', 'product.related.self');
+    if (!ids.length) return;
+    const count = await this.prisma.product.count({ where: { id: { in: ids } } });
+    if (count !== ids.length) throw invalidField('relatedIds', 'product.not_found');
   }
 
   private async checkImages(ids: string[]): Promise<void> {

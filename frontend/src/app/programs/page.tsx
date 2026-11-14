@@ -1,4 +1,5 @@
-import { GENERIC_QUESTION_MESSAGE, waLink } from '@bom/shared/web';
+import { PROGRAMS_TEXT_DEFAULTS } from '@bom/shared';
+import { GENERIC_QUESTION_MESSAGE, splitAccent, waLink } from '@bom/shared/web';
 import type { Metadata } from 'next';
 import { TrackedLink } from '@/components/header-client';
 import { QuizBanner } from '@/components/home/home-client';
@@ -9,17 +10,34 @@ import { QuizStickyBar } from '@/components/sticky-bar';
 import { AccentTitle, card, container, PageIntro, PageTitle, SectionTitle } from '@/components/ui';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
-import { getPrograms, getSettings } from '@/lib/data';
+import { getContent, getPrograms, getSettings } from '@/lib/data';
 import { breadcrumbsLd } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: copy.seo.programs,
-  description: copy.programs.lead,
-  alternates: { canonical: '/programs' },
-};
+/** The tab title follows the owner's heading (D50), without the accent marks. */
+export async function generateMetadata(): Promise<Metadata> {
+  const home = await getContent('home').catch(() => null);
+  const texts = home?.data.programs ?? PROGRAMS_TEXT_DEFAULTS;
+  return {
+    title: plainTitle(texts.pageTitle) || copy.seo.programs,
+    description: texts.pageLead || copy.programs.lead,
+    alternates: { canonical: '/programs' },
+  };
+}
+
+const plainTitle = (title: string): string =>
+  splitAccent(title)
+    .map((part) => part.text)
+    .join('')
+    .trim();
 
 export default async function ProgramsPage() {
-  const [programs, settings] = await Promise.all([getPrograms(), getSettings()]);
+  const [programs, settings, home] = await Promise.all([
+    getPrograms(),
+    getSettings(),
+    getContent('home').catch(() => null),
+  ]);
+  // The owner's headings (D50); the defaults if the texts cannot be read.
+  const texts = home?.data.programs ?? PROGRAMS_TEXT_DEFAULTS;
 
   return (
     <>
@@ -31,11 +49,13 @@ export default async function ProgramsPage() {
       />
       <PageIntro>
         <PageTitle>
-          <AccentTitle text={`${copy.programs.titleBefore}*${copy.programs.titleAccent}*`} />
+          <AccentTitle text={texts.pageTitle} />
         </PageTitle>
-        <p className="mt-3.5 max-w-[640px] self-stretch text-base leading-normal text-muted">
-          {copy.programs.lead}
-        </p>
+        {texts.pageLead && (
+          <p className="mt-3.5 max-w-[640px] self-stretch text-base leading-normal text-muted">
+            {texts.pageLead}
+          </p>
+        )}
       </PageIntro>
 
       <section className={cn(container, 'flex flex-col gap-2.5 px-4 pt-6 lg:grid lg:grid-cols-2 lg:gap-4')}>

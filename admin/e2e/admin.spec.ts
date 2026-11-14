@@ -81,6 +81,49 @@ test('orders: status change, note, history; leads and customers render', async (
   await expect(page.getByRole('row').filter({ hasText: '+996 555 00 11 22' }).first()).toBeVisible();
 });
 
+test('orders: tick several orders, give them one status and delete them (D51)', async ({ request }) => {
+  const tag = `E2E пакет ${randomUUID().slice(0, 6)}`;
+  for (const n of [1, 2]) {
+    const created = await request.post(`${API}/orders`, {
+      data: {
+        clientRef: randomUUID(),
+        items: [{ type: 'product', slug: 'dr-sgn-cica-serum', qty: 1 }],
+        name: `${tag} ${n}`,
+        phone: '+996 555 00 11 22',
+        address: 'Бишкек, ул. Тестовая, 5',
+        message: 'Здравствуйте! Хочу заказать',
+        pageUrl: 'http://localhost:3100/catalog',
+      },
+    });
+    expect(created.status()).toBe(201);
+  }
+
+  await page
+    .getByRole('link', { name: /Заказы/ })
+    .first()
+    .click();
+  await page.getByRole('searchbox', { name: 'Поиск по имени, телефону или заказу' }).fill(tag);
+  const rows = page.getByRole('row').filter({ hasText: tag });
+  await expect(rows).toHaveCount(2);
+  await page.getByRole('checkbox', { name: 'Выбрать все' }).check();
+  const bar = page.getByRole('region', { name: 'Действия с выбранными заказами' });
+  await expect(bar.getByText('Выбрано 2')).toBeVisible();
+  // A tick never opens the order.
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+
+  await bar.getByRole('button', { name: 'Статус «Отправлен»' }).click();
+  await expect(page.getByText('Готово: 2 заказа')).toBeVisible();
+  await expect(bar).toHaveCount(0);
+  for (const select of await rows.getByRole('combobox').all()) await expect(select).toHaveValue('sent');
+
+  await page.getByRole('checkbox', { name: 'Выбрать все' }).check();
+  await bar.getByRole('button', { name: 'Удалить' }).click();
+  const dialog = page.getByRole('alertdialog');
+  await expect(dialog.getByText('Удалить 2 заказа?')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Удалить' }).click();
+  await expect(rows).toHaveCount(0);
+});
+
 test('catalog: create a product, see it on the site, find it in the list, delete it there', async ({
   request,
 }) => {
@@ -149,6 +192,38 @@ test('catalog: tick products in the list, hide them and delete them in one go', 
   await expect(bar).toHaveCount(0);
 });
 
+test('catalog: «С этим средством ещё берут» picked in the editor shows on the product page (D49)', async ({
+  request,
+}) => {
+  const relatedOnSite = async () => {
+    const response = await request.get(`${API}/catalog/products/merikit-cleansing-oil`);
+    const body = (await response.json()) as { related: { name: string }[] };
+    return body.related.map((product) => product.name);
+  };
+  const auto = await relatedOnSite();
+  await page.getByRole('link', { name: 'Товары' }).first().click();
+  await page.getByRole('searchbox', { name: 'Поиск по названию или бренду' }).fill('Гидрофильное масло');
+  await page.getByRole('link', { name: 'Гидрофильное масло', exact: true }).first().click();
+  const panel = page
+    .locator('section')
+    .filter({ has: page.getByRole('heading', { name: 'С этим средством ещё берут' }) })
+    .last();
+  // Empty: the site's own pick is listed and taken over in one click.
+  await expect(panel.getByText('Пока список пуст, сайт подбирает сам', { exact: false })).toBeVisible();
+  await panel.getByRole('button', { name: 'Взять этот список и изменить' }).click();
+  await expect(panel.getByRole('button', { name: 'Убрать из списка' })).toHaveCount(auto.length);
+  await panel.getByRole('button', { name: 'Убрать из списка' }).first().click();
+  await page.getByRole('button', { name: 'Сохранить' }).click();
+  await expect(page.getByText('Изменения сохранены')).toBeVisible();
+  await expect.poll(relatedOnSite).toEqual(auto.slice(1));
+
+  // Cleared again, the site picks by itself.
+  const remove = panel.getByRole('button', { name: 'Убрать из списка' });
+  while ((await remove.count()) > 0) await remove.first().click();
+  await page.getByRole('button', { name: 'Сохранить' }).click();
+  await expect.poll(relatedOnSite).toEqual(auto);
+});
+
 test('catalog: a category is renamed and deleted from its «⋯» settings; duplicate names are refused', async () => {
   const name = `E2E категория ${Date.now().toString().slice(-6)}`;
   const renamed = `${name} новая`;
@@ -180,20 +255,20 @@ test('catalog: a category is renamed and deleted from its «⋯» settings; dupl
   await expect(page.getByRole('button', { name: `Настроить «${renamed}»` })).toHaveCount(0);
 });
 
-test('programs: the picker finds a product by name; «Мини» is saved for the site and removed', async ({
+test('programs: the picker finds a product by name; «Базовый уход» is saved for the site and removed', async ({
   request,
 }) => {
   await page.getByRole('link', { name: 'Программы' }).first().click();
   await page.getByRole('link', { name: 'Пигментация', exact: true }).click();
   await expect(page).toHaveURL(/\/programs\/[0-9a-f-]{36}$/);
 
-  // «Мини» starts from «Стандарт»'s products, drops two and gets the oil through the search.
-  await page.getByRole('switch', { name: 'Добавить «Мини»' }).click();
+  // «Базовый уход» starts from «Оптимальный уход»'s products, drops two and gets the oil through the search.
+  await page.getByRole('switch', { name: 'Добавить «Базовый уход»' }).click();
   const mini = page.locator('[data-variant="mini"]');
-  await mini.getByRole('button', { name: 'Взять средства «Стандарт»' }).click();
-  await expect(mini.getByText('Средства «Мини» · 5')).toBeVisible();
-  await mini.getByRole('button', { name: 'Убрать из варианта «Мини»' }).first().click();
-  await mini.getByRole('button', { name: 'Убрать из варианта «Мини»' }).first().click();
+  await mini.getByRole('button', { name: 'Взять средства «Оптимальный уход»' }).click();
+  await expect(mini.getByText('Средства «Базовый уход» · 5')).toBeVisible();
+  await mini.getByRole('button', { name: 'Убрать из варианта «Базовый уход»' }).first().click();
+  await mini.getByRole('button', { name: 'Убрать из варианта «Базовый уход»' }).first().click();
   await mini.getByRole('button', { name: 'Добавить средство' }).click();
   const search = mini.getByRole('searchbox', { name: 'Найти по названию или бренду' });
   await expect(search).toBeFocused();
@@ -205,8 +280,8 @@ test('programs: the picker finds a product by name; «Мини» is saved for th
   await search.fill('несуществующее средство');
   await expect(mini.getByText('Ничего не нашлось. Проверьте название')).toBeVisible();
   await mini.getByRole('button', { name: 'Закрыть' }).click();
-  await expect(mini.getByText('Средства «Мини» · 4')).toBeVisible();
-  await mini.getByLabel('Цена «Мини»').fill('4500');
+  await expect(mini.getByText('Средства «Базовый уход» · 4')).toBeVisible();
+  await mini.getByLabel('Цена «Базовый уход»').fill('4500');
   await page.getByRole('button', { name: 'Сохранить' }).click();
   await expect(page.getByText('Изменения сохранены')).toBeVisible();
 
@@ -223,7 +298,7 @@ test('programs: the picker finds a product by name; «Мини» is saved for th
   ]);
 
   // Switched off and saved, the program is as before.
-  await page.getByRole('switch', { name: 'Добавить «Мини»' }).click();
+  await page.getByRole('switch', { name: 'Добавить «Базовый уход»' }).click();
   await page.getByRole('button', { name: 'Сохранить' }).click();
   await expect.poll(variantsOnSite).toEqual([['standard', 6900, 5]]);
 });

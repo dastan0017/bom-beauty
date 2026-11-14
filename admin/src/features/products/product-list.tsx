@@ -211,8 +211,8 @@ function ProductName({ product, detail }: { product: AdminProductRow; detail?: s
   );
 }
 
-/** A checkbox with a 36 px hit area. */
-function Check({
+/** A checkbox with a 36 px hit area; a click on it never reaches the row (rows open the item). */
+export function Check({
   label,
   checked,
   indeterminate = false,
@@ -226,7 +226,10 @@ function Check({
   disabled?: boolean;
 }) {
   return (
-    <label className="flex size-9 flex-none cursor-pointer items-center justify-center">
+    <label
+      className="flex size-9 flex-none cursor-pointer items-center justify-center"
+      onClick={(event) => event.stopPropagation()}
+    >
       <input
         type="checkbox"
         checked={checked}
@@ -359,7 +362,7 @@ export function BulkBar({
   );
 }
 
-function TrashIcon() {
+export function TrashIcon() {
   return (
     <svg
       width="17"

@@ -1,24 +1,30 @@
 import type { ProgramCard } from '@bom/shared';
+import { PROGRAM_VARIANT_LABELS, variantOffers } from '@bom/shared/web';
 import Link from 'next/link';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
-import { programSummary } from '@/lib/program-summary';
 import { formatDuration } from '@/lib/words';
 import { BbImage, PhotoPlaceholder } from '../bb-image';
 import { Price } from '../currency';
 import { ArrowRightIcon, PlayTriangleIcon, SparkleIcon } from '../icons';
 import { card } from '../ui';
+import { programHref, SavingChip } from './variant-offers';
 
-/** Program card of the home grid «Готовые программы ухода» (README §1.2): 5:4 cover, badge, video length, price. */
+/**
+ * Program card of the home grid «Готовые программы ухода» (README §1.2): 5:4 cover, badge, video length, price. A
+ * program with variants lists each one with its own price, «Оптимальный уход» raised; a row opens the page on it
+ * (owner request 2026-11-14, D48). The title is the card's link; the rows are links of their own above it.
+ */
 export function ProgramTile({ program, priority = false }: { program: ProgramCard; priority?: boolean }) {
-  const summary = programSummary(program);
+  const offers = variantOffers(program);
+  const choice = offers.length > 1;
+  const single = offers[0];
   const duration = formatDuration(program.video?.durationSec);
   return (
-    <Link
-      href={`/programs/${program.slug}`}
+    <article
       className={cn(
         card,
-        'flex min-w-0 flex-col overflow-hidden transition-transform hover:border-line-hover active:scale-[.98]',
+        'relative flex min-w-0 flex-col overflow-hidden transition-transform hover:border-line-hover has-[.stretched-link:active]:scale-[.98]',
       )}
     >
       <span className="relative flex aspect-[5/4] items-center justify-center bg-surface-2">
@@ -44,18 +50,64 @@ export function ProgramTile({ program, priority = false }: { program: ProgramCar
         )}
       </span>
       <span className="flex flex-1 flex-col gap-1 px-3 pt-3 pb-3.5">
-        <span className="text-base leading-[1.25] font-semibold tracking-[-0.01em]">{program.title}</span>
+        <Link
+          href={programHref(program.slug)}
+          className="stretched-link text-base leading-[1.25] font-semibold tracking-[-0.01em]"
+        >
+          {program.title}
+        </Link>
         <span className="text-[13px] leading-[1.4] text-muted">{program.symptom}</span>
-        <span className="mt-auto flex items-center justify-between gap-1.5 pt-2">
-          <span className="text-[15px] font-semibold whitespace-nowrap">
-            {summary.from && copy.program.priceFrom}
-            <Price kgs={summary.priceKgs} />
-          </span>
-          <span className="flex size-7 flex-none items-center justify-center rounded-full bg-surface-2">
-            <ArrowRightIcon size={14} />
-          </span>
-        </span>
+        {choice ? (
+          <ul
+            aria-label={copy.programs.variantsLabel}
+            className="relative z-[1] mt-auto flex flex-col gap-0.5 rounded-xl bg-surface-2 p-1"
+          >
+            {offers.map((offer) => {
+              const main = offer.variant === 'standard';
+              return (
+                <li key={offer.variant}>
+                  <Link
+                    href={programHref(program.slug, offer.variant)}
+                    className={cn(
+                      'flex min-h-11 flex-col justify-center gap-0.5 rounded-[10px] px-2 py-1 transition-colors hover:bg-surface',
+                      main && 'bg-surface shadow-[0_2px_8px_rgba(20,20,43,.10)]',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'text-[13px] leading-[1.25]',
+                        main ? 'font-semibold text-ink' : 'text-muted',
+                      )}
+                    >
+                      {PROGRAM_VARIANT_LABELS[offer.variant]}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-[15px] leading-[1.25] font-semibold whitespace-nowrap">
+                        <Price kgs={offer.priceKgs} />
+                      </span>
+                      <SavingChip percent={offer.savingPercent} />
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          single && (
+            <span className="mt-auto flex items-center justify-between gap-1.5 pt-2">
+              <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                <span className="text-[15px] font-semibold whitespace-nowrap">
+                  <Price kgs={single.priceKgs} />
+                </span>
+                <SavingChip percent={single.savingPercent} />
+              </span>
+              <span className="flex size-7 flex-none items-center justify-center rounded-full bg-surface-2">
+                <ArrowRightIcon size={14} />
+              </span>
+            </span>
+          )
+        )}
       </span>
-    </Link>
+    </article>
   );
 }

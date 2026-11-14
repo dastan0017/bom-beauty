@@ -245,3 +245,20 @@ with the design's rules as settings (D47).
 - [x] Tests: shared (defaults parity, edited lists, input rules), backend (admin edit, cleanup, validation, leads),
       e2e (admin adds and deletes a skin type)
 - [x] Gate + `feat: quiz goals and skin types editable in the admin`
+
+## M13 Owner feedback (2026-11-14)
+
+Requests from Нурайым after adding the first variants, plus the admin checks she asked for.
+
+- [x] Program description shown on the program page as «О программе»; the admin hint says where it appears
+- [x] «Программы» headings as owner texts (Тексты → Главная → Программы), page title «Готовые _профессиональные
+      программы ухода_» (D50)
+- [x] Variant names: Базовый уход, Оптимальный уход, Интенсивный курс (labels only, keys unchanged) (D48)
+- [x] Cards on the home grid and the programs list: every variant with its own price and «−N%», «Оптимальный уход»
+      raised as the main price, rows open the page on that variant (`?variant=`); one-set programs show their «−N%» (D48)
+- [x] «С этим средством ещё берут» in the product editor: up to 6 products in order, the site's pick shown while empty
+      and taken over in one click (migration `product_related`, additive) (D49)
+- [x] Orders: checkboxes, «Выбрать все», bulk status and owner-only delete (D51)
+- [x] Tests: shared (names, offers, `?variant=`), backend (card sums, related picks, bulk orders), e2e (card rows,
+      admin related products and bulk orders)
+- [x] Gate + `feat: owner feedback (variant cards, related products, bulk orders, program headings)`

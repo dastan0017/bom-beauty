@@ -113,6 +113,16 @@ export default async function ProgramPage({ params }: Params) {
                   </p>
                 </>
               )}
+              {program.description && (
+                <div
+                  className={cn(card, 'mt-[22px] flex flex-col gap-2 self-stretch px-[18px] pt-[18px] pb-5')}
+                >
+                  <h2 className="text-[17px] font-semibold">{copy.program.about}</h2>
+                  <p className="text-base leading-[1.55] text-pretty whitespace-pre-line text-muted">
+                    {program.description}
+                  </p>
+                </div>
+              )}
               {program.fit.length > 0 && (
                 <div className={cn(card, 'mt-[22px] flex flex-col gap-3 self-stretch p-[18px]')}>
                   <span className="text-base font-semibold">{copy.program.fitTitle}</span>

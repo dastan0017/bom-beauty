@@ -889,6 +889,52 @@
         ]
       }
     },
+    "/v1/admin/orders/bulk": {
+      "post": {
+        "operationId": "AdminOrdersController_bulk",
+        "parameters": [
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "description": "Required on mutations",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderBulkDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderBulkResultDto_Output"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookie": []
+          }
+        ],
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/v1/admin/orders/{id}": {
       "get": {
         "operationId": "AdminOrdersController_detail",
@@ -4811,13 +4857,20 @@
                     ],
                     "additionalProperties": false
                   }
+                },
+                "sumKgs": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
                 }
               },
               "required": [
                 "variant",
                 "priceKgs",
                 "itemCount",
-                "thumbs"
+                "thumbs",
+                "sumKgs"
               ],
               "additionalProperties": false
             }
@@ -5152,6 +5205,11 @@
                     "additionalProperties": false
                   }
                 },
+                "sumKgs": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
                 "items": {
                   "type": "array",
                   "items": {
@@ -5375,11 +5433,6 @@
                     ],
                     "additionalProperties": false
                   }
-                },
-                "sumKgs": {
-                  "type": "integer",
-                  "minimum": -9007199254740991,
-                  "maximum": 9007199254740991
                 }
               },
               "required": [
@@ -5387,8 +5440,8 @@
                 "priceKgs",
                 "itemCount",
                 "thumbs",
-                "items",
-                "sumKgs"
+                "sumKgs",
+                "items"
               ],
               "additionalProperties": false
             }
@@ -7521,6 +7574,54 @@
         ],
         "additionalProperties": false
       },
+      "OrderBulkDto": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "minItems": 1,
+            "maxItems": 500,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "status",
+              "delete"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "new",
+              "sent",
+              "cancelled"
+            ]
+          }
+        },
+        "required": [
+          "ids",
+          "action"
+        ]
+      },
+      "OrderBulkResultDto_Output": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "count"
+        ],
+        "additionalProperties": false
+      },
       "OrderDetailDto_Output": {
         "type": "object",
         "properties": {
@@ -8894,6 +8995,16 @@
               }
             ]
           },
+          "relatedIds": {
+            "default": [],
+            "maxItems": 6,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
           "seoTitle": {
             "anyOf": [
               {
@@ -9278,6 +9389,22 @@
               "additionalProperties": false
             }
           },
+          "relatedIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          "relatedAutoIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
           "updatedAt": {
             "type": "string",
             "format": "date-time",
@@ -9309,6 +9436,8 @@
           "seoTitle",
           "seoDescription",
           "programs",
+          "relatedIds",
+          "relatedAutoIds",
           "updatedAt"
         ],
         "additionalProperties": false

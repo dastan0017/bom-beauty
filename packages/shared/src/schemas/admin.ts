@@ -125,6 +125,30 @@ export const updateOrderSchema = z
   .refine((value) => Object.values(value).some((v) => v !== undefined), 'order.update.empty');
 export type UpdateOrder = z.infer<typeof updateOrderSchema>;
 
+/**
+ * Actions on the orders ticked in the list (owner request 2026-11-14, D51): one status for all of them, or delete
+ * (owner only, like a single delete).
+ */
+export const ORDER_BULK_ACTIONS = ['status', 'delete'] as const;
+export type OrderBulkAction = (typeof ORDER_BULK_ACTIONS)[number];
+
+export const orderBulkSchema = z
+  .object({
+    ids: z.array(z.uuid()).min(1, 'bulk.empty').max(500, 'bulk.too_many'),
+    action: z.enum(ORDER_BULK_ACTIONS),
+    /** Target of `status`. */
+    status: z.enum(ORDER_STATUSES).optional(),
+  })
+  .refine((value) => value.action !== 'status' || Boolean(value.status), {
+    message: 'order.status.required',
+    path: ['status'],
+  });
+export type OrderBulkInput = z.infer<typeof orderBulkSchema>;
+
+/** How many orders the action changed (already in that status or gone: not counted). */
+export const orderBulkResultSchema = z.object({ count: z.number().int() });
+export type OrderBulkResult = z.infer<typeof orderBulkResultSchema>;
+
 export const leadListQuerySchema = z.object({ kind: z.enum(LEAD_KINDS).optional(), ...pageQuery });
 export type LeadListQuery = z.input<typeof leadListQuerySchema>;
 

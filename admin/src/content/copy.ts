@@ -1,4 +1,6 @@
-import { plural, PRODUCT_IMAGES_MAX } from '@bom/shared';
+import { plural, PRODUCT_IMAGES_MAX, PRODUCT_RELATED_MAX, PROGRAM_VARIANT_LABELS } from '@bom/shared';
+
+const STANDARD = PROGRAM_VARIANT_LABELS.standard;
 
 // Every static UI string of the admin (CLAUDE.md). Texts are verbatim from design/BomAdmin.dc.html where they exist;
 // texts for screens the design does not have (login, leads, order details) are ours and never use em-dashes.
@@ -94,6 +96,20 @@ export const copy = {
     exporting: 'Готовим файл…',
     statusChanged: 'Статус изменён',
     paymentChanged: 'Статус оплаты изменён',
+    // Ticked orders (owner request 2026-11-14, D51).
+    selectAll: 'Выбрать все',
+    select: (number: number) => `Выбрать заказ №${number}`,
+    chosen: (n: number) => `Выбрано ${n}`,
+    clearSelection: 'Снять выбор',
+    bulkLabel: 'Действия с выбранными заказами',
+    bulkDone: (n: number) =>
+      n ? `Готово: ${n} ${plural(n, 'заказ', 'заказа', 'заказов')}` : 'Ничего не изменилось',
+    bulkStatus: 'Сменить статус',
+    bulkStatusPick: 'Статус…',
+    bulkTo: (status: string) => `Статус «${status}»`,
+    bulkDelete: 'Удалить',
+    bulkDeleteTitle: (n: number) => `Удалить ${n} ${plural(n, 'заказ', 'заказа', 'заказов')}?`,
+    bulkDeleteText: 'Заказы и данные клиентов в них удалятся без возможности восстановления.',
   },
   order: {
     title: (n: number) => `Заказ №${n}`,
@@ -352,6 +368,19 @@ export const copy = {
     inciPlaceholder: 'Например: ниацинамид, пантенол, гиалуроновая кислота',
     home: 'На главной странице',
     homeHint: 'Блоки с фото и ценами под отзывами. На сайте появится после сохранения',
+    // «С этим средством ещё берут» (owner request 2026-11-14, D49).
+    related: 'С этим средством ещё берут',
+    relatedAside: (n: number) => `${n} из ${PRODUCT_RELATED_MAX}`,
+    relatedHint: 'Карточки на странице товара, в этом порядке. Скрытые товары на сайте не покажутся.',
+    relatedAuto:
+      'Пока список пуст, сайт подбирает сам: другие средства из программ с этим товаром, затем бестселлеры. Сейчас на сайте:',
+    relatedAutoEmpty:
+      'Пока список пуст, сайт подбирает сам: другие средства из программ с этим товаром, затем бестселлеры.',
+    relatedTakeAuto: 'Взять этот список и изменить',
+    relatedRemove: 'Убрать из списка',
+    relatedAdd: 'Добавить товар',
+    relatedFull: `Уже ${PRODUCT_RELATED_MAX} товаров: уберите один, чтобы добавить другой`,
+    relatedPickEmpty: 'Все товары каталога уже в списке',
     bestseller: 'Бестселлеры BOM BEAUTY',
     isNew: 'Новинки и метка «Новинка»',
     seoulChoice: 'Выбор клиник Сеула',
@@ -399,7 +428,8 @@ export const copy = {
     symptom: 'Симптомы для карточки в списке',
     symptomPlaceholder: 'Например: стянутость, шелушения',
     description: 'Описание',
-    descriptionHint: 'Для поисковиков и ссылок в мессенджерах.',
+    descriptionHint:
+      'Блок «О программе» на странице программы. Ещё его видят поисковики и мессенджеры в ссылках.',
     fit: 'Кому подходит',
     fitPlaceholder: 'Например: кожа стягивает после умывания',
     addFit: 'Добавить пункт',
@@ -411,7 +441,7 @@ export const copy = {
     course: 'Курс',
     coursePlaceholder: 'Утро и вечер, курс на 6–8 недель',
     items: (n: number) => `Средства в программе · ${n}`,
-    standardItems: (n: number) => `Средства «Стандарт» · ${n}`,
+    standardItems: (n: number) => `Средства «${STANDARD}» · ${n}`,
     itemsHint: 'Порядок здесь = порядок на сайте',
     addItem: 'Добавить средство',
     pickTitle: 'Выберите средство из каталога',
@@ -421,17 +451,16 @@ export const copy = {
     close: 'Закрыть',
     pickEmpty: 'Все средства каталога уже в программе',
     removeItem: 'Убрать из программы',
-    // Program variants (design 2026-11: Мини / Стандарт / Максимум; the admin screen is ours).
+    // Program variants (design 2026-11; names since 2026-11-14 in PROGRAM_VARIANT_LABELS; the admin screen is ours).
     variants: 'Варианты',
     variantsAside: 'по желанию',
-    variantsHint:
-      'Клиент выберет вариант на странице программы. «Стандарт»: средства и цена выше. Без вариантов страница выглядит как раньше.',
+    variantsHint: `Каждый вариант со своей ценой виден на карточке программы, клиент выберет его на странице программы. «${STANDARD}»: средства и цена выше, это главная цена. Без вариантов карточка и страница выглядят как раньше.`,
     addVariant: (label: string) => `Добавить «${label}»`,
     variantItems: (label: string, n: number) => `Средства «${label}» · ${n}`,
     variantPrice: (label: string) => `Цена «${label}»`,
     removeVariantItem: (label: string) => `Убрать из варианта «${label}»`,
-    copyStandard: 'Взять средства «Стандарт»',
-    standardPrice: 'Цена «Стандарт»',
+    copyStandard: `Взять средства «${STANDARD}»`,
+    standardPrice: `Цена «${STANDARD}»`,
     video: 'Видео Нурайым',
     protocol: 'Схема ухода',
     protocolHint:
@@ -487,8 +516,8 @@ export const copy = {
     bonusSkinsHint: 'Клиенту с таким типом кожи программы с этой задачей покажутся выше',
     alsoMatches: 'Также подходят программы для',
     alsoMatchesHint: 'Клиенту с этим типом кожи подойдут и программы, отмеченные этими типами',
-    avoidMax: 'Не предлагать «Максимум»',
-    avoidMaxHint: 'Тест предложит «Стандарт», если у программы есть варианты',
+    avoidMax: `Не предлагать «${PROGRAM_VARIANT_LABELS.max}»`,
+    avoidMaxHint: `Тест предложит «${STANDARD}», если у программы есть варианты`,
     addGoal: 'Добавить задачу',
     addSkin: 'Добавить тип кожи',
     remove: 'Удалить',
@@ -598,6 +627,13 @@ export const copy = {
     reviews: 'Блок отзывов',
     reviewsTitle: 'Заголовок',
     reviewsSubtitle: 'Подзаголовок',
+    // Owner request 2026-11-14 (D50).
+    programs: 'Программы',
+    programsPageTitle: 'Заголовок страницы «Программы»',
+    programsPageLead: 'Подзаголовок страницы «Программы»',
+    programsHomeTitle: 'Заголовок блока программ на главной',
+    programsHomeLead: 'Подзаголовок блока программ на главной',
+    accentHint: 'Выделенные слова оберните звёздочками: Готовые *профессиональные программы ухода*',
     programFacts: 'Строки под ценой программы',
     programFactsHint: 'Например: «Доставка по Бишкеку» и «в день оплаты»',
     label: 'Название',
@@ -865,6 +901,10 @@ export const copy = {
     'video.not_found': 'Видео не найдено',
     'video.in_use': 'Видео используется на сайте, сначала уберите его',
     'product.not_found': 'Товар не найден',
+    'product.related.max': `Не больше ${PRODUCT_RELATED_MAX} товаров`,
+    'product.related.duplicate': 'Товар добавлен дважды',
+    'product.related.self': 'Товар не может советовать сам себя',
+    'order.status.required': 'Выберите статус',
     'payments.template.required': 'Напишите текст сообщения',
     'payments.template.max': 'Слишком длинный текст',
     'payments.template.link': 'Добавьте {ссылка}: без неё клиенту нечем оплатить',

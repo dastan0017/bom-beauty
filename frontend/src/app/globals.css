@@ -15,6 +15,26 @@
 }
 
 /*
+ * A card's main link covering the whole card (program cards, D48), so the variant rows inside can be links of their
+ * own: they sit above it (position: relative). The focus ring goes just inside the card's edge (tiles clip overflow).
+ */
+@layer components {
+  .stretched-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-card);
+  }
+  .stretched-link:focus-visible {
+    outline: none;
+  }
+  .stretched-link:focus-visible::after {
+    outline: 2px solid var(--ac);
+    outline-offset: -2px;
+  }
+}
+
+/*
  * Height of the sticky site header (site-header.tsx): a 56 px row, 44 px tabs, a 10 px gap and the 1 px border on
  * phones; one 68 px row and the border from 1024 px. The catalog's sticky search bar sits under it.
  */

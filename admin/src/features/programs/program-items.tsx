@@ -17,8 +17,8 @@ export const moveItem = <T,>(list: T[], index: number, delta: number): T[] => {
 };
 
 /**
- * An ordered product list with the catalog picker: «Стандарт»'s products and each variant's. The order here is the
- * order on the site.
+ * An ordered product list with the catalog picker: the main variant's products and each variant's, and a product's
+ * «С этим средством ещё берут». The order here is the order on the site.
  */
 export function ProgramItemList({
   items,
@@ -29,6 +29,9 @@ export function ProgramItemList({
   onRemove,
   onAdd,
   extra,
+  addLabel = copy.program.addItem,
+  pickEmpty = copy.program.pickEmpty,
+  full,
 }: {
   items: AdminProgramItem[];
   products: AdminProductRow[] | undefined;
@@ -37,8 +40,13 @@ export function ProgramItemList({
   onMove: (index: number, delta: number) => void;
   onRemove: (id: string) => void;
   onAdd: (id: string) => void;
-  /** Shown beside «Добавить средство» (a variant offers to copy «Стандарт»'s products). */
+  /** Shown beside «Добавить средство» (a variant offers to copy the main variant's products). */
   extra?: ReactNode;
+  addLabel?: string;
+  /** The picker's text once every product is in the list. */
+  pickEmpty?: string;
+  /** Set when the list is full: shown in place of the add button. */
+  full?: string | undefined;
 }) {
   const [picker, setPicker] = useState(false);
   const chosen = new Set(items.map((item) => item.id));
@@ -77,8 +85,16 @@ export function ProgramItemList({
         </div>
       )}
       <FieldError error={error} />
-      {picker ? (
-        <ProductPicker products={products} chosen={chosen} onAdd={onAdd} onClose={() => setPicker(false)} />
+      {full ? (
+        <p className="text-sm text-muted">{full}</p>
+      ) : picker ? (
+        <ProductPicker
+          products={products}
+          chosen={chosen}
+          pickEmpty={pickEmpty}
+          onAdd={onAdd}
+          onClose={() => setPicker(false)}
+        />
       ) : (
         <div className="flex flex-col gap-2.5 sm:flex-row">
           <button
@@ -87,7 +103,7 @@ export function ProgramItemList({
             className="flex h-[50px] flex-1 items-center justify-center gap-2 rounded-xl border border-dashed text-[15px] font-semibold hover:border-dashed-hover"
           >
             <PlusIcon />
-            {copy.program.addItem}
+            {addLabel}
           </button>
           {extra}
         </div>
@@ -104,11 +120,13 @@ export function ProgramItemList({
 function ProductPicker({
   products,
   chosen,
+  pickEmpty,
   onAdd,
   onClose,
 }: {
   products: AdminProductRow[] | undefined;
   chosen: ReadonlySet<string>;
+  pickEmpty: string;
   onAdd: (id: string) => void;
   onClose: () => void;
 }) {
@@ -175,7 +193,7 @@ function ProductPicker({
         ))}
         {products && found.length === 0 && (
           <span className="px-3.5 py-5 text-sm text-muted">
-            {available.length ? copy.program.pickNothing : copy.program.pickEmpty}
+            {available.length ? copy.program.pickNothing : pickEmpty}
           </span>
         )}
         {!products && <span className="px-3.5 py-5 text-sm text-muted">{copy.loading}</span>}
