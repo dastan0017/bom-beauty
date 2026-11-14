@@ -8,12 +8,13 @@ import { BbImage, PhotoPlaceholder } from '../bb-image';
 import { Price } from '../currency';
 import { ArrowRightIcon, PlayTriangleIcon, SparkleIcon } from '../icons';
 import { card } from '../ui';
-import { programHref, SavingChip } from './variant-offers';
+import { OldPrice, programHref } from './variant-offers';
 
 /**
  * Program card of the home grid «Готовые программы ухода» (README §1.2): 5:4 cover, badge, video length, price. A
- * program with variants lists each one with its own price, «Оптимальный уход» raised; a row opens the page on it
- * (owner request 2026-11-14, D48). The title is the card's link; the rows are links of their own above it.
+ * program with variants lists each one with its own price and crossed-out separate price, «Оптимальный уход» raised;
+ * a row opens the page on it (owner request 2026-11-14, D48). Two to a row on phones (the owner's choice over the
+ * programs list's card, which needs the full phone width). The title is the card's link; the rows are links of their own above it.
  */
 export function ProgramTile({ program, priority = false }: { program: ProgramCard; priority?: boolean }) {
   const offers = variantOffers(program);
@@ -69,7 +70,7 @@ export function ProgramTile({ program, priority = false }: { program: ProgramCar
                   <Link
                     href={programHref(program.slug, offer.variant)}
                     className={cn(
-                      'flex min-h-11 flex-col justify-center gap-0.5 rounded-[10px] px-2 py-1 transition-colors hover:bg-surface',
+                      'flex min-h-11 flex-col justify-center gap-0.5 rounded-[10px] px-1.5 py-1.5 transition-colors hover:bg-surface',
                       main && 'bg-surface shadow-[0_2px_8px_rgba(20,20,43,.10)]',
                     )}
                   >
@@ -81,12 +82,11 @@ export function ProgramTile({ program, priority = false }: { program: ProgramCar
                     >
                       {PROGRAM_VARIANT_LABELS[offer.variant]}
                     </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="text-[15px] leading-[1.25] font-semibold whitespace-nowrap">
-                        <Price kgs={offer.priceKgs} />
-                      </span>
-                      <SavingChip percent={offer.savingPercent} />
+                    {/* The old price goes under the price at every width: side by side does not fit a phone tile. */}
+                    <span className="text-[15px] leading-[1.25] font-semibold whitespace-nowrap">
+                      <Price kgs={offer.priceKgs} />
                     </span>
+                    <OldPrice kgs={offer.separatelyKgs} className="text-xs" />
                   </Link>
                 </li>
               );
@@ -94,16 +94,16 @@ export function ProgramTile({ program, priority = false }: { program: ProgramCar
           </ul>
         ) : (
           single && (
-            <span className="mt-auto flex items-center justify-between gap-1.5 pt-2">
-              <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-                <span className="text-[15px] font-semibold whitespace-nowrap">
+            <span className="mt-auto flex flex-col gap-0.5 pt-2">
+              <span className="flex items-center justify-between gap-1.5">
+                <span className="text-[17px] leading-[1.2] font-semibold whitespace-nowrap">
                   <Price kgs={single.priceKgs} />
                 </span>
-                <SavingChip percent={single.savingPercent} />
+                <span className="flex size-7 flex-none items-center justify-center rounded-full bg-surface-2">
+                  <ArrowRightIcon size={14} />
+                </span>
               </span>
-              <span className="flex size-7 flex-none items-center justify-center rounded-full bg-surface-2">
-                <ArrowRightIcon size={14} />
-              </span>
+              <OldPrice kgs={single.separatelyKgs} />
             </span>
           )
         )}

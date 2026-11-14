@@ -26,12 +26,11 @@ const comparisonSide = z.object({
 
 /**
  * Headings of the programs (owner request 2026-11-14, D50): the «Программы» page title and lead, the home section
- * title and lead. The page title is the owner's wording; the rest is the design's.
+ * title and lead. The page title and lead are the owner's wording; the home ones are the design's.
  */
 export const PROGRAMS_TEXT_DEFAULTS = {
   pageTitle: 'Готовые *профессиональные программы ухода*',
-  pageLead:
-    'Выберите уход для своей кожи. В каждой программе Нурайым на видео объяснит, как использовать средства.',
+  pageLead: 'К каждой программе прилагается протокол с подробной схемой ухода.',
   homeTitle: 'Готовые программы ухода',
   homeLead: 'Полный уход под вашу проблему кожи — в одном наборе',
 };

@@ -254,8 +254,9 @@ Requests from Нурайым after adding the first variants, plus the admin che
 - [x] «Программы» headings as owner texts (Тексты → Главная → Программы), page title «Готовые _профессиональные
       программы ухода_» (D50)
 - [x] Variant names: Базовый уход, Оптимальный уход, Интенсивный курс (labels only, keys unchanged) (D48)
-- [x] Cards on the home grid and the programs list: every variant with its own price and «−N%», «Оптимальный уход»
-      raised as the main price, rows open the page on that variant (`?variant=`); one-set programs show their «−N%» (D48)
+- [x] Cards on the home grid and the programs list: every variant with its own price and the crossed-out separate price, «Оптимальный уход»
+      raised as the main price, rows open the page on that variant (`?variant=`); one-set programs show the crossed-out price too (D48)
+- [x] Programs search: sticky like the catalog's, by program and by the products in it, works without JS (D52)
 - [x] «С этим средством ещё берут» in the product editor: up to 6 products in order, the site's pick shown while empty
       and taken over in one click (migration `product_related`, additive) (D49)
 - [x] Orders: checkboxes, «Выбрать все», bulk status and owner-only delete (D51)

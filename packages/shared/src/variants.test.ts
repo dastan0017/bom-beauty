@@ -178,7 +178,7 @@ describe('program input variants', () => {
 });
 
 describe('variantOffers (D48: every variant on the cards)', () => {
-  it('lists each variant with its own price, count and saving', () => {
+  it('lists each variant with its own price, count and crossed-out separate price', () => {
     const { card } = programProductsFixture();
     const priced: ProgramCard = {
       ...card,
@@ -189,18 +189,18 @@ describe('variantOffers (D48: every variant on the cards)', () => {
       ],
     };
     expect(variantOffers(priced)).toEqual([
-      { variant: 'mini', priceKgs: 3900, itemCount: 2, savingKgs: 700, savingPercent: 15 },
-      { variant: 'standard', priceKgs: 5900, itemCount: 3, savingKgs: 1500, savingPercent: 20 },
-      { variant: 'max', priceKgs: 9900, itemCount: 5, savingKgs: 0, savingPercent: 0 },
+      { variant: 'mini', priceKgs: 3900, itemCount: 2, separatelyKgs: 4600 },
+      { variant: 'standard', priceKgs: 5900, itemCount: 3, separatelyKgs: 7400 },
+      { variant: 'max', priceKgs: 9900, itemCount: 5, separatelyKgs: 0 },
     ]);
   });
 
-  it('shows no saving when the sum is unknown (cached data) or below the price', () => {
+  it('crosses out nothing when the sum is unknown (cached data) or not above the price', () => {
     const { card } = programProductsFixture();
     expect(variantOffers({ ...card, variants: [] })).toEqual([
-      { variant: 'standard', priceKgs: 5900, itemCount: 2, savingKgs: 0, savingPercent: 0 },
+      { variant: 'standard', priceKgs: 5900, itemCount: 2, separatelyKgs: 0 },
     ]);
-    expect(variantOffers(card).map((offer) => offer.savingKgs)).toEqual([0, 0]);
+    expect(variantOffers(card).map((offer) => offer.separatelyKgs)).toEqual([0, 0]);
   });
 
   it('reads ?variant= from a card link', () => {

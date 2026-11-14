@@ -2,23 +2,25 @@ import type { ProgramVariant } from '@bom/shared';
 import type { Route } from 'next';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
+import { Price } from '../currency';
 
 /** The program page opened on one variant (`?variant=mini`); «standard» is the page as it is. */
 export const programHref = (slug: string, variant?: ProgramVariant): Route =>
   (variant && variant !== 'standard' ? `/programs/${slug}?variant=${variant}` : `/programs/${slug}`) as Route;
 
-/** «−11%»: what the set saves against its products one by one (D48). Nothing when it saves nothing. */
-export function SavingChip({ percent, className }: { percent: number; className?: string }) {
-  if (percent < 1) return null;
+/**
+ * The products of the set bought one by one, crossed out next to its price, as on the program page («По отдельности»)
+ * (owner request 2026-11-14), grey like it. Through <Price>, so the currency switch applies. Nothing when the set costs
+ * no less.
+ */
+export function OldPrice({ kgs, className = 'text-[13px]' }: { kgs: number; className?: string }) {
+  if (kgs < 1) return null;
   return (
-    <span
-      className={cn(
-        'inline-flex h-5 flex-none items-center rounded-full bg-accent-soft px-1.5 text-xs font-semibold whitespace-nowrap text-accent-ink',
-        className,
-      )}
-    >
-      <span aria-hidden="true">{copy.programs.saving(percent)}</span>
-      <span className="sr-only">{copy.programs.savingSpoken(percent)}</span>
+    <span className={cn('leading-[1.25] whitespace-nowrap text-muted', className)}>
+      <span className="sr-only">{copy.programs.separately}</span>
+      <s>
+        <Price kgs={kgs} />
+      </s>
     </span>
   );
 }

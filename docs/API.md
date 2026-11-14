@@ -157,7 +157,7 @@ type ProgramCard = {
     priceKgs: number;
     itemCount: number;
     thumbs: { slug; image }[];
-    sumKgs: number; // its products one by one, for the «−N%» on the cards (D48); 0 in data cached before
+    sumKgs: number; // its products one by one, crossed out next to the price on the cards (D48); 0 in data cached before
   }[];
   cover: ImageRef | null; // 5:4 home card photo (M8)
   video: Pick<VideoRef, 'durationSec' | 'poster'> | null;

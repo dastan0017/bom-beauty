@@ -1,26 +1,39 @@
 import { PROGRAMS_TEXT_DEFAULTS } from '@bom/shared';
-import { GENERIC_QUESTION_MESSAGE, splitAccent, waLink } from '@bom/shared/web';
+import { GENERIC_QUESTION_MESSAGE, programsWord, splitAccent, waLink } from '@bom/shared/web';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { TrackedLink } from '@/components/header-client';
 import { QuizBanner } from '@/components/home/home-client';
 import { ArrowRightIcon } from '@/components/icons';
 import { JsonLd } from '@/components/json-ld';
 import { ProgramCard } from '@/components/program/program-card';
+import { SearchBox } from '@/components/search-box';
 import { QuizStickyBar } from '@/components/sticky-bar';
+import { KeepResultsInView, StickyRow } from '@/components/sticky-row';
 import { AccentTitle, card, container, PageIntro, PageTitle, SectionTitle } from '@/components/ui';
 import { copy } from '@/content/copy';
 import { cn } from '@/lib/cn';
-import { getContent, getPrograms, getSettings } from '@/lib/data';
+import { getContent, getPrograms, getProductsSafe, getSettings } from '@/lib/data';
+import { searchPrograms } from '@/lib/program-search';
 import { breadcrumbsLd } from '@/lib/seo';
 
-/** The tab title follows the owner's heading (D50), without the accent marks. */
-export async function generateMetadata(): Promise<Metadata> {
-  const home = await getContent('home').catch(() => null);
+type Props = { searchParams: Promise<{ q?: string | string[] }> };
+
+const SEARCH_ROW_ID = 'programs-search';
+const RESULTS_ID = 'programs-results';
+
+const searchOf = (value: string | string[] | undefined): string =>
+  ((Array.isArray(value) ? value[0] : value) ?? '').trim().slice(0, 100);
+
+/** The tab title follows the owner's heading (D50), without the accent marks; search results stay out of the index. */
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const [home, params] = await Promise.all([getContent('home').catch(() => null), searchParams]);
   const texts = home?.data.programs ?? PROGRAMS_TEXT_DEFAULTS;
   return {
     title: plainTitle(texts.pageTitle) || copy.seo.programs,
     description: texts.pageLead || copy.programs.lead,
     alternates: { canonical: '/programs' },
+    ...(searchOf(params.q) ? { robots: { index: false, follow: true } } : {}),
   };
 }
 
@@ -30,14 +43,18 @@ const plainTitle = (title: string): string =>
     .join('')
     .trim();
 
-export default async function ProgramsPage() {
-  const [programs, settings, home] = await Promise.all([
+export default async function ProgramsPage({ searchParams }: Props) {
+  const query = searchOf((await searchParams).q);
+  const [programs, settings, home, products] = await Promise.all([
     getPrograms(),
     getSettings(),
     getContent('home').catch(() => null),
+    // Product names make a program findable by what it contains (owner request 2026-11-14).
+    query ? getProductsSafe() : Promise.resolve([]),
   ]);
   // The owner's headings (D50); the defaults if the texts cannot be read.
   const texts = home?.data.programs ?? PROGRAMS_TEXT_DEFAULTS;
+  const shown = searchPrograms(programs, products, query);
 
   return (
     <>
@@ -58,11 +75,53 @@ export default async function ProgramsPage() {
         )}
       </PageIntro>
 
-      <section className={cn(container, 'flex flex-col gap-2.5 px-4 pt-6 lg:grid lg:grid-cols-2 lg:gap-4')}>
-        <QuizBanner className="lg:col-span-2" />
-        {programs.map((program) => (
+      {/* Sticky under the header like the catalog's search (owner request 2026-11-14). */}
+      {programs.length > 0 && (
+        <StickyRow id={SEARCH_ROW_ID}>
+          <SearchBox
+            path="/programs"
+            query={query}
+            label={copy.programs.searchLabel}
+            placeholder={copy.programs.searchPlaceholder}
+            clearLabel={copy.catalog.clearSearch}
+            className="flex-1 lg:max-w-[560px]"
+          />
+        </StickyRow>
+      )}
+
+      <KeepResultsInView query={query} rowId={SEARCH_ROW_ID} resultsId={RESULTS_ID} />
+      <section
+        id={RESULTS_ID}
+        className={cn(container, 'flex flex-col gap-2.5 px-4 pt-3 lg:grid lg:grid-cols-2 lg:gap-4')}
+      >
+        {query && shown.length > 0 && (
+          <p role="status" className="px-1 text-sm text-muted lg:col-span-2">
+            {copy.catalog.found(shown.length, programsWord(shown.length))}
+          </p>
+        )}
+        {/* While searching, the results come first; the quiz is offered when nothing is found. */}
+        {!query && <QuizBanner className="lg:col-span-2" />}
+        {shown.map((program) => (
           <ProgramCard key={program.slug} program={program} />
         ))}
+        {query && shown.length === 0 && (
+          <div
+            role="status"
+            className="flex flex-col items-center gap-3 px-6 pt-6 pb-2 text-center lg:col-span-2"
+          >
+            <p className="text-base leading-normal text-balance text-muted">
+              {copy.programs.searchNotFound(query)}
+            </p>
+            <Link
+              href="/programs"
+              scroll={false}
+              className="flex h-11 items-center rounded-full border border-line bg-surface px-[18px] text-[15px] font-semibold text-ink"
+            >
+              {copy.programs.showAll}
+            </Link>
+          </div>
+        )}
+        {query && shown.length === 0 && <QuizBanner className="mt-2 lg:col-span-2" />}
         {programs.length === 0 && (
           <p className={cn(card, 'px-5 py-6 text-center text-base text-muted lg:col-span-2')}>
             {copy.programs.empty}

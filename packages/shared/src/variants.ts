@@ -40,27 +40,24 @@ export interface VariantOffer {
   variant: ProgramVariant;
   priceKgs: number;
   itemCount: number;
-  /** What the set saves against its products one by one; 0 when it saves nothing or the sum is unknown. */
-  savingKgs: number;
-  /** The saving in whole percent of the sum («−11%» on the cards); 0 below 1%. */
-  savingPercent: number;
+  /**
+   * Its products bought one by one, shown crossed out next to the price; 0 when the set costs no less or the sum is
+   * unknown (data cached before D48).
+   */
+  separatelyKgs: number;
 }
 
 /**
- * Every variant with its own price and saving, in page order (owner request 2026-11-14: the cheaper set is seen on
- * the cards, not only inside the program).
+ * Every variant with its own price and the crossed-out price of its products one by one, in page order (owner
+ * requests 2026-11-14: the cheaper set is seen on the cards, and the saving reads as an old price).
  */
 export function variantOffers(program: ProgramCard): VariantOffer[] {
-  return programCardVariants(program).map(({ variant, priceKgs, itemCount, sumKgs }) => {
-    const savingKgs = sumKgs > priceKgs ? sumKgs - priceKgs : 0;
-    return {
-      variant,
-      priceKgs,
-      itemCount,
-      savingKgs,
-      savingPercent: savingKgs ? Math.round((savingKgs / sumKgs) * 100) : 0,
-    };
-  });
+  return programCardVariants(program).map(({ variant, priceKgs, itemCount, sumKgs }) => ({
+    variant,
+    priceKgs,
+    itemCount,
+    separatelyKgs: sumKgs > priceKgs ? sumKgs : 0,
+  }));
 }
 
 /** `?variant=mini` on a program link: the variant the page opens on, when it is a known one. */

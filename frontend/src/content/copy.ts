@@ -61,7 +61,7 @@ export const copy = {
   },
   programs: {
     // The page title, its lead and the home section headings are the owner's texts (content block «home», D50).
-    lead: 'Выберите уход для своей кожи. В каждой программе Нурайым на видео объяснит, как использовать средства.',
+    lead: 'К каждой программе прилагается протокол с подробной схемой ухода.',
     quizTitle: 'Не знаете, что выбрать?',
     quizText: 'Пройдите тест — подберём программу за 1 минуту',
     videoMeta: 'Видеоразбор Нурайым',
@@ -80,11 +80,15 @@ export const copy = {
     notFound: 'Не нашли свою проблему?',
     writeNurai: 'Написать Нурайым',
     empty: 'Программы скоро появятся. Пока можно написать Нурайым в WhatsApp.',
+    // Search (owner request 2026-11-14, not in the design): like the catalog's.
+    searchLabel: 'Поиск по программам',
+    searchPlaceholder: 'Найти программу или средство',
+    searchNotFound: (query: string) => `По запросу «${query}» программ не нашлось`,
+    showAll: 'Показать все программы',
     /** Each variant with its own price on the cards (owner request 2026-11-14, D48). */
     variantsLabel: 'Варианты программы',
-    /** The «−11%» chip: what the set saves against buying its products one by one. */
-    saving: (percent: number) => `−${percent}%`,
-    savingSpoken: (percent: number) => `Выгода ${percent}%`,
+    /** Read before the crossed-out price on the cards (screen readers only). */
+    separately: 'По отдельности ',
   },
   program: {
     careFor: 'Уход при ',

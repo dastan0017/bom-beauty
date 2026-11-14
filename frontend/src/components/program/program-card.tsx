@@ -10,12 +10,13 @@ import { Price } from '../currency';
 import { ChevronRightIcon, PlayTriangleIcon, SparkleIcon } from '../icons';
 import { card } from '../ui';
 import { VideoThumb } from '../video-thumb';
-import { programHref, SavingChip } from './variant-offers';
+import { OldPrice, programHref } from './variant-offers';
 
 /**
  * Program card from the programs list (design: isPrograms → programs). A program with variants lists each one with
- * its own price, count and saving, «Оптимальный уход» raised as the main one; each row opens the page on that variant
- * (owner request 2026-11-14, D48). The title is the card's link; the rows are links of their own above it.
+ * its own price, count and crossed-out separate price, «Оптимальный уход» raised as the main one; each row opens the
+ * page on that variant (owner request 2026-11-14, D48). The title is the card's link; the rows are links of their own
+ * above it.
  */
 export function ProgramCard({ program }: { program: ProgramCardData }) {
   const offers = variantOffers(program);
@@ -64,19 +65,24 @@ export function ProgramCard({ program }: { program: ProgramCardData }) {
                     main && 'bg-surface shadow-[0_2px_8px_rgba(20,20,43,.10)]',
                   )}
                 >
-                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className={cn('text-[15px] leading-[1.25]', main ? 'font-bold' : 'font-semibold')}>
-                      {PROGRAM_VARIANT_LABELS[offer.variant]}
+                  {/* Two lines: the name with the price, the count with the crossed-out separate price. */}
+                  <span className="flex min-w-0 flex-1 flex-col gap-1">
+                    <span className="flex items-baseline justify-between gap-3">
+                      <span
+                        className={cn('text-[15px] leading-[1.25]', main ? 'font-bold' : 'font-semibold')}
+                      >
+                        {PROGRAM_VARIANT_LABELS[offer.variant]}
+                      </span>
+                      <span className="text-base leading-[1.2] font-semibold whitespace-nowrap">
+                        <Price kgs={offer.priceKgs} />
+                      </span>
                     </span>
-                    <span className="text-[13px] leading-[1.25] text-muted">
-                      {productsCount(offer.itemCount)}
+                    <span className="flex items-center justify-between gap-3">
+                      <span className="text-[13px] leading-[1.25] text-muted">
+                        {productsCount(offer.itemCount)}
+                      </span>
+                      <OldPrice kgs={offer.separatelyKgs} />
                     </span>
-                  </span>
-                  <span className="flex flex-none flex-col items-end gap-1">
-                    <span className="text-base leading-[1.2] font-semibold whitespace-nowrap">
-                      <Price kgs={offer.priceKgs} />
-                    </span>
-                    <SavingChip percent={offer.savingPercent} />
                   </span>
                   <ChevronRightIcon size={16} className="flex-none text-muted" />
                 </Link>
@@ -116,7 +122,7 @@ export function ProgramCard({ program }: { program: ProgramCardData }) {
               <span className="text-[17px] leading-[1.2] font-semibold whitespace-nowrap">
                 <Price kgs={single.priceKgs} />
               </span>
-              <SavingChip percent={single.savingPercent} />
+              <OldPrice kgs={single.separatelyKgs} className="self-end text-[13px]" />
             </span>
             <ChevronRightIcon size={16} className="flex-none text-muted" />
           </span>

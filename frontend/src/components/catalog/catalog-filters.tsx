@@ -17,7 +17,7 @@ import { cn } from '@/lib/cn';
 import { CloseIcon, FiltersIcon } from '../icons';
 import { SheetHandle } from '../overlays/sheet';
 import { useModal, usePresence } from '../overlays/use-dialog';
-import { container } from '../ui';
+import { StickyRow } from '../sticky-row';
 
 // Compact catalog filters (2026-10-27): the design's three chip rows took most of a phone screen, so the catalog has
 // one sticky row with the search and a «Фильтры» button, and the chip groups live in a bottom sheet. Without
@@ -49,36 +49,9 @@ export function CatalogFiltersProvider({ children }: { children: ReactNode }) {
   return <FiltersContext value={{ open, setOpen }}>{children}</FiltersContext>;
 }
 
-/** The sticky row under the site header; a soft shadow once it is stuck. */
+/** The catalog's sticky row; the filters sheet scrolls the results under it by its id. */
 export function CatalogBar({ children }: { children: ReactNode }) {
-  const bar = useRef<HTMLDivElement>(null);
-  const [stuck, setStuck] = useState(false);
-  useEffect(() => {
-    const element = bar.current;
-    if (!element) return;
-    const update = () => {
-      const top = parseFloat(getComputedStyle(element).top) || 0;
-      setStuck(window.scrollY > 0 && element.getBoundingClientRect().top <= top + 0.5);
-    };
-    window.addEventListener('scroll', update, { passive: true });
-    window.addEventListener('resize', update);
-    return () => {
-      window.removeEventListener('scroll', update);
-      window.removeEventListener('resize', update);
-    };
-  }, []);
-  return (
-    <div
-      ref={bar}
-      id={BAR_ID}
-      className={cn(
-        'sticky top-[var(--header-h)] z-20 mt-3 bg-bg transition-shadow duration-200',
-        stuck && 'shadow-[0_12px_20px_-16px_rgba(14,14,44,.35)]',
-      )}
-    >
-      <div className={cn(container, 'flex h-[var(--catalog-bar-h)] items-center gap-2 px-4')}>{children}</div>
-    </div>
-  );
+  return <StickyRow id={BAR_ID}>{children}</StickyRow>;
 }
 
 export function FiltersButton({ count }: { count: number }) {

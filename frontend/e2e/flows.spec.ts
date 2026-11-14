@@ -148,6 +148,36 @@ test.describe('catalog filter', () => {
   }
 });
 
+// Programs search (owner request 2026-11-14): a GET form like the catalog's, so it also works without JavaScript.
+test.describe('programs search', () => {
+  for (const javaScriptEnabled of [true, false]) {
+    test(javaScriptEnabled ? 'with JavaScript' : 'without JavaScript', async ({ browser }) => {
+      const context = await browser.newContext({ javaScriptEnabled });
+      const page = await context.newPage();
+      await page.goto('/programs');
+      const programs = page.getByRole('article');
+      await expect(programs).toHaveCount(8);
+      const search = page.getByRole('searchbox', { name: 'Поиск по программам' });
+      // A product name finds the programs that list it (the dev seed puts the PDRN ampoule in three).
+      await (javaScriptEnabled ? await whenHydrated(search) : search).fill('pdrn');
+      await search.press('Enter');
+      await expect(page).toHaveURL(/\/programs\?q=pdrn$/);
+      await expect(page.getByRole('status')).toHaveText('Нашлось 3 программы');
+      await expect(programs).toHaveCount(3);
+      await expect(programs.getByRole('link', { name: 'Акне и постакне' })).toBeVisible();
+
+      await search.fill('маникюр');
+      await search.press('Enter');
+      await expect(page.getByText('По запросу «маникюр» программ не нашлось')).toBeVisible();
+      await expect(programs).toHaveCount(0);
+      await page.getByRole('link', { name: 'Показать все программы' }).click();
+      await expect(page).toHaveURL(/\/programs$/);
+      await expect(programs).toHaveCount(8);
+      await context.close();
+    });
+  }
+});
+
 test('cart order: add from the catalog, validation, WhatsApp hand-off, cart emptied', async ({ page }) => {
   await page.goto('/catalog');
   const foam = page.getByRole('article').filter({ hasText: 'Пенка для умывания с центеллой' });
@@ -266,6 +296,8 @@ test('program cards list every variant with its price; a row opens the page on i
   await expect(rows.nth(0)).toContainText('Базовый уход');
   await expect(rows.nth(0)).toContainText('3 средства');
   await expect(rows.nth(1)).toContainText('Оптимальный уход');
+  // The products one by one, crossed out next to the price (owner request 2026-11-14).
+  await expect(rows.nth(1).locator('s')).toHaveText(/^\d[\d\s]*\sсом$/); // prices use a no-break space
   await expect(rows.nth(2)).toContainText('Интенсивный курс');
   // A program without variants keeps one price.
   const pigment = page.getByRole('article').filter({ has: page.getByRole('link', { name: 'Пигментация' }) });
