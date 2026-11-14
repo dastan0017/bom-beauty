@@ -266,3 +266,5 @@ Requests from Нурайым after adding the first variants, plus the admin che
 - [x] Search beyond the exact letters on the site and in the admin: typos, the other alphabet and keyboard layout,
       everyday and ingredient words, ranked results, products found by their programs' problems, «Похожие» when a
       longer query has no full match (D53)
+- [x] Search loader on the catalog and the programs list: a spinner in place of the magnifier and faded results from
+      the first key until the new results are shown

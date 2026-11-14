@@ -94,6 +94,7 @@ export default async function ProgramsPage({ searchParams }: Props) {
       <KeepResultsInView query={query} rowId={SEARCH_ROW_ID} resultsId={RESULTS_ID} />
       <section
         id={RESULTS_ID}
+        data-search-results
         className={cn(container, 'flex flex-col gap-2.5 px-4 pt-3 lg:grid lg:grid-cols-2 lg:gap-4')}
       >
         {query && shown.length > 0 && (

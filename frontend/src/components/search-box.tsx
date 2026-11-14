@@ -3,7 +3,7 @@
 import type { Route } from 'next';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useTransition } from 'react';
 import { cn } from '@/lib/cn';
 import { CloseIcon, SearchIcon } from './icons';
 
@@ -22,7 +22,8 @@ export function searchHref(path: string, params: Record<string, string | undefin
 /**
  * Search field of the catalog and the programs list (owner requests 2026-10-26 and 2026-11-14; the design has none). A
  * GET form, so it works without JavaScript; with it, the results follow the typing after a short pause. The page's
- * other parameters stay as they are.
+ * other parameters stay as they are. From the first key until the new results are shown, a spinner takes the
+ * magnifier's place and the old results fade (`aria-busy`, globals.css; owner request 2026-11-15).
  */
 export function SearchBox({
   path,
@@ -45,6 +46,9 @@ export function SearchBox({
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const timer = useRef<number | undefined>(undefined);
+  const [typing, setTyping] = useState(false);
+  const [loading, startLoading] = useTransition();
+  const busy = typing || loading;
 
   // Back, forward and the reset links change the query from outside; while the visitor types, their text stays.
   useEffect(() => {
@@ -53,9 +57,11 @@ export function SearchBox({
   }, [query]);
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
+  // In a transition, so `loading` lasts until the new results are on the screen.
   const search = (value: string) => {
     window.clearTimeout(timer.current);
-    router.replace(searchHref(path, params, value), { scroll: false });
+    setTyping(false);
+    startLoading(() => router.replace(searchHref(path, params, value), { scroll: false }));
   };
 
   return (
@@ -63,6 +69,7 @@ export function SearchBox({
       role="search"
       action={path}
       method="get"
+      aria-busy={busy}
       className={cn('min-w-0', className)}
       onSubmit={(event) => {
         event.preventDefault();
@@ -74,10 +81,17 @@ export function SearchBox({
         value ? <input key={key} type="hidden" name={key} value={value} /> : null,
       )}
       <div className="relative">
-        <SearchIcon
-          size={18}
-          className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-muted"
-        />
+        {busy ? (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute top-1/2 left-3.5 size-[18px] -translate-y-1/2 animate-spin rounded-full border-2 border-line border-t-accent motion-reduce:animate-[spin_1.5s_linear_infinite]"
+          />
+        ) : (
+          <SearchIcon
+            size={18}
+            className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-muted"
+          />
+        )}
         <input
           ref={input}
           name="q"
@@ -90,6 +104,7 @@ export function SearchBox({
           maxLength={100}
           onChange={(event) => {
             const value = event.target.value;
+            setTyping(true);
             window.clearTimeout(timer.current);
             timer.current = window.setTimeout(() => search(value), TYPING_PAUSE_MS);
           }}
@@ -105,9 +120,11 @@ export function SearchBox({
             replace
             scroll={false}
             aria-label={clearLabel}
-            onClick={() => {
-              window.clearTimeout(timer.current);
+            onClick={(event) => {
+              // With JavaScript the clearing loads like a search, with the spinner; the link is the fallback.
+              event.preventDefault();
               if (input.current) input.current.value = '';
+              search('');
             }}
             className="absolute top-0 right-0 flex size-11 items-center justify-center rounded-xl text-muted hover:text-ink"
           >

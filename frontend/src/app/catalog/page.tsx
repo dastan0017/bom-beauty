@@ -234,7 +234,7 @@ export default async function CatalogPage({ searchParams }: Props) {
       )}
 
       {query && shown.length > 0 && (
-        <p role="status" className={cn(container, 'px-5 pt-4 text-sm text-muted')}>
+        <p data-search-results role="status" className={cn(container, 'px-5 pt-4 text-sm text-muted')}>
           {found.length
             ? copy.catalog.found(found.length, productsWord(found.length))
             : copy.catalog.similar(query)}
@@ -242,7 +242,11 @@ export default async function CatalogPage({ searchParams }: Props) {
       )}
 
       {empty ? (
-        <div role="status" className="flex flex-col items-center gap-3 px-6 pt-10 pb-2 text-center">
+        <div
+          data-search-results
+          role="status"
+          className="flex flex-col items-center gap-3 px-6 pt-10 pb-2 text-center"
+        >
           <p className="text-base leading-normal text-balance text-muted">{empty.text}</p>
           <Link
             href={empty.action.href}
@@ -255,6 +259,7 @@ export default async function CatalogPage({ searchParams }: Props) {
       ) : (
         <section
           id={RESULTS_ID}
+          data-search-results
           className={cn(
             container,
             'grid grid-cols-2 gap-2.5 px-4 pt-3 md:grid-cols-3 lg:grid-cols-4 lg:gap-4',
